@@ -1,1 +1,5 @@
 workspace.xml
+uiDesigner.xml
+
+# Not sure if this is a good idea to check in because it has my local path for Android SDK 
+libraries/support_v4_19_0_1.xml

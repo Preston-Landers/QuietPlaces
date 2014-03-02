@@ -22,10 +22,21 @@ android {
         versionCode 1
         versionName "1.0"
     }
+
+    signingConfigs {
+        release {
+            storeFile file(QP_RELEASE_STORE_FILE)
+            storePassword QP_RELEASE_STORE_PASSWORD
+            keyAlias QP_RELEASE_KEY_ALIAS
+            keyPassword QP_RELEASE_KEY_PASSWORD
+        }
+    }
+
     buildTypes {
         release {
             runProguard true
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.txt'
+            signingConfig signingConfigs.release
         }
     }
 }
