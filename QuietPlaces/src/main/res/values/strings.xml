@@ -9,5 +9,8 @@
     <string name="navigation_drawer_close">Close navigation drawer</string>
     <string name="action_example">Example action</string>
     <string name="action_settings">Settings</string>
+    <string name="title_home">Welcome to QuietPlaces</string>
+    <string name="current_ringer_status">Current Ringer Status</string>
+    <string name="authors">Mobile Computing 2014 UT Austin</string>
 
 </resources>
