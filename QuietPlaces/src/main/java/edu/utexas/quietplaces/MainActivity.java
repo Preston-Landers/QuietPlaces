@@ -1,22 +1,21 @@
 package edu.utexas.quietplaces;
 
 import android.app.Activity;
+import android.media.AudioManager;
 import android.support.v7.app.ActionBarActivity;
 import android.support.v7.app.ActionBar;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
-import android.content.Context;
-import android.os.Build;
 import android.os.Bundle;
-import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.support.v4.widget.DrawerLayout;
-import android.widget.ArrayAdapter;
+import android.widget.Switch;
 import android.widget.TextView;
+import android.widget.Toast;
 
 public class MainActivity extends ActionBarActivity
         implements NavigationDrawerFragment.NavigationDrawerCallbacks {
@@ -229,12 +228,68 @@ public class MainActivity extends ActionBarActivity
             return rootView;
         }
 
+//        @Override
+//        public void onResume() {
+//            super.onResume();
+//        }
+
+        @Override
+        public void onStart() {
+            super.onStart();
+            updateSwitchWithRingerState();
+        }
+
         @Override
         public void onAttach(Activity activity) {
             super.onAttach(activity);
             ((MainActivity) activity).onSectionAttached(
                     getArguments().getInt(ARG_SECTION_NUMBER));
         }
+
+        private void updateSwitchWithRingerState() {
+            Activity activity = getActivity();
+            Switch ringerSwitch = (Switch) activity.findViewById(R.id.switch_home_ringer);
+            AudioManager audioManager = (AudioManager) activity.getSystemService(AUDIO_SERVICE);
+            int ringerMode = audioManager.getRingerMode();
+            if (ringerMode == audioManager.RINGER_MODE_NORMAL) {
+                ringerSwitch.setChecked(true);
+            } else {
+                ringerSwitch.setChecked(false);
+            }
+
+        }
+
+    }
+
+    public void onClickRinger(View view) {
+        Switch ringerSwitch = (Switch) findViewById(R.id.switch_home_ringer);
+        // String result = "Ringer turned off.";
+        boolean ringerState = false;
+        if (ringerSwitch.isChecked()) {
+            // result = "Ringer turned on.";
+            ringerState = true;
+        }
+        // shortToast(result);
+        setRinger(ringerState);
+    }
+
+    public void shortToast(String msg) {
+        Toast.makeText(MainActivity.this, msg, Toast.LENGTH_SHORT).show();
+    }
+
+    public void longToast(String msg) {
+        Toast.makeText(MainActivity.this, msg, Toast.LENGTH_LONG).show();
+    }
+
+    // Todo: support separate vibration setting?
+    private void setRinger(boolean ringerState) {
+        AudioManager audioManager = (AudioManager) getSystemService(AUDIO_SERVICE);
+        int ringerMode = audioManager.RINGER_MODE_NORMAL;
+        if (!ringerState) {
+            ringerMode = audioManager.RINGER_MODE_SILENT;
+        }
+        audioManager.setRingerMode(ringerMode);
+
     }
 
 }

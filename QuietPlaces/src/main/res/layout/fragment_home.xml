@@ -9,19 +9,42 @@
             android:layout_height="wrap_content"
             android:textAppearance="?android:attr/textAppearanceLarge"
             android:text="@string/title_home"
-            android:id="@+id/textView"
+            android:id="@+id/home_header"
             android:layout_alignParentTop="true"
             android:layout_centerHorizontal="true"
-            android:layout_marginTop="50dp"/>
+            android:layout_marginTop="40dp"/>
 
     <ImageView
             android:layout_width="150dp"
             android:layout_height="150dp"
-            android:id="@+id/imageView"
-            android:layout_below="@+id/textView"
+            android:id="@+id/home_logo"
+            android:layout_below="@+id/home_header"
             android:layout_centerHorizontal="true"
             android:src="@drawable/ic_launcher_web"
             android:layout_marginTop="20dp"/>
+
+    <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textAppearance="?android:attr/textAppearanceSmall"
+            android:text="@string/authors2"
+            android:layout_alignParentBottom="true"
+            android:layout_centerHorizontal="true"
+            android:layout_marginBottom="18dp"
+            android:id="@+id/home_authors_2"/>
+
+    <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textAppearance="?android:attr/textAppearanceSmall"
+            android:id="@+id/home_authors"
+            android:layout_alignParentBottom="false"
+            android:layout_centerHorizontal="true"
+            android:layout_marginBottom="18dp"
+            android:singleLine="false"
+            android:text="@string/authors"
+            android:layout_alignParentLeft="false"
+            android:layout_above="@+id/home_authors_2"/>
 
     <RelativeLayout
             android:layout_width="fill_parent"
@@ -29,16 +52,17 @@
             android:layout_alignParentTop="false"
             android:layout_alignParentLeft="false"
             android:layout_alignParentStart="true"
-            android:layout_below="@+id/imageView"
+            android:layout_below="@+id/home_logo"
             android:layout_margin="20dp"
-            android:background="#cfcfcf">
+            android:background="#cfcfcf"
+            android:layout_above="@+id/home_authors">
 
         <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:textAppearance="?android:attr/textAppearanceMedium"
                 android:text="@string/current_ringer_status"
-                android:id="@+id/textView2"
+                android:id="@+id/tv_ringer_status"
                 android:layout_alignParentTop="true"
                 android:layout_centerHorizontal="true"
                 android:layout_marginTop="10dp"/>
@@ -47,24 +71,15 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="Ringer"
-                android:id="@+id/switch1"
-                android:layout_below="@+id/textView2"
+                android:id="@+id/switch_home_ringer"
+                android:layout_below="@+id/tv_ringer_status"
                 android:layout_centerHorizontal="true"
-                android:layout_marginTop="40dp"
+                android:layout_marginTop="30dp"
                 android:textSize="20dp"
                 android:lines="1"
                 android:longClickable="false"
-                />
+                android:onClick="onClickRinger"/>
 
-        <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:textAppearance="?android:attr/textAppearanceSmall"
-                android:text="@string/authors"
-                android:id="@+id/textView3"
-                android:layout_alignParentBottom="true"
-                android:layout_centerHorizontal="true"
-                android:layout_marginBottom="18dp"/>
     </RelativeLayout>
 
 </RelativeLayout>
