@@ -28,10 +28,12 @@ import com.google.android.gms.common.GooglePlayServicesClient;
 import com.google.android.gms.common.GooglePlayServicesUtil;
 import com.google.android.gms.location.LocationClient;
 import com.google.android.gms.location.LocationRequest;
+import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.GoogleMapOptions;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.location.LocationListener;
+import com.google.android.gms.maps.model.LatLng;
 
 public class MainActivity extends ActionBarActivity
         implements NavigationDrawerFragment.NavigationDrawerCallbacks,
@@ -52,7 +54,9 @@ public class MainActivity extends ActionBarActivity
 
     private SharedPreferences sharedPrefs;
 
+    private GoogleMap googleMap = null;
     private boolean mUpdatesRequested = false;
+    private Location lastKnownLocation = null;
 
     /**
      * Used to store the last screen title. For use in {@link #restoreActionBar()}.
@@ -125,6 +129,7 @@ public class MainActivity extends ActionBarActivity
         options.mapType(GoogleMap.MAP_TYPE_HYBRID)
                 .compassEnabled(true);
         mapFragment = SupportMapFragment.newInstance(options);
+        setupMapIfNeeded();
         return mapFragment;
     }
 
@@ -170,13 +175,20 @@ public class MainActivity extends ActionBarActivity
     }
 
     private void setupMapIfNeeded() {
-        GoogleMap map = getMapFragment().getMap();
-        if (map == null) {
+        googleMap = getMapFragment().getMap();
+        if (googleMap == null) {
             // longToast("Can't get map object. :-(");
             // This can happen if the user hasn't visited the map tab yet
             return;
         }
-        // TODO: other map setup here?
+
+        // other map setup here
+
+        googleMap.setMyLocationEnabled(true);
+
+        if (lastKnownLocation != null) {
+            updateUserLocationOnMap(lastKnownLocation);
+        }
     }
 
     public void onSectionAttached(int number) {
@@ -466,9 +478,24 @@ public class MainActivity extends ActionBarActivity
                 Double.toString(location.getLatitude()) + "," +
                 Double.toString(location.getLongitude());
         shortToast(msg);
+
+        lastKnownLocation = location;
+        updateUserLocationOnMap(location);
     }
 
     private boolean getPrefUsingLocation() {
         return sharedPrefs.getBoolean(SettingsActivity.KEY_USE_LOCATION, false);
+    }
+
+    private void updateUserLocationOnMap(Location location) {
+        // setupMapIfNeeded();
+        if (googleMap == null) {
+            Log.w(TAG, "Map doesn't exist so can't show user location");
+            return;
+        }
+        float zoom = (float) 16.0; // a fairly tight zoom  (TODO: a setting?)
+        googleMap.moveCamera(
+                CameraUpdateFactory.newLatLngZoom(
+                        new LatLng(location.getLatitude(), location.getLongitude()), zoom));
     }
 }
