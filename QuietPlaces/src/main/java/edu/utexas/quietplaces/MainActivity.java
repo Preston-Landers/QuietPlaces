@@ -1,6 +1,5 @@
 package edu.utexas.quietplaces;
 
-import android.app.Activity;
 import android.app.Dialog;
 import android.content.Intent;
 import android.content.IntentSender;
@@ -14,14 +13,11 @@ import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.os.Bundle;
 import android.util.Log;
-import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
-import android.view.ViewGroup;
 import android.support.v4.widget.DrawerLayout;
 import android.widget.Switch;
-import android.widget.TextView;
 import android.widget.Toast;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GooglePlayServicesClient;
@@ -57,6 +53,8 @@ public class MainActivity extends ActionBarActivity
     private GoogleMap googleMap = null;
     private boolean mUpdatesRequested = false;
     private Location lastKnownLocation = null;
+
+    private boolean haveAlreadyCenteredCamera = false;
 
     /**
      * Used to store the last screen title. For use in {@link #restoreActionBar()}.
@@ -240,113 +238,6 @@ public class MainActivity extends ActionBarActivity
         return super.onOptionsItemSelected(item);
     }
 
-    /**
-     * A placeholder fragment containing a simple view.
-     */
-    public static class PlaceholderFragment extends Fragment {
-        /**
-         * The fragment argument representing the section number for this
-         * fragment.
-         */
-        private static final String ARG_SECTION_NUMBER = "section_number";
-
-        /**
-         * Returns a new instance of this fragment for the given section
-         * number.
-         */
-        protected static PlaceholderFragment newInstance(int sectionNumber) {
-            PlaceholderFragment fragment = new PlaceholderFragment();
-            Bundle args = new Bundle();
-            args.putInt(ARG_SECTION_NUMBER, sectionNumber);
-            fragment.setArguments(args);
-            return fragment;
-        }
-
-        public PlaceholderFragment() {
-        }
-
-        @Override
-        public View onCreateView(LayoutInflater inflater, ViewGroup container,
-                                 Bundle savedInstanceState) {
-            View rootView = inflater.inflate(R.layout.fragment_main, container, false);
-            TextView textView = (TextView) rootView.findViewById(R.id.section_label);
-            textView.setText(Integer.toString(getArguments().getInt(ARG_SECTION_NUMBER)));
-            return rootView;
-        }
-
-        @Override
-        public void onAttach(Activity activity) {
-            super.onAttach(activity);
-            ((MainActivity) activity).onSectionAttached(
-                    getArguments().getInt(ARG_SECTION_NUMBER));
-        }
-    }
-
-
-    /**
-     * A fragment containing the welcome screen of the app.
-     */
-    public static class HomeFragment extends Fragment {
-        /**
-         * The fragment argument representing the section number for this
-         * fragment.
-         */
-        private static final String ARG_SECTION_NUMBER = "section_number";
-
-        /**
-         * Returns a new instance of this fragment for the given section
-         * number.
-         */
-        protected static HomeFragment newInstance(int sectionNumber) {
-            HomeFragment fragment = new HomeFragment();
-            Bundle args = new Bundle();
-            args.putInt(ARG_SECTION_NUMBER, sectionNumber);
-            fragment.setArguments(args);
-            return fragment;
-        }
-
-        public HomeFragment() {
-        }
-
-        @Override
-        public View onCreateView(LayoutInflater inflater, ViewGroup container,
-                                 Bundle savedInstanceState) {
-            View rootView = inflater.inflate(R.layout.fragment_home, container, false);
-            return rootView;
-        }
-
-//        @Override
-//        public void onResume() {
-//            super.onResume();
-//        }
-
-        @Override
-        public void onStart() {
-            super.onStart();
-            updateSwitchWithRingerState();
-        }
-
-        @Override
-        public void onAttach(Activity activity) {
-            super.onAttach(activity);
-            ((MainActivity) activity).onSectionAttached(
-                    getArguments().getInt(ARG_SECTION_NUMBER));
-        }
-
-        private void updateSwitchWithRingerState() {
-            Activity activity = getActivity();
-            Switch ringerSwitch = (Switch) activity.findViewById(R.id.switch_home_ringer);
-            AudioManager audioManager = (AudioManager) activity.getSystemService(AUDIO_SERVICE);
-            int ringerMode = audioManager.getRingerMode();
-            if (ringerMode == audioManager.RINGER_MODE_NORMAL) {
-                ringerSwitch.setChecked(true);
-            } else {
-                ringerSwitch.setChecked(false);
-            }
-
-        }
-
-    }
 
     public void onClickRinger(View view) {
         Switch ringerSwitch = (Switch) findViewById(R.id.switch_home_ringer);
@@ -480,7 +371,11 @@ public class MainActivity extends ActionBarActivity
         shortToast(msg);
 
         lastKnownLocation = location;
-        updateUserLocationOnMap(location);
+
+        if (!haveAlreadyCenteredCamera) {
+            haveAlreadyCenteredCamera = true;
+            updateUserLocationOnMap(location);
+        }
     }
 
     private boolean getPrefUsingLocation() {
@@ -494,7 +389,7 @@ public class MainActivity extends ActionBarActivity
             return;
         }
         float zoom = (float) 16.0; // a fairly tight zoom  (TODO: a setting?)
-        googleMap.moveCamera(
+        googleMap.animateCamera(
                 CameraUpdateFactory.newLatLngZoom(
                         new LatLng(location.getLatitude(), location.getLongitude()), zoom));
     }

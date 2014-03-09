@@ -72,6 +72,7 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="library" exported="" name="Gradle: ComAndroidSupportAppcompatV71901.aar" level="project" />
     <orderEntry type="library" exported="" name="Gradle: ComGoogleAndroidGmsPlayServices4030.aar" level="project" />
+    <orderEntry type="library" exported="" name="Gradle: joda-time-2.3" level="project" />
     <orderEntry type="library" exported="" name="Gradle: support-v4-19.0.1" level="project" />
   </component>
 </module>
