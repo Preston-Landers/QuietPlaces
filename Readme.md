@@ -22,12 +22,26 @@ Thanks to:
 
 Dr. Christine Julien
 
+# Development Notes #
+
+Currently we have a simple with a switch that (manually) controls the ringer.
+
+We also display a map thought don't do anything with it currently.
+
+## Current TODO List ##
+
+* Display current location on map.
+* Create a SQLite database to store manually defined quiet zones.
+* Draw quiet places on the map
 
 # Building from Source #
 
 This is a Gradle based project which is buildable from the command line, or from
-Gradle-aware IDEs such as IntelliJ IDEA 13 or Android Studio.  In order to build and run
-the app from source, you must create a new private.xml file and put in a Google API key.
+Gradle-aware IDEs such as IntelliJ IDEA 13 or Android Studio. It should work with
+Eclipse but I haven't tried that.
+
+*Important*: In order to build and run the app from source, you must create a new private.xml file
+and put in a Google API key as described below.
 
 
 ## Add the API Key in res/values/private.xml ##

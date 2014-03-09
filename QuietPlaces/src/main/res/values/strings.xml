@@ -13,5 +13,9 @@
     <string name="current_ringer_status">Current Ringer Status</string>
     <string name="authors">Preston Landers and Abe Arredondo</string>
     <string name="authors2">Mobile Computing 2014 @ UT Austin</string>
+    <string name="pref_category_location_title">Location Settings</string>
+    <string name="pref_use_location">Allow Location Updates</string>
+    <string name="pref_use_location_summary">If this is checked the app will periodically refresh your location to check for nearby quiet places.</string>
+    <string name="settings_activity_name">Settings</string>
 
 </resources>

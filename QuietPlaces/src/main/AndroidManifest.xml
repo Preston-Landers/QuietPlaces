@@ -43,6 +43,11 @@
             </intent-filter>
         </activity>
 
+        <activity
+                android:name="SettingsActivity"
+                android:label="@string/settings_activity_name">
+        </activity>
+
         <meta-data
                 android:name="com.google.android.maps.v2.API_KEY"
                 android:value="@string/google_public_api_key"/>
