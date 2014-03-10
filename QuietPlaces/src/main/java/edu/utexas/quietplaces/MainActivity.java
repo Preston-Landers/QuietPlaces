@@ -7,6 +7,7 @@ import android.content.SharedPreferences;
 import android.location.Location;
 import android.media.AudioManager;
 import android.preference.PreferenceManager;
+import android.support.v4.app.FragmentTransaction;
 import android.support.v7.app.ActionBarActivity;
 import android.support.v7.app.ActionBar;
 import android.support.v4.app.Fragment;
@@ -43,6 +44,8 @@ public class MainActivity extends ActionBarActivity
      */
     private NavigationDrawerFragment mNavigationDrawerFragment;
     private SupportMapFragment mapFragment;
+    private HomeFragment homeFragment;
+    private PlaceholderFragment placeholderFragment; // this is current a placeholder empty fragment, convert to something!
 
     // Define an object that holds accuracy and frequency parameters
     private LocationRequest mLocationRequest;
@@ -64,12 +67,29 @@ public class MainActivity extends ActionBarActivity
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
 
         // Initialize preference defaults
         PreferenceManager.setDefaultValues(this, R.xml.preferences, false);
         // Get preference object
         sharedPrefs = PreferenceManager.getDefaultSharedPreferences(this);
+
+        mapFragment = getMapFragment();
+        homeFragment = HomeFragment.newInstance(1);
+        placeholderFragment = PlaceholderFragment.newInstance(3);
+
+        getSupportFragmentManager()
+                .beginTransaction()
+                .add(R.id.container, homeFragment)
+                .add(R.id.container, mapFragment)
+                .add(R.id.container, placeholderFragment)
+                .hide(mapFragment)
+                .hide(placeholderFragment)
+                .commit();
+
+
+        setContentView(R.layout.activity_main);
+
+        // Create objects for all of our primary fragments
 
         mNavigationDrawerFragment = (NavigationDrawerFragment)
                 getSupportFragmentManager().findFragmentById(R.id.navigation_drawer);
@@ -99,24 +119,27 @@ public class MainActivity extends ActionBarActivity
     public void onNavigationDrawerItemSelected(int position) {
         // update the main content by replacing fragments
         FragmentManager fragmentManager = getSupportFragmentManager();
-        Fragment newFragment;
+        FragmentTransaction transaction = fragmentManager.beginTransaction();
         switch (position) {
             case 0:
-                newFragment = HomeFragment.newInstance(position + 1);
+                transaction.hide(mapFragment)
+                        .hide(placeholderFragment)
+                        .show(homeFragment);
                 break;
             case 1:
-                // newFragment = QPMapFragment.newInstance(position + 1);
-                newFragment = getMapFragment();
+                transaction.hide(homeFragment)
+                        .hide(placeholderFragment)
+                        .show(mapFragment);
                 mTitle = getString(R.string.title_section2);
                 break;
             default:
-                newFragment = PlaceholderFragment.newInstance(position + 1);
+                transaction.hide(mapFragment)
+                        .hide(homeFragment)
+                        .show(placeholderFragment);
                 break;
         }
 
-        fragmentManager.beginTransaction()
-                .replace(R.id.container, newFragment)
-                .commit();
+        transaction.commit();
     }
 
     private SupportMapFragment getMapFragment() {
@@ -127,7 +150,8 @@ public class MainActivity extends ActionBarActivity
         options.mapType(GoogleMap.MAP_TYPE_HYBRID)
                 .compassEnabled(true);
         mapFragment = SupportMapFragment.newInstance(options);
-        setupMapIfNeeded();
+        // mapFragment.setRetainInstance(true);
+        // setupMapIfNeeded();
         return mapFragment;
     }
 
@@ -147,6 +171,7 @@ public class MainActivity extends ActionBarActivity
             // Maybe quit at this point?
         }
 
+        haveAlreadyCenteredCamera = false; /// good idea?
         setupMapIfNeeded();
 
         mUpdatesRequested = getPrefUsingLocation();
