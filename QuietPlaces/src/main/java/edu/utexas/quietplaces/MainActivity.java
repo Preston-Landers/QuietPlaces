@@ -77,6 +77,9 @@ public class MainActivity extends ActionBarActivity
         homeFragment = HomeFragment.newInstance(1);
         placeholderFragment = PlaceholderFragment.newInstance(3);
 
+        // Add all the fragments but only show the home one initially
+        // Got this idea from: http://stackoverflow.com/questions/16461483/preserving-fragment-state
+        // Main purpose of this is to avoid resetting the map state when you switch fragments
         getSupportFragmentManager()
                 .beginTransaction()
                 .add(R.id.container, homeFragment)
@@ -125,6 +128,7 @@ public class MainActivity extends ActionBarActivity
                 transaction.hide(mapFragment)
                         .hide(placeholderFragment)
                         .show(homeFragment);
+                mTitle = getString(R.string.title_section1);
                 break;
             case 1:
                 transaction.hide(homeFragment)
@@ -136,6 +140,7 @@ public class MainActivity extends ActionBarActivity
                 transaction.hide(mapFragment)
                         .hide(homeFragment)
                         .show(placeholderFragment);
+                mTitle = getString(R.string.title_section3);
                 break;
         }
 
@@ -417,5 +422,10 @@ public class MainActivity extends ActionBarActivity
         googleMap.animateCamera(
                 CameraUpdateFactory.newLatLngZoom(
                         new LatLng(location.getLatitude(), location.getLongitude()), zoom));
+    }
+
+    public void clickAddButton(View view) {
+        Log.w(TAG, "Clicked the add button");
+        shortToast("ADD PLACEHOLDER");
     }
 }

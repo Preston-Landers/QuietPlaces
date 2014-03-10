@@ -17,5 +17,6 @@
     <string name="pref_use_location">Allow Location Updates</string>
     <string name="pref_use_location_summary">If this is checked the app will periodically refresh your location to check for nearby quiet places.</string>
     <string name="settings_activity_name">Settings</string>
+    <string name="add_quiet_place_button">Add</string>
 
 </resources>
