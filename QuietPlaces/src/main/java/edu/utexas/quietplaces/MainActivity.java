@@ -424,8 +424,8 @@ public class MainActivity extends ActionBarActivity
                         new LatLng(location.getLatitude(), location.getLongitude()), zoom));
     }
 
+    // Forward the "Add" button click to the fragment
     public void clickAddButton(View view) {
-        Log.w(TAG, "Clicked the add button");
-        shortToast("ADD PLACEHOLDER");
+        getMapFragment().clickAddButton(view);
     }
 }

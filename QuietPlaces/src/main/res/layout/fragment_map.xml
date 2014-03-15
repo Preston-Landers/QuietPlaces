@@ -30,8 +30,8 @@
                 android:layout_alignParentTop="true"
                 android:layout_alignParentRight="false"
                 android:layout_alignParentEnd="true"
-                android:layout_marginTop="75dp"
-                android:layout_marginRight="10dp"
+                android:layout_marginTop="70dp"
+                android:layout_marginRight="12dp"
                 android:id="@+id/add_button_container"
                 android:padding="5dp"
                 android:background="@drawable/map_controls"
@@ -39,16 +39,16 @@
 
             <ImageButton
                     android:layout_width="wrap_content"
-                    android:layout_height="35dp"
+                    android:layout_height="wrap_content"
                     android:id="@+id/addPlaceButton"
-                    android:background="@android:drawable/ic_menu_add"
+                    android:background="@drawable/ic_add_icon"
                     android:layout_alignParentTop="true"
                     android:layout_alignParentRight="false"
                     android:layout_alignParentEnd="false"
-                    android:scaleType="centerCrop"
-                    android:tint="#08b71f"
+                    android:scaleType="center"
                     android:onClick="clickAddButton"
-                    android:contentDescription="Add Quiet Place"/>
+                    android:contentDescription="@string/add_button_description"
+                    android:layout_centerHorizontal="true"/>
 
             <TextView
                     android:layout_width="wrap_content"
@@ -60,7 +60,7 @@
                     android:layout_alignStart="@+id/addPlaceButton"
                     android:layout_alignWithParentIfMissing="false"
                     android:layout_alignParentRight="false"
-                    android:layout_alignParentLeft="false"
+                    android:layout_alignParentLeft="true"
                     />
         </RelativeLayout>
 

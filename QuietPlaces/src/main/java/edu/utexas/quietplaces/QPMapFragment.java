@@ -2,13 +2,16 @@ package edu.utexas.quietplaces;
 
 import android.app.Activity;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageButton;
 import com.google.android.gms.common.GooglePlayServicesNotAvailableException;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.MapView;
 import com.google.android.gms.maps.MapsInitializer;
+import com.google.android.gms.maps.model.LatLng;
 
 /**
  * A fragment containing the MapView plus our custom controls.
@@ -19,10 +22,13 @@ public class QPMapFragment extends QPFragment {
      * fragment.
      */
     private static final String ARG_SECTION_NUMBER = "section_number";
+    private static final String TAG = "QPMapFragment";
 
     private MapView mMapView;
     private GoogleMap mMap;
     private Bundle mBundle;
+
+    private boolean currentlyAddingPlace = false;
 
     /**
      * Returns a new instance of this fragment for the given section
@@ -99,6 +105,7 @@ public class QPMapFragment extends QPFragment {
 
     @Override
     public void onPause() {
+        // Compass requires extra sensors, so turn it off when not using
         getMap().getUiSettings().setCompassEnabled(false);
         super.onPause();
         mMapView.onPause();
@@ -113,4 +120,35 @@ public class QPMapFragment extends QPFragment {
     public GoogleMap getMap() {
         return mMap;
     }
+
+    public void clickAddButton(final View view) {
+        Log.w(TAG, "Clicked the add button");
+        // shortToast("ADD PLACEHOLDER");
+
+        if (currentlyAddingPlace) {
+            cancelAddButton(view);
+            return;
+        }
+
+
+        ImageButton addButton = ((ImageButton) view.findViewById(R.id.addPlaceButton));
+        addButton.setBackgroundResource(R.drawable.ic_close_icon);
+
+        currentlyAddingPlace = true;
+        getMap().setOnMapClickListener(new GoogleMap.OnMapClickListener() {
+            @Override
+            public void onMapClick(LatLng latLng) {
+                shortToast("Clicked at: " + latLng);
+                cancelAddButton(view);
+            }
+        });
+    }
+
+    public void cancelAddButton(View view) {
+        ImageButton addButton = ((ImageButton) view.findViewById(R.id.addPlaceButton));
+        addButton.setBackgroundResource(R.drawable.ic_add_icon);
+        getMap().setOnMapClickListener(null);
+        currentlyAddingPlace = false;
+    }
+
 }

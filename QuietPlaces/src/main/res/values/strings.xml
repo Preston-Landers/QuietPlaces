@@ -19,5 +19,6 @@
     <string name="settings_activity_name">Settings</string>
     <string name="add_quiet_place_button">Add</string>
     <string name="ringer_switch">Ringer</string>
+    <string name="add_button_description">Add Quiet Place</string>
 
 </resources>
