@@ -64,7 +64,7 @@ public class HomeFragment extends QPFragment {
         Switch ringerSwitch = (Switch) activity.findViewById(R.id.switch_home_ringer);
         AudioManager audioManager = (AudioManager) activity.getSystemService(Context.AUDIO_SERVICE);
         int ringerMode = audioManager.getRingerMode();
-        if (ringerMode == audioManager.RINGER_MODE_NORMAL) {
+        if (ringerMode == AudioManager.RINGER_MODE_NORMAL) {
             ringerSwitch.setChecked(true);
         } else {
             ringerSwitch.setChecked(false);

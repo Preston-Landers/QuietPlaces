@@ -1,7 +1,6 @@
 package edu.utexas.quietplaces;
 
 import org.joda.time.DateTime;
-import org.joda.time.format.DateTimeFormat;
 import org.joda.time.format.DateTimeFormatter;
 import org.joda.time.format.ISODateTimeFormat;
 
@@ -33,7 +32,6 @@ public class DateUtils {
         DateTimeFormatter parser = ISODateTimeFormat.dateTimeParser();
         // todo: check if this is correct
         // probably want an exception handler that returns null?
-        DateTime dt = parser.parseDateTime(datetimeString);
-        return dt;
+        return parser.parseDateTime(datetimeString);
     }
 }

@@ -2,8 +2,6 @@ package edu.utexas.quietplaces;
 
 
 import org.joda.time.DateTime;
-import org.joda.time.format.DateTimeFormatter;
-import org.joda.time.format.ISODateTimeFormat;
 
 /**
  * Data model object for a single QuietPlace

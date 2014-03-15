@@ -47,7 +47,8 @@
                     android:layout_alignParentEnd="false"
                     android:scaleType="centerCrop"
                     android:tint="#08b71f"
-                    android:onClick="clickAddButton"/>
+                    android:onClick="clickAddButton"
+                    android:contentDescription="Add Quiet Place"/>
 
             <TextView
                     android:layout_width="wrap_content"

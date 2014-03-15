@@ -4,7 +4,7 @@ package edu.utexas.quietplaces;
  * Generic bucket for configuration values.
  *
  */
-public class Config {
+class Config {
     public static final String APPNAME = "QuietPlaces";
 
     // http://developer.android.com/training/location/receive-location-updates.html

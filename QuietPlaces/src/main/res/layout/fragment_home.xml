@@ -21,7 +21,8 @@
             android:layout_below="@+id/home_header"
             android:layout_centerHorizontal="true"
             android:src="@drawable/ic_launcher_web"
-            android:layout_marginTop="20dp"/>
+            android:layout_marginTop="20dp"
+            android:contentDescription="Logo"/>
 
     <TextView
             android:layout_width="wrap_content"
@@ -70,12 +71,12 @@
         <Switch
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Ringer"
+                android:text="@string/ringer_switch"
                 android:id="@+id/switch_home_ringer"
                 android:layout_below="@+id/tv_ringer_status"
                 android:layout_centerHorizontal="true"
                 android:layout_marginTop="30dp"
-                android:textSize="20dp"
+                android:textSize="20sp"
                 android:lines="1"
                 android:longClickable="false"
                 android:onClick="onClickRinger"/>
