@@ -1,6 +1,7 @@
 package edu.utexas.quietplaces;
 
 import org.joda.time.DateTime;
+import org.joda.time.format.DateTimeFormat;
 import org.joda.time.format.DateTimeFormatter;
 import org.joda.time.format.ISODateTimeFormat;
 
@@ -33,5 +34,13 @@ public class DateUtils {
         // todo: check if this is correct
         // probably want an exception handler that returns null?
         return parser.parseDateTime(datetimeString);
+    }
+
+    public static String getPrettyDateTime(DateTime dateTime) {
+        if (dateTime == null) {
+            dateTime = new DateTime();
+        }
+        DateTimeFormatter fmt = DateTimeFormat.forPattern("M-d-y H:m");
+        return fmt.print(dateTime);
     }
 }

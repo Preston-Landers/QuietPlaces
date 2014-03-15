@@ -12,6 +12,9 @@ import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.MapView;
 import com.google.android.gms.maps.MapsInitializer;
 import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.Marker;
+import com.google.android.gms.maps.model.MarkerOptions;
+import org.joda.time.DateTime;
 
 /**
  * A fragment containing the MapView plus our custom controls.
@@ -94,6 +97,9 @@ public class QPMapFragment extends QPFragment {
         getMap().setMapType(GoogleMap.MAP_TYPE_HYBRID);
         getMap().getUiSettings().setCompassEnabled(true);
 
+
+        // Load markers from database
+
     }
 
     @Override
@@ -123,13 +129,11 @@ public class QPMapFragment extends QPFragment {
 
     public void clickAddButton(final View view) {
         Log.w(TAG, "Clicked the add button");
-        // shortToast("ADD PLACEHOLDER");
 
         if (currentlyAddingPlace) {
             cancelAddButton(view);
             return;
         }
-
 
         ImageButton addButton = ((ImageButton) view.findViewById(R.id.addPlaceButton));
         addButton.setBackgroundResource(R.drawable.ic_close_icon);
@@ -138,7 +142,7 @@ public class QPMapFragment extends QPFragment {
         getMap().setOnMapClickListener(new GoogleMap.OnMapClickListener() {
             @Override
             public void onMapClick(LatLng latLng) {
-                shortToast("Clicked at: " + latLng);
+                addQuietPlace(latLng);
                 cancelAddButton(view);
             }
         });
@@ -149,6 +153,47 @@ public class QPMapFragment extends QPFragment {
         addButton.setBackgroundResource(R.drawable.ic_add_icon);
         getMap().setOnMapClickListener(null);
         currentlyAddingPlace = false;
+    }
+
+    public void addQuietPlace(LatLng latLng) {
+        shortToast("Clicked at: " + latLng);
+
+        GoogleMap googleMap = getMap();
+
+        // temporary stuff
+        DateTime now = new DateTime();
+        final String comment = "Created at " + DateUtils.getPrettyDateTime(now);
+
+        // Radius??
+
+        // Place a map marker
+        MarkerOptions markerOptions = new MarkerOptions();
+        markerOptions.position(latLng);
+        markerOptions.title(comment);
+
+        // TODO: confirm before removing... maybe that should be a pref?
+        googleMap.setOnMarkerClickListener(new GoogleMap.OnMarkerClickListener() {
+            @Override
+            public boolean onMarkerClick(Marker marker) {
+                shortToast("Marker clicked: " + comment);
+                marker.remove();
+                // Delete from database
+                return true;
+            }
+        });
+
+        googleMap.addMarker(markerOptions);
+
+        // Save it to the database
+        /*
+        QuietPlacesDataSource dataSource = new QuietPlacesDataSource(getActivity());
+        dataSource.open();
+
+        QuietPlace quietPlace = new QuietPlace();
+        quietPlace.setLatitude(latLng.latitude);
+        quietPlace.setLongitude(latLng.longitude);
+        */
+
     }
 
 }
