@@ -42,7 +42,7 @@ android {
 }
 
 dependencies {
-    compile 'com.android.support:appcompat-v7:+'
+    compile 'com.android.support:appcompat-v4:+'
     compile 'com.google.android.gms:play-services:4.0.30'
     compile 'joda-time:joda-time:2.3'
 }
