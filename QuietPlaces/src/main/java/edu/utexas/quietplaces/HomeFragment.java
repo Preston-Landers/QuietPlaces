@@ -4,7 +4,6 @@ import android.app.Activity;
 import android.content.Context;
 import android.media.AudioManager;
 import android.os.Bundle;
-import android.support.v4.app.Fragment;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -13,7 +12,7 @@ import android.widget.Switch;
 /**
  * A fragment containing the welcome screen of the app.
  */
-public class HomeFragment extends Fragment {
+public class HomeFragment extends QPFragment {
     /**
      * The fragment argument representing the section number for this
      * fragment.

@@ -10,7 +10,6 @@ import android.preference.PreferenceManager;
 import android.support.v4.app.FragmentTransaction;
 import android.support.v7.app.ActionBarActivity;
 import android.support.v7.app.ActionBar;
-import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.os.Bundle;
 import android.util.Log;
@@ -27,8 +26,6 @@ import com.google.android.gms.location.LocationClient;
 import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
-import com.google.android.gms.maps.GoogleMapOptions;
-import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.location.LocationListener;
 import com.google.android.gms.maps.model.LatLng;
 
@@ -43,7 +40,7 @@ public class MainActivity extends ActionBarActivity
      * Fragment managing the behaviors, interactions and presentation of the navigation drawer.
      */
     private NavigationDrawerFragment mNavigationDrawerFragment;
-    private SupportMapFragment mapFragment;
+    private QPMapFragment mapFragment;
     private HomeFragment homeFragment;
     private PlaceholderFragment placeholderFragment; // this is current a placeholder empty fragment, convert to something!
 
@@ -147,16 +144,19 @@ public class MainActivity extends ActionBarActivity
         transaction.commit();
     }
 
-    private SupportMapFragment getMapFragment() {
+    private QPMapFragment getMapFragment() {
         if (mapFragment != null) {
             return mapFragment;
         }
-        GoogleMapOptions options = new GoogleMapOptions();
-        options.mapType(GoogleMap.MAP_TYPE_HYBRID)
-                .compassEnabled(true);
-        mapFragment = SupportMapFragment.newInstance(options);
+//        GoogleMapOptions options = new GoogleMapOptions();
+//        options.mapType(GoogleMap.MAP_TYPE_HYBRID)
+//                .compassEnabled(true);
+//        mapFragment = SupportMapFragment.newInstance(options);
         // mapFragment.setRetainInstance(true);
-        // setupMapIfNeeded();
+
+
+        mapFragment = QPMapFragment.newInstance(2);
+        setupMapIfNeeded();
         return mapFragment;
     }
 

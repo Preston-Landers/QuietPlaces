@@ -3,17 +3,66 @@
         xmlns:tools="http://schemas.android.com/tools"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:paddingLeft="@dimen/activity_horizontal_margin"
-        android:paddingRight="@dimen/activity_horizontal_margin"
-        android:paddingTop="@dimen/activity_vertical_margin"
-        android:paddingBottom="@dimen/activity_vertical_margin"
         tools:context="edu.utexas.quietplaces.PlaceholderFragment">
 
-    <fragment
-            xmlns:android="http://schemas.android.com/apk/res/android"
+    <com.google.android.gms.maps.MapView
             android:id="@+id/map"
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:name="com.google.android.gms.maps.MapFragment"
-            />
+            android:layout_height="match_parent" />
+            <!--xmlns:map="http://schemas.android.com/apk/res-auto"-->
+            <!--map:mapType="satellite"-->
+            <!--map:uiCompass="true"-->
+            <!--map:uiRotateGestures="true"-->
+            <!--map:uiScrollGestures="true"-->
+            <!--map:uiTiltGestures="true"-->
+            <!--map:uiZoomControls="true"-->
+            <!--map:uiZoomGestures="true"-->
+            <!--/>-->
+
+    <RelativeLayout
+            android:layout_width="fill_parent"
+            android:layout_height="fill_parent"
+            android:id="@+id/customControlsContainer">
+
+        <RelativeLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignParentTop="true"
+                android:layout_alignParentRight="false"
+                android:layout_alignParentEnd="true"
+                android:layout_marginTop="75dp"
+                android:layout_marginRight="10dp"
+                android:id="@+id/add_button_container"
+                android:padding="5dp"
+                android:background="@drawable/map_controls"
+                >
+
+            <ImageButton
+                    android:layout_width="wrap_content"
+                    android:layout_height="35dp"
+                    android:id="@+id/addPlaceButton"
+                    android:background="@android:drawable/ic_menu_add"
+                    android:layout_alignParentTop="true"
+                    android:layout_alignParentRight="false"
+                    android:layout_alignParentEnd="false"
+                    android:scaleType="centerCrop"
+                    android:tint="#08b71f"
+                    android:onClick="clickAddButton"/>
+
+            <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textAppearance="@android:style/TextAppearance.DeviceDefault.Medium"
+                    android:text="@string/add_quiet_place_button"
+                    android:id="@+id/tv_addPlaceLabel"
+                    android:layout_below="@+id/addPlaceButton"
+                    android:layout_alignStart="@+id/addPlaceButton"
+                    android:layout_alignWithParentIfMissing="false"
+                    android:layout_alignParentRight="false"
+                    android:layout_alignParentLeft="false"
+                    />
+        </RelativeLayout>
+
+    </RelativeLayout>
+
 </RelativeLayout>
