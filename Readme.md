@@ -122,3 +122,7 @@ Now you should be able to create a signed release build with:
 
     gradle assembleRelease
 
+# Open Source Credits
+
+Icons from:
+http://www.iconarchive.com/show/sleek-xp-basic-icons-by-hopstarter.html
