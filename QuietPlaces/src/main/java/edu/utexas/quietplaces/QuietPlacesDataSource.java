@@ -44,9 +44,21 @@ public class QuietPlacesDataSource {
         dbHelper.close();
     }
 
-    public QuietPlace createQuietPlace(String comment) {
+    /**
+     * Save a QuietPlace object to the local database. This also returns a new instance
+     * of the 'same' object with the id value filled in.
+     *
+     * @param quietPlace the place to save
+     * @return a new copy of that place with the id field set
+     */
+    public QuietPlace saveQuietPlace(QuietPlace quietPlace) {
         ContentValues values = new ContentValues();
-        values.put(QuietPlacesSQLiteHelper.COLUMN_COMMENT, comment);
+        values.put(QuietPlacesSQLiteHelper.COLUMN_COMMENT, quietPlace.getComment());
+        values.put(QuietPlacesSQLiteHelper.COLUMN_LATITUDE, quietPlace.getLatitude());
+        values.put(QuietPlacesSQLiteHelper.COLUMN_LONGITUDE, quietPlace.getLongitude());
+        values.put(QuietPlacesSQLiteHelper.COLUMN_RADIUS, quietPlace.getRadius());
+        values.put(QuietPlacesSQLiteHelper.COLUMN_DATETIME, quietPlace.getDatetimeString());
+        values.put(QuietPlacesSQLiteHelper.COLUMN_CATEGORY, quietPlace.getCategory());
         long insertId = database.insert(QuietPlacesSQLiteHelper.TABLE_PLACES, null,
                 values);
         Cursor cursor = database.query(QuietPlacesSQLiteHelper.TABLE_PLACES,

@@ -1,5 +1,6 @@
 package edu.utexas.quietplaces;
 
+import android.util.Log;
 import org.joda.time.DateTime;
 import org.joda.time.format.DateTimeFormat;
 import org.joda.time.format.DateTimeFormatter;
@@ -7,6 +8,8 @@ import org.joda.time.format.ISODateTimeFormat;
 
 
 public class DateUtils {
+
+    private static final String TAG = Config.APPNAME + ".DateUtils";
 
     /**
      * Turn a DateTime to a YYYYMMDD style (f8) string
@@ -25,7 +28,7 @@ public class DateUtils {
         if (dateTime == null) {
             dateTime = new DateTime();
         }
-        DateTimeFormatter fmt = ISODateTimeFormat.basicDateTimeNoMillis();
+        DateTimeFormatter fmt = ISODateTimeFormat.dateTime();
         return fmt.print(dateTime);
     }
 
@@ -33,7 +36,12 @@ public class DateUtils {
         DateTimeFormatter parser = ISODateTimeFormat.dateTimeParser();
         // todo: check if this is correct
         // probably want an exception handler that returns null?
-        return parser.parseDateTime(datetimeString);
+        try {
+            return parser.parseDateTime(datetimeString);
+        } catch (Exception e) {
+            Log.e(TAG, "Failed to parse datetime str: " + datetimeString, e);
+            return null;
+        }
     }
 
     public static String getPrettyDateTime(DateTime dateTime) {

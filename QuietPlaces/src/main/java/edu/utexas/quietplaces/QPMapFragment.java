@@ -16,6 +16,9 @@ import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import org.joda.time.DateTime;
 
+import java.util.Iterator;
+import java.util.List;
+
 /**
  * A fragment containing the MapView plus our custom controls.
  */
@@ -48,6 +51,11 @@ public class QPMapFragment extends QPFragment {
     public QPMapFragment() {
     }
 
+
+    public GoogleMap getMap() {
+        return mMap;
+    }
+
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -70,7 +78,6 @@ public class QPMapFragment extends QPFragment {
         mMapView = (MapView) rootView.findViewById(R.id.map);
         mMapView.onCreate(mBundle);
         setUpMapIfNeeded(rootView);
-
 
         return rootView;
     }
@@ -97,9 +104,7 @@ public class QPMapFragment extends QPFragment {
         getMap().setMapType(GoogleMap.MAP_TYPE_HYBRID);
         getMap().getUiSettings().setCompassEnabled(true);
 
-
-        // Load markers from database
-
+        loadPlacesFromDatabase();
     }
 
     @Override
@@ -123,10 +128,11 @@ public class QPMapFragment extends QPFragment {
         super.onDestroy();
     }
 
-    public GoogleMap getMap() {
-        return mMap;
-    }
-
+    /**
+     * Enable the "add place" mode, where touching the map adds a new quiet place.
+     *
+     * @param view current view
+     */
     public void clickAddButton(final View view) {
         Log.w(TAG, "Clicked the add button");
 
@@ -142,12 +148,17 @@ public class QPMapFragment extends QPFragment {
         getMap().setOnMapClickListener(new GoogleMap.OnMapClickListener() {
             @Override
             public void onMapClick(LatLng latLng) {
-                addQuietPlace(latLng);
+                addNewQuietPlace(latLng);
                 cancelAddButton(view);
             }
         });
     }
 
+    /**
+     * Disable the "add place" state - back to regular mode
+     *
+     * @param view: current view
+     */
     public void cancelAddButton(View view) {
         ImageButton addButton = ((ImageButton) view.findViewById(R.id.addPlaceButton));
         addButton.setBackgroundResource(R.drawable.ic_add_icon);
@@ -155,19 +166,62 @@ public class QPMapFragment extends QPFragment {
         currentlyAddingPlace = false;
     }
 
-    public void addQuietPlace(LatLng latLng) {
-        shortToast("Clicked at: " + latLng);
-
-        GoogleMap googleMap = getMap();
+    /**
+     * Adds a new QuietPlace to the map and save it to the database.
+     * @param latLng the lat/long coordinates of the place
+     */
+    public void addNewQuietPlace(LatLng latLng) {
+        // shortToast("Clicked at: " + latLng);
+        QuietPlacesDataSource dataSource = new QuietPlacesDataSource(getActivity());
+        dataSource.open();
 
         // temporary stuff
         DateTime now = new DateTime();
         final String comment = "Created at " + DateUtils.getPrettyDateTime(now);
 
         // Radius??
+        double radius = 2.0; // TODO
 
-        // Place a map marker
+        // Save it to the database
+
+        QuietPlace quietPlace = new QuietPlace();
+        quietPlace.setLatitude(latLng.latitude);
+        quietPlace.setLongitude(latLng.longitude);
+        quietPlace.setCategory(""); // TODO
+        quietPlace.setDatetime(now);
+        quietPlace.setComment(comment);
+        quietPlace.setRadius(radius);
+
+        quietPlace = dataSource.saveQuietPlace(quietPlace);
+        Log.w(TAG, "Saved place to db: " + quietPlace);
+        dataSource.close();
+
+        setMarkerFromQP(quietPlace);
+    }
+
+    /**
+     * Delete a QuietPlace object from the database.
+     * @param quietPlace
+     */
+    public void deleteQuietPlace(QuietPlace quietPlace) {
+        Log.w(TAG, "Deleting QP from db: " + quietPlace);
+        QuietPlacesDataSource dataSource = new QuietPlacesDataSource(getActivity());
+        dataSource.open();
+        dataSource.deleteQuietPlace(quietPlace);
+        dataSource.close();
+    }
+
+    /**
+     * Add a marker to the map for a given QuietPlace
+     *
+     * @param quietPlace the Place to add to the map
+     */
+    private void setMarkerFromQP(final QuietPlace quietPlace) {
+        final String comment = quietPlace.getComment();
+        GoogleMap googleMap = getMap();
+
         MarkerOptions markerOptions = new MarkerOptions();
+        LatLng latLng = new LatLng(quietPlace.getLatitude(), quietPlace.getLongitude());
         markerOptions.position(latLng);
         markerOptions.title(comment);
 
@@ -177,23 +231,31 @@ public class QPMapFragment extends QPFragment {
             public boolean onMarkerClick(Marker marker) {
                 shortToast("Marker clicked: " + comment);
                 marker.remove();
-                // Delete from database
+                deleteQuietPlace(quietPlace);
                 return true;
             }
         });
 
         googleMap.addMarker(markerOptions);
+        Log.w(TAG, "Added place to map: " + quietPlace);
+    }
 
-        // Save it to the database
-        /*
+    /**
+     * Load the database into markers
+     */
+    public void loadPlacesFromDatabase() {
         QuietPlacesDataSource dataSource = new QuietPlacesDataSource(getActivity());
         dataSource.open();
 
-        QuietPlace quietPlace = new QuietPlace();
-        quietPlace.setLatitude(latLng.latitude);
-        quietPlace.setLongitude(latLng.longitude);
-        */
+        List<QuietPlace> quietPlaceList = dataSource.getAllQuietPlaces();
 
+        for (Iterator<QuietPlace> it = quietPlaceList.iterator(); it.hasNext(); ) {
+            QuietPlace quietPlace = it.next();
+            setMarkerFromQP(quietPlace);
+        }
+
+        dataSource.close();
+        Log.w(TAG, "Loaded marker database.");
     }
 
 }
