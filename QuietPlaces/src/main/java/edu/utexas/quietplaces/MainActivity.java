@@ -33,7 +33,7 @@ public class MainActivity extends ActionBarActivity
         implements NavigationDrawerFragment.NavigationDrawerCallbacks,
         GooglePlayServicesClient.ConnectionCallbacks, GooglePlayServicesClient.OnConnectionFailedListener, LocationListener {
 
-    private static final String TAG = Config.APPNAME + ".MainActivity";
+    private static final String TAG = Config.PACKAGE_NAME + ".MainActivity";
     static final int REQUEST_GOOGLE_PLAY_SERVICES = 0;
 
     /**

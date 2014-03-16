@@ -17,7 +17,7 @@ import android.util.Log;
  */
 public class QuietPlacesDataSource {
 
-    private final static String TAG = "QuietPlacesDataSource";
+    private final static String TAG = Config.PACKAGE_NAME + ".QuietPlacesDataSource";
 
     // Database fields
     private SQLiteDatabase database;

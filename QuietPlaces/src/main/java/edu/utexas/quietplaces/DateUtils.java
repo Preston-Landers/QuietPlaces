@@ -9,7 +9,7 @@ import org.joda.time.format.ISODateTimeFormat;
 
 public class DateUtils {
 
-    private static final String TAG = Config.APPNAME + ".DateUtils";
+    private static final String TAG = Config.PACKAGE_NAME + ".DateUtils";
 
     /**
      * Turn a DateTime to a YYYYMMDD style (f8) string
@@ -48,7 +48,7 @@ public class DateUtils {
         if (dateTime == null) {
             dateTime = new DateTime();
         }
-        DateTimeFormatter fmt = DateTimeFormat.forPattern("M-d-y H:m");
+        DateTimeFormatter fmt = DateTimeFormat.forPattern("M-d-y HH:mm");
         return fmt.print(dateTime);
     }
 }

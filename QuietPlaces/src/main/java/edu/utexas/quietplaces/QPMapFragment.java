@@ -1,6 +1,7 @@
 package edu.utexas.quietplaces;
 
 import android.app.Activity;
+import android.location.Location;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -13,11 +14,10 @@ import com.google.android.gms.maps.MapView;
 import com.google.android.gms.maps.MapsInitializer;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
-import com.google.android.gms.maps.model.MarkerOptions;
+import com.google.android.gms.maps.model.VisibleRegion;
 import org.joda.time.DateTime;
 
-import java.util.Iterator;
-import java.util.List;
+import java.util.*;
 
 /**
  * A fragment containing the MapView plus our custom controls.
@@ -28,13 +28,16 @@ public class QPMapFragment extends QPFragment {
      * fragment.
      */
     private static final String ARG_SECTION_NUMBER = "section_number";
-    private static final String TAG = "QPMapFragment";
+    private static final String TAG = Config.PACKAGE_NAME + ".QPMapFragment";
 
     private MapView mMapView;
     private GoogleMap mMap;
     private Bundle mBundle;
 
     private boolean currentlyAddingPlace = false;
+
+    private Set<QuietPlaceMapMarker> mapMarkerSet;
+    private Map<Marker, QuietPlaceMapMarker> markerMap;
 
     /**
      * Returns a new instance of this fragment for the given section
@@ -49,6 +52,8 @@ public class QPMapFragment extends QPFragment {
     }
 
     public QPMapFragment() {
+        mapMarkerSet = new HashSet<QuietPlaceMapMarker>();
+        markerMap = new HashMap<Marker, QuietPlaceMapMarker>();
     }
 
 
@@ -105,6 +110,20 @@ public class QPMapFragment extends QPFragment {
         getMap().getUiSettings().setCompassEnabled(true);
 
         loadPlacesFromDatabase();
+
+        // Handler for when we click the marker
+        getMap().setOnMarkerClickListener(new GoogleMap.OnMarkerClickListener() {
+            @Override
+            public boolean onMarkerClick(Marker marker) {
+                QuietPlaceMapMarker qpmm = getQPMMFromMarker(marker);
+                if (qpmm != null) {
+                    return qpmm.onMarkerClick();
+                } else {
+                    Log.e(TAG, "clicking map marker but can't find QPMM object");
+                    return false;
+                }
+            }
+        });
     }
 
     @Override
@@ -168,9 +187,10 @@ public class QPMapFragment extends QPFragment {
 
     /**
      * Adds a new QuietPlace to the map and save it to the database.
+     *
      * @param latLng the lat/long coordinates of the place
      */
-    public void addNewQuietPlace(LatLng latLng) {
+    private void addNewQuietPlace(LatLng latLng) {
         // shortToast("Clicked at: " + latLng);
         QuietPlacesDataSource dataSource = new QuietPlacesDataSource(getActivity());
         dataSource.open();
@@ -179,11 +199,10 @@ public class QPMapFragment extends QPFragment {
         DateTime now = new DateTime();
         final String comment = "Created at " + DateUtils.getPrettyDateTime(now);
 
-        // Radius??
-        double radius = 2.0; // TODO
+        // initial radius suggestion
+        double radius = getSuggestedRadius();
 
-        // Save it to the database
-
+        // Create a new object and save it to the database
         QuietPlace quietPlace = new QuietPlace();
         quietPlace.setLatitude(latLng.latitude);
         quietPlace.setLongitude(latLng.longitude);
@@ -196,66 +215,94 @@ public class QPMapFragment extends QPFragment {
         Log.w(TAG, "Saved place to db: " + quietPlace);
         dataSource.close();
 
-        setMarkerFromQP(quietPlace);
+        addQuietPlaceMapMarker(quietPlace);
     }
 
     /**
-     * Delete a QuietPlace object from the database.
-     * @param quietPlace
+     * Suggest an initial radius (in meters) for the quiet place based on the
+     * current zoom level of the map.
+     * <p/>
+     * Current process:
+     * * Get the bounding box of the current map view
+     * * Find the shortest dimension (horizontal or vertical)
+     * * Get the distance in meters of that dimension
+     * * Suggest the radius as 1/8th of that.
+     *
+     * @return suggested radius in meters
      */
-    public void deleteQuietPlace(QuietPlace quietPlace) {
-        Log.w(TAG, "Deleting QP from db: " + quietPlace);
+    private double getSuggestedRadius() {
+        VisibleRegion region = getMap().getProjection().getVisibleRegion();
+
+        double horizontalDistance = getDistance(region.farLeft, region.farRight);
+        double verticalDistance = getDistance(region.nearLeft, region.farLeft);
+        double chosenDimension = horizontalDistance;
+        if (verticalDistance < horizontalDistance) {
+            chosenDimension = verticalDistance;
+        }
+
+        return chosenDimension * Config.SUGGESTED_RADIUS_MULTIPLIER;
+    }
+
+    /**
+     * Get the distance in meters between two gms LatLng points.
+     *
+     * @param a first LatLng point
+     * @param b second LatLng point
+     * @return distance in meters
+     */
+    private static double getDistance(LatLng a, LatLng b) {
+        Location aprime = new Location("");
+        aprime.setLongitude(a.longitude);
+        aprime.setLatitude(a.latitude);
+        Location bprime = new Location("");
+        bprime.setLatitude(b.latitude);
+        bprime.setLongitude(b.longitude);
+        return aprime.distanceTo(bprime);
+    }
+
+    /**
+     * Delete a QuietPlaceMapMarker and the underlying object from the database.
+     *
+     * @param qpmm the map marker/place to delete
+     */
+    public void deleteQuietPlaceMapMarker(QuietPlaceMapMarker qpmm) {
+        Log.w(TAG, "Deleting QP from db: " + qpmm.getQuietPlace());
+
+        // TODO: catch and log exception?
+        mapMarkerSet.remove(qpmm);
+        markerMap.remove(qpmm.getMapMarker());
+
         QuietPlacesDataSource dataSource = new QuietPlacesDataSource(getActivity());
         dataSource.open();
-        dataSource.deleteQuietPlace(quietPlace);
+        dataSource.deleteQuietPlace(qpmm.getQuietPlace());
         dataSource.close();
     }
 
-    /**
-     * Add a marker to the map for a given QuietPlace
-     *
-     * @param quietPlace the Place to add to the map
-     */
-    private void setMarkerFromQP(final QuietPlace quietPlace) {
-        final String comment = quietPlace.getComment();
-        GoogleMap googleMap = getMap();
-
-        MarkerOptions markerOptions = new MarkerOptions();
-        LatLng latLng = new LatLng(quietPlace.getLatitude(), quietPlace.getLongitude());
-        markerOptions.position(latLng);
-        markerOptions.title(comment);
-
-        // TODO: confirm before removing... maybe that should be a pref?
-        googleMap.setOnMarkerClickListener(new GoogleMap.OnMarkerClickListener() {
-            @Override
-            public boolean onMarkerClick(Marker marker) {
-                shortToast("Marker clicked: " + comment);
-                marker.remove();
-                deleteQuietPlace(quietPlace);
-                return true;
-            }
-        });
-
-        googleMap.addMarker(markerOptions);
-        Log.w(TAG, "Added place to map: " + quietPlace);
-    }
 
     /**
      * Load the database into markers
      */
-    public void loadPlacesFromDatabase() {
+    private void loadPlacesFromDatabase() {
         QuietPlacesDataSource dataSource = new QuietPlacesDataSource(getActivity());
         dataSource.open();
 
         List<QuietPlace> quietPlaceList = dataSource.getAllQuietPlaces();
 
-        for (Iterator<QuietPlace> it = quietPlaceList.iterator(); it.hasNext(); ) {
-            QuietPlace quietPlace = it.next();
-            setMarkerFromQP(quietPlace);
+        for (QuietPlace quietPlace : quietPlaceList) {
+            addQuietPlaceMapMarker(quietPlace);
         }
 
         dataSource.close();
         Log.w(TAG, "Loaded marker database.");
     }
 
+    private void addQuietPlaceMapMarker(QuietPlace quietPlace) {
+        QuietPlaceMapMarker qpmm = QuietPlaceMapMarker.createQuietPlaceMapMarker(quietPlace, this);
+        mapMarkerSet.add(qpmm);
+        markerMap.put(qpmm.getMapMarker(), qpmm);
+    }
+
+    public QuietPlaceMapMarker getQPMMFromMarker(Marker marker) {
+        return markerMap.get(marker);
+    }
 }
