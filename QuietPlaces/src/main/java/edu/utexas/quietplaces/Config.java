@@ -22,6 +22,7 @@ class Config {
     // Probably belongs in an XML file somewhere
     public static final int QP_CIRCLE_STROKE_COLOR = Color.argb(150, 0, 0, 255);
     public static final int QP_CIRCLE_FILL_COLOR = Color.argb(100, 138, 241, 255);
+    public static final float QP_CIRCLE_STROKE_WIDTH = 5;  // default is 10
 
     // The suggested radius of a manually added quiet place is a multiplier of the current
     // width in meters of the shortest dimension of the current map viewing region

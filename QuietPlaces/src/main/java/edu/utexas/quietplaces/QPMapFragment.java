@@ -111,7 +111,7 @@ public class QPMapFragment extends QPFragment {
 
         loadPlacesFromDatabase();
 
-        // Handler for when we click the marker
+        // Handler for when we click a marker
         getMap().setOnMarkerClickListener(new GoogleMap.OnMarkerClickListener() {
             @Override
             public boolean onMarkerClick(Marker marker) {

@@ -74,6 +74,7 @@ public class QuietPlaceMapMarker {
         );
         circleOptions.radius(quietPlace.getRadius());
         circleOptions.strokeColor(Config.QP_CIRCLE_STROKE_COLOR);
+        circleOptions.strokeWidth(Config.QP_CIRCLE_STROKE_WIDTH);
         circleOptions.fillColor(Config.QP_CIRCLE_FILL_COLOR);
 
         return getQpMapFragment().getMap().addCircle(circleOptions);
