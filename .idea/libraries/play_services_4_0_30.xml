@@ -1,8 +1,8 @@
 <component name="libraryTable">
-  <library name="Gradle: ComGoogleAndroidGmsPlayServices4030.aar">
+  <library name="play-services-4.0.30">
     <CLASSES>
-      <root url="file://$PROJECT_DIR$/QuietPlaces/build/exploded-bundles/ComGoogleAndroidGmsPlayServices4030.aar/res" />
       <root url="jar://$PROJECT_DIR$/QuietPlaces/build/exploded-bundles/ComGoogleAndroidGmsPlayServices4030.aar/classes.jar!/" />
+      <root url="file://$PROJECT_DIR$/QuietPlaces/build/exploded-bundles/ComGoogleAndroidGmsPlayServices4030.aar/res" />
     </CLASSES>
     <JAVADOC />
     <SOURCES />
