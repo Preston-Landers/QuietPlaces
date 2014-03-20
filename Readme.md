@@ -16,7 +16,7 @@ Google Maps and Places APIs to enable intelligent control over the phone ringer 
 
 Preston Landers _planders at utexas dot edu_
 
-Abe Arredondo
+Abe Arredondo _abe_arredondo at utexas dot edu_
 
 Thanks to:
 
