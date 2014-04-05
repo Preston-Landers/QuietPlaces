@@ -12,12 +12,12 @@ class Config {
 
     // http://developer.android.com/training/location/receive-location-updates.html
     //
-    // Basically, we normally only ask for location updates every 30 seconds,
-    // but we'll accept updates as often as every 5 seconds, if other apps
+    // Basically, we normally only ask for location updates every 90 seconds,
+    // but we'll accept updates as often as every 10 seconds, if other apps
     // are requesting more frequent updates.
 
-    public static final long LOCATION_UPDATE_INTERVAL_MS = 30000;
-    public static final long LOCATION_FASTEST_INTERVAL_MS = 5000;
+    public static final long LOCATION_UPDATE_INTERVAL_MS = 90000;
+    public static final long LOCATION_FASTEST_INTERVAL_MS = 10000;
 
     // Probably belongs in an XML file somewhere
     public static final int QP_CIRCLE_STROKE_COLOR = Color.argb(150, 0, 0, 255);

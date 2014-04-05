@@ -128,22 +128,28 @@ public class QPMapFragment extends QPFragment {
 
     @Override
     public void onResume() {
-        super.onResume();
-        mMapView.onResume();
+        if (mMapView != null) {
+            mMapView.onResume();
+        }
         getMap().getUiSettings().setCompassEnabled(true);
+        super.onResume();
     }
 
     @Override
     public void onPause() {
+        if (mMapView != null) {
+            mMapView.onPause();
+        }
         // Compass requires extra sensors, so turn it off when not using
         getMap().getUiSettings().setCompassEnabled(false);
         super.onPause();
-        mMapView.onPause();
     }
 
     @Override
     public void onDestroy() {
-        mMapView.onDestroy();
+        if (mMapView != null) {
+            mMapView.onDestroy();
+        }
         super.onDestroy();
     }
 

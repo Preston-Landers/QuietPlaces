@@ -80,12 +80,12 @@ public class MainActivity extends ActionBarActivity
         getSupportFragmentManager()
                 .beginTransaction()
                 .add(R.id.container, homeFragment)
+                .hide(homeFragment)
                 .add(R.id.container, mapFragment)
-                .add(R.id.container, placeholderFragment)
                 .hide(mapFragment)
+                .add(R.id.container, placeholderFragment)
                 .hide(placeholderFragment)
                 .commit();
-
 
         setContentView(R.layout.activity_main);
 
@@ -170,6 +170,17 @@ public class MainActivity extends ActionBarActivity
     @Override
     protected void onResume() {
         super.onResume();
+
+        if (mapFragment != null) {
+            mapFragment.onResume();
+        }
+        if (homeFragment != null) {
+            homeFragment.onResume();
+        }
+        if (placeholderFragment != null) {
+            placeholderFragment.onResume();
+        }
+
         if (!checkGooglePlayServicesAvailable()) {
             Log.e(TAG, "Can't find Google Play Services needed for maps and location.");
             longToast("Can't get Google Play Services. :-(");
@@ -180,6 +191,21 @@ public class MainActivity extends ActionBarActivity
         setupMapIfNeeded();
 
         mUpdatesRequested = getPrefUsingLocation();
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        if (mapFragment != null) {
+            mapFragment.onPause();
+        }
+        if (homeFragment != null) {
+            homeFragment.onPause();
+        }
+        if (placeholderFragment != null) {
+            placeholderFragment.onPause();
+        }
+
     }
 
     @Override
@@ -198,9 +224,37 @@ public class MainActivity extends ActionBarActivity
          * considered "dead".
          */
         mLocationClient.disconnect();
+
+        if (mapFragment != null) {
+            mapFragment.onStop();
+        }
+        if (homeFragment != null) {
+            homeFragment.onStop();
+        }
+        if (placeholderFragment != null) {
+            placeholderFragment.onStop();
+        }
+
         super.onStop();
 
     }
+
+    @Override
+    protected void onDestroy() {
+
+        if (mapFragment != null) {
+            mapFragment.onDestroy();
+        }
+        if (homeFragment != null) {
+            homeFragment.onDestroy();
+        }
+        if (placeholderFragment != null) {
+            placeholderFragment.onDestroy();
+        }
+
+        super.onDestroy();
+    }
+
 
     private void setupMapIfNeeded() {
         googleMap = getMapFragment().getMap();
@@ -220,24 +274,24 @@ public class MainActivity extends ActionBarActivity
     }
 
     public void onSectionAttached(int number) {
-        switch (number) {
-            case 1:
-                mTitle = getString(R.string.title_section1);
-                break;
-            case 2:
-                mTitle = getString(R.string.title_section2);
-                break;
-            case 3:
-                mTitle = getString(R.string.title_section3);
-                break;
-        }
+//        switch (number) {
+//            case 1:
+//                mTitle = getString(R.string.title_section1);
+//                break;
+//            case 2:
+//                mTitle = getString(R.string.title_section2);
+//                break;
+//            case 3:
+//                mTitle = getString(R.string.title_section3);
+//                break;
+//        }
     }
 
     public void restoreActionBar() {
         ActionBar actionBar = getSupportActionBar();
         actionBar.setNavigationMode(ActionBar.NAVIGATION_MODE_STANDARD);
         actionBar.setDisplayShowTitleEnabled(true);
-        actionBar.setTitle(mTitle);
+            actionBar.setTitle(mTitle);
     }
 
 
