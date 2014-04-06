@@ -1,9 +1,10 @@
 
-# Welcome to QuietPlace #
+# Welcome to QuietPlaces #
 
-This is the source code repository for QuietPlace, an Android app to automatically
+This is the source code repository for QuietPlaces, an Android app to automatically
 silence your phone when you enter quiet places. You can create, remove and adjust your
-quiet places at any time.
+quiet places at any time, and quiet places can be automatically suggested based on
+categories obtained from the Google Places API.
 
 ## About QuietPlace ##
 
