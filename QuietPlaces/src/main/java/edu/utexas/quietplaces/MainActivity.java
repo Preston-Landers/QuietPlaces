@@ -6,6 +6,7 @@ import android.location.Location;
 import android.media.AudioManager;
 import android.preference.PreferenceManager;
 import android.support.v4.app.DialogFragment;
+import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentTransaction;
 import android.support.v4.content.LocalBroadcastManager;
 import android.support.v7.app.ActionBarActivity;
@@ -131,23 +132,32 @@ public class MainActivity extends ActionBarActivity
         // All Location Services sample apps use this category
         mIntentFilter.addCategory(GeofenceUtils.CATEGORY_LOCATION_SERVICES);
 
+        List<Fragment> currentFragments = getSupportFragmentManager().getFragments();
+        if (currentFragments == null || currentFragments.size() == 0) {
+            mapFragment = getMapFragment();
+            homeFragment = HomeFragment.newInstance(1);
+            placeholderFragment = PlaceholderFragment.newInstance(3);
 
-        mapFragment = getMapFragment();
-        homeFragment = HomeFragment.newInstance(1);
-        placeholderFragment = PlaceholderFragment.newInstance(3);
+            // Add all the fragments but only show the home one initially
+            // Got this idea from: http://stackoverflow.com/questions/16461483/preserving-fragment-state
+            // Main purpose of this is to avoid resetting the map state when you switch fragments
+            getSupportFragmentManager()
+                    .beginTransaction()
+                    .add(R.id.frame_home, homeFragment)
+                    .hide(homeFragment)
+                    .add(R.id.frame_map, mapFragment)
+                    .hide(mapFragment)
+                    .add(R.id.frame_placeholder, placeholderFragment)
+                    .hide(placeholderFragment)
+                    .commit();
+        }
+        else {
+            // Load saved fragments
+            mapFragment = (QPMapFragment) getSupportFragmentManager().findFragmentById(R.id.frame_map);
+            homeFragment = (HomeFragment) getSupportFragmentManager().findFragmentById(R.id.frame_home);
+            placeholderFragment = (PlaceholderFragment) getSupportFragmentManager().findFragmentById(R.id.frame_placeholder);
+        }
 
-        // Add all the fragments but only show the home one initially
-        // Got this idea from: http://stackoverflow.com/questions/16461483/preserving-fragment-state
-        // Main purpose of this is to avoid resetting the map state when you switch fragments
-        getSupportFragmentManager()
-                .beginTransaction()
-                .add(R.id.container, homeFragment)
-                .hide(homeFragment)
-                .add(R.id.container, mapFragment)
-                .hide(mapFragment)
-                .add(R.id.container, placeholderFragment)
-                .hide(placeholderFragment)
-                .commit();
 
         setContentView(R.layout.activity_main);
 
@@ -277,6 +287,8 @@ public class MainActivity extends ActionBarActivity
 
     @Override
     protected void onStop() {
+        super.onStop();
+
         // If the client is connected
         if (mLocationClient.isConnected()) {
             /*
@@ -302,13 +314,13 @@ public class MainActivity extends ActionBarActivity
             placeholderFragment.onStop();
         }
 
-        super.onStop();
-
     }
 
     @Override
     protected void onDestroy() {
+        super.onDestroy();
 
+/*
         if (mapFragment != null) {
             mapFragment.onDestroy();
         }
@@ -318,8 +330,8 @@ public class MainActivity extends ActionBarActivity
         if (placeholderFragment != null) {
             placeholderFragment.onDestroy();
         }
+*/
 
-        super.onDestroy();
     }
 
 
@@ -629,7 +641,7 @@ public class MainActivity extends ActionBarActivity
          * If you want to display a UI message about adding or removing geofences, put it here.
          *
          * @param context A Context for this component
-         * @param intent The received broadcast Intent
+         * @param intent  The received broadcast Intent
          */
         private void handleGeofenceStatus(Context context, Intent intent) {
 
@@ -639,7 +651,7 @@ public class MainActivity extends ActionBarActivity
          * Report geofence transitions to the UI
          *
          * @param context A Context for this component
-         * @param intent The Intent containing the transition
+         * @param intent  The Intent containing the transition
          */
         private void handleGeofenceTransition(Context context, Intent intent) {
             /*
