@@ -24,16 +24,36 @@ Dr. Christine Julien
 
 # Development Notes #
 
-Currently we have a simple with a switch that (manually) controls the ringer.
+## Current Status ##
 
-We also display a map thought don't do anything with it currently.
+See the section below for building the app from source code.
+
+We have a simple navigation drawer based app that has a home screen, a map
+screen, and a settings screen, plus a placeholder screen for future use.
+
+The home screen simply displays logo and credits, and a ringer on/off switch.
+
+The map screen displays and shows your current location. There is a custom map
+overlay that allows you to manually add QuietPlace zones.
+
+You can not yet move or resize the quiet places (just add or remove them at fixed sizes)
+but we hope to implement that soon.
+
+The quiet places on the map currently don't do anything. We are working on adding
+the geo-fencing and ringer control operations.
+
+We also have a mock location testing companion app, which is available here:
+
+https://bitbucket.org/planders/quietplacesmocklocations
+
+The Mock Location app will feed a series of fake location events to the location service,
+if mock locations is enabled in the device's developer options menu.
 
 ## Current TODO List ##
 
-* Create a SQLite database to store manually defined quiet zones.
-* Draw quiet places on the map
-* Discover/suggest quiet places automatically
 * Implement geofenced ringer around quiet places
+* Ability to move or resize quiet places with gestures
+* Discover/suggest quiet places automatically from Places API
 
 ## Software Engineering Challenges ##
 
