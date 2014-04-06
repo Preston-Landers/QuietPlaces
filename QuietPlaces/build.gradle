@@ -46,4 +46,5 @@ dependencies {
     compile 'com.android.support:appcompat-v7:19.0.+'
     compile 'com.google.android.gms:play-services:4.0.30'
     compile 'joda-time:joda-time:2.3'
+    // compile fileTree(dir: 'libs', include: ['*.jar'])
 }
