@@ -14,6 +14,7 @@ public class QuietPlaceMapMarker {
     private Marker mapMarker;
     private QPMapFragment qpMapFragment;
     private Circle circle;
+    private boolean selected;
 
     QuietPlaceMapMarker() {
     }
@@ -60,11 +61,21 @@ public class QuietPlaceMapMarker {
      * @return true if this should be considered fully handled
      */
     public boolean onMarkerClick() {
-        getQpMapFragment().shortToast("Marker clicked: " + getQuietPlace().getComment());
+        if (isSelected()) {
+            getQpMapFragment().shortToast("Marker un-selected: " + getQuietPlace().getComment());
+            setSelected(false);
+        } else {
+            getQpMapFragment().shortToast("Marker selected: " + getQuietPlace().getComment());
+            setSelected(true);
+        }
+        return true;
+    }
+
+    public void delete() {
+        getQpMapFragment().shortToast("Marker deleted: " + getQuietPlace().getComment());
         getMapMarker().remove();
         getCircle().remove();
         getQpMapFragment().deleteQuietPlaceMapMarker(this);
-        return true;
     }
 
     private Circle addQuietPlaceCircle(QuietPlace quietPlace) {
@@ -75,9 +86,22 @@ public class QuietPlaceMapMarker {
         circleOptions.radius(quietPlace.getRadius());
         circleOptions.strokeColor(Config.QP_CIRCLE_STROKE_COLOR);
         circleOptions.strokeWidth(Config.QP_CIRCLE_STROKE_WIDTH);
-        circleOptions.fillColor(Config.QP_CIRCLE_FILL_COLOR);
+        if (!isSelected()) {
+            circleOptions.fillColor(Config.QP_CIRCLE_FILL_COLOR);
+        } else {
+            circleOptions.fillColor(Config.QP_CIRCLE_SELECTED_FILL_COLOR);
+
+        }
 
         return getQpMapFragment().getMap().addCircle(circleOptions);
+    }
+
+    private void removeQuietPlaceCircle() {
+        Circle circle = getCircle();
+        if (circle != null) {
+            circle.remove();
+        }
+        setCircle(null);
     }
 
     public QuietPlace getQuietPlace() {
@@ -112,4 +136,17 @@ public class QuietPlaceMapMarker {
         this.circle = circle;
     }
 
+    public boolean isSelected() {
+        return selected;
+    }
+
+    public void setSelected(boolean selected) {
+        this.selected = selected;
+
+        // Re-draw the circle to reflect the selection status
+        removeQuietPlaceCircle();
+        setCircle(addQuietPlaceCircle(quietPlace));
+
+        getQpMapFragment().setSelectionMode();
+    }
 }

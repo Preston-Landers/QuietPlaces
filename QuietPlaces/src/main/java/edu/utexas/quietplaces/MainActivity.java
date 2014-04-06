@@ -1,17 +1,18 @@
 package edu.utexas.quietplaces;
 
 import android.app.Dialog;
-import android.content.Intent;
-import android.content.IntentSender;
-import android.content.SharedPreferences;
+import android.content.*;
 import android.location.Location;
 import android.media.AudioManager;
 import android.preference.PreferenceManager;
+import android.support.v4.app.DialogFragment;
 import android.support.v4.app.FragmentTransaction;
+import android.support.v4.content.LocalBroadcastManager;
 import android.support.v7.app.ActionBarActivity;
 import android.support.v7.app.ActionBar;
 import android.support.v4.app.FragmentManager;
 import android.os.Bundle;
+import android.text.TextUtils;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -22,16 +23,18 @@ import android.widget.Toast;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GooglePlayServicesClient;
 import com.google.android.gms.common.GooglePlayServicesUtil;
-import com.google.android.gms.location.LocationClient;
-import com.google.android.gms.location.LocationRequest;
+import com.google.android.gms.location.*;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
-import com.google.android.gms.location.LocationListener;
 import com.google.android.gms.maps.model.LatLng;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class MainActivity extends ActionBarActivity
         implements NavigationDrawerFragment.NavigationDrawerCallbacks,
-        GooglePlayServicesClient.ConnectionCallbacks, GooglePlayServicesClient.OnConnectionFailedListener, LocationListener {
+        GooglePlayServicesClient.ConnectionCallbacks, GooglePlayServicesClient.OnConnectionFailedListener,
+        LocationListener, LocationClient.OnAddGeofencesResultListener {
 
     private static final String TAG = Config.PACKAGE_NAME + ".MainActivity";
     static final int REQUEST_GOOGLE_PLAY_SERVICES = 0;
@@ -61,6 +64,37 @@ public class MainActivity extends ActionBarActivity
      */
     private CharSequence mTitle;
 
+    private GeofenceRequester mGeofenceRequester;
+    private GeofenceRemover mGeofenceRemover;
+
+    // Store a list of geofences to add
+    List<Geofence> mCurrentGeofences;
+
+    /*
+     * Use to set an expiration time for a geofence. After this amount
+     * of time Location Services will stop tracking the geofence.
+     * Remember to unregister a geofence when you're finished with it.
+     * Otherwise, your app will use up battery. To continue monitoring
+     * a geofence indefinitely, set the expiration time to
+     * Geofence#NEVER_EXPIRE.
+     */
+    private static final long GEOFENCE_EXPIRATION_IN_HOURS = 12;
+    private static final long GEOFENCE_EXPIRATION_IN_MILLISECONDS =
+            GEOFENCE_EXPIRATION_IN_HOURS * android.text.format.DateUtils.HOUR_IN_MILLIS;
+
+    /*
+     * An instance of an inner class that receives broadcasts from listeners and from the
+     * IntentService that receives geofence transition events
+     */
+    private GeofenceSampleReceiver mBroadcastReceiver;
+
+    // An intent filter for the broadcast receiver
+    private IntentFilter mIntentFilter;
+
+    // Store the list of geofences to remove
+    private List<String> mGeofenceIdsToRemove;
+
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -69,6 +103,34 @@ public class MainActivity extends ActionBarActivity
         PreferenceManager.setDefaultValues(this, R.xml.preferences, false);
         // Get preference object
         sharedPrefs = PreferenceManager.getDefaultSharedPreferences(this);
+
+        // Instantiate the current List of geofences
+        mCurrentGeofences = new ArrayList<Geofence>();
+
+        // Instantiate a Geofence requester
+        mGeofenceRequester = new GeofenceRequester(this);
+
+        // Instantiate a Geofence remover
+        mGeofenceRemover = new GeofenceRemover(this);
+
+        // Create a new broadcast receiver to receive updates from the listeners and service
+        mBroadcastReceiver = new GeofenceSampleReceiver();
+
+        // Create an intent filter for the broadcast receiver
+        mIntentFilter = new IntentFilter();
+
+        // Action for broadcast Intents that report successful addition of geofences
+        mIntentFilter.addAction(GeofenceUtils.ACTION_GEOFENCES_ADDED);
+
+        // Action for broadcast Intents that report successful removal of geofences
+        mIntentFilter.addAction(GeofenceUtils.ACTION_GEOFENCES_REMOVED);
+
+        // Action for broadcast Intents containing various types of geofencing errors
+        mIntentFilter.addAction(GeofenceUtils.ACTION_GEOFENCE_ERROR);
+
+        // All Location Services sample apps use this category
+        mIntentFilter.addCategory(GeofenceUtils.CATEGORY_LOCATION_SERVICES);
+
 
         mapFragment = getMapFragment();
         homeFragment = HomeFragment.newInstance(1);
@@ -101,6 +163,7 @@ public class MainActivity extends ActionBarActivity
                 (DrawerLayout) findViewById(R.id.drawer_layout));
 
         // Set up location updates.
+        // TODO: make this a setting?
         mLocationRequest = LocationRequest.create();
         mLocationRequest.setPriority(
                 LocationRequest.PRIORITY_BALANCED_POWER_ACCURACY
@@ -171,6 +234,12 @@ public class MainActivity extends ActionBarActivity
     protected void onResume() {
         super.onResume();
 
+        if (!checkGooglePlayServicesAvailable()) {
+            Log.e(TAG, "Can't find Google Play Services needed for maps and location.");
+            longToast("Can't get Google Play Services. :-(");
+            // Maybe quit at this point?
+        }
+
         if (mapFragment != null) {
             mapFragment.onResume();
         }
@@ -181,16 +250,14 @@ public class MainActivity extends ActionBarActivity
             placeholderFragment.onResume();
         }
 
-        if (!checkGooglePlayServicesAvailable()) {
-            Log.e(TAG, "Can't find Google Play Services needed for maps and location.");
-            longToast("Can't get Google Play Services. :-(");
-            // Maybe quit at this point?
-        }
-
         haveAlreadyCenteredCamera = false; /// good idea?
         setupMapIfNeeded();
 
         mUpdatesRequested = getPrefUsingLocation();
+
+        // Register the broadcast receiver to receive status updates
+        LocalBroadcastManager.getInstance(this).registerReceiver(mBroadcastReceiver, mIntentFilter);
+
     }
 
     @Override
@@ -291,7 +358,7 @@ public class MainActivity extends ActionBarActivity
         ActionBar actionBar = getSupportActionBar();
         actionBar.setNavigationMode(ActionBar.NAVIGATION_MODE_STANDARD);
         actionBar.setDisplayShowTitleEnabled(true);
-            actionBar.setTitle(mTitle);
+        actionBar.setTitle(mTitle);
     }
 
 
@@ -475,11 +542,191 @@ public class MainActivity extends ActionBarActivity
         float zoom = (float) 16.0; // a fairly tight zoom  (TODO: a setting?)
         googleMap.animateCamera(
                 CameraUpdateFactory.newLatLngZoom(
-                        new LatLng(location.getLatitude(), location.getLongitude()), zoom));
+                        new LatLng(location.getLatitude(), location.getLongitude()), zoom)
+        );
     }
 
     // Forward the "Add" button click to the fragment
     public void clickAddButton(View view) {
         getMapFragment().clickAddButton(view);
+    }
+
+
+    /*
+     * Provide the implementation of
+     * OnAddGeofencesResultListener.onAddGeofencesResult.
+     * Handle the result of adding the geofences
+     *
+     */
+    @Override
+    public void onAddGeofencesResult(
+            int statusCode, String[] geofenceRequestIds) {
+
+        // If adding the geofences was successful
+        if (LocationStatusCodes.SUCCESS == statusCode) {
+            /*
+             * Handle successful addition of geofences here.
+             * You can send out a broadcast intent or update the UI.
+             * geofences into the Intent's extended data.
+             */
+            Log.i(TAG, "Added geofence successfully. Status code: " + statusCode);
+        } else {
+            // If adding the geofences failed
+            /*
+             * Report errors here.
+             * You can log the error using Log.e() or update
+             * the UI.
+             */
+            Log.e(TAG, "Unable to create geofence. Status code: " + statusCode);
+            shortToast("Error: unable to create geofence!");
+        }
+        // Turn off the in progress flag and disconnect the client
+//        mInProgress = false;
+//        mLocationClient.disconnect();
+    }
+
+    /**
+     * Define a Broadcast receiver that receives updates from connection listeners and
+     * the geofence transition service.
+     */
+    public class GeofenceSampleReceiver extends BroadcastReceiver {
+        /*
+         * Define the required method for broadcast receivers
+         * This method is invoked when a broadcast Intent triggers the receiver
+         */
+        @Override
+        public void onReceive(Context context, Intent intent) {
+
+            // Check the action code and determine what to do
+            String action = intent.getAction();
+
+            // Intent contains information about errors in adding or removing geofences
+            if (TextUtils.equals(action, GeofenceUtils.ACTION_GEOFENCE_ERROR)) {
+
+                handleGeofenceError(context, intent);
+
+                // Intent contains information about successful addition or removal of geofences
+            } else if (
+                    TextUtils.equals(action, GeofenceUtils.ACTION_GEOFENCES_ADDED)
+                            ||
+                            TextUtils.equals(action, GeofenceUtils.ACTION_GEOFENCES_REMOVED)) {
+
+                handleGeofenceStatus(context, intent);
+
+                // Intent contains information about a geofence transition
+            } else if (TextUtils.equals(action, GeofenceUtils.ACTION_GEOFENCE_TRANSITION)) {
+
+                handleGeofenceTransition(context, intent);
+
+                // The Intent contained an invalid action
+            } else {
+                Log.e(GeofenceUtils.APPTAG, getString(R.string.invalid_action_detail, action));
+                Toast.makeText(context, R.string.invalid_action, Toast.LENGTH_LONG).show();
+            }
+        }
+
+        /**
+         * If you want to display a UI message about adding or removing geofences, put it here.
+         *
+         * @param context A Context for this component
+         * @param intent The received broadcast Intent
+         */
+        private void handleGeofenceStatus(Context context, Intent intent) {
+
+        }
+
+        /**
+         * Report geofence transitions to the UI
+         *
+         * @param context A Context for this component
+         * @param intent The Intent containing the transition
+         */
+        private void handleGeofenceTransition(Context context, Intent intent) {
+            /*
+             * If you want to change the UI when a transition occurs, put the code
+             * here. The current design of the app uses a notification to inform the
+             * user that a transition has occurred.
+             */
+        }
+
+        /**
+         * Report addition or removal errors to the UI, using a Toast
+         *
+         * @param intent A broadcast Intent sent by ReceiveTransitionsIntentService
+         */
+        private void handleGeofenceError(Context context, Intent intent) {
+            String msg = intent.getStringExtra(GeofenceUtils.EXTRA_GEOFENCE_STATUS);
+            Log.e(GeofenceUtils.APPTAG, msg);
+            Toast.makeText(context, msg, Toast.LENGTH_LONG).show();
+        }
+    }
+
+    /**
+     * Define a DialogFragment to display the error dialog generated in
+     * showErrorDialog.
+     */
+    public static class ErrorDialogFragment extends DialogFragment {
+
+        // Global field to contain the error dialog
+        private Dialog mDialog;
+
+        /**
+         * Default constructor. Sets the dialog field to null
+         */
+        public ErrorDialogFragment() {
+            super();
+            mDialog = null;
+        }
+
+        /**
+         * Set the dialog to display
+         *
+         * @param dialog An error dialog
+         */
+        public void setDialog(Dialog dialog) {
+            mDialog = dialog;
+        }
+
+        /*
+         * This method must return a Dialog to the DialogFragment.
+         */
+        @Override
+        public Dialog onCreateDialog(Bundle savedInstanceState) {
+            return mDialog;
+        }
+    }
+
+    /**
+     * Verify that Google Play services is available before making a request.
+     *
+     * @return true if Google Play services is available, otherwise false
+     */
+    private boolean servicesConnected() {
+
+        // Check that Google Play services is available
+        int resultCode =
+                GooglePlayServicesUtil.isGooglePlayServicesAvailable(this);
+
+        // If Google Play services is available
+        if (ConnectionResult.SUCCESS == resultCode) {
+
+            // In debug mode, log the status
+            Log.d(GeofenceUtils.APPTAG, getString(R.string.play_services_available));
+
+            // Continue
+            return true;
+
+            // Google Play services was not available for some reason
+        } else {
+
+            // Display an error dialog
+            Dialog dialog = GooglePlayServicesUtil.getErrorDialog(resultCode, this, 0);
+            if (dialog != null) {
+                ErrorDialogFragment errorFragment = new ErrorDialogFragment();
+                errorFragment.setDialog(dialog);
+                errorFragment.show(getSupportFragmentManager(), GeofenceUtils.APPTAG);
+            }
+            return false;
+        }
     }
 }

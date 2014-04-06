@@ -44,8 +44,8 @@ The quiet places on the map currently don't do anything. We are working on addin
 the geo-fencing and ringer control operations.
 
 We also have a mock location testing companion app, which is available here:
+[QuietPlacesMockLocations][QuietPlacesMockLocations]
 
-https://bitbucket.org/planders/quietplacesmocklocations
 
 The Mock Location app will feed a series of fake location events to the location service,
 if mock locations is enabled in the device's developer options menu.

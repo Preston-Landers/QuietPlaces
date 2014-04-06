@@ -8,6 +8,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageButton;
+import android.widget.TextView;
 import com.google.android.gms.common.GooglePlayServicesNotAvailableException;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.MapView;
@@ -161,15 +162,21 @@ public class QPMapFragment extends QPFragment {
     public void clickAddButton(final View view) {
         Log.w(TAG, "Clicked the add button");
 
+        List<QuietPlaceMapMarker> selectedMarkers = getSelectedMarkers();
+        if (selectedMarkers.size() > 0) {
+            deleteMarkers(selectedMarkers);
+            cancelAddButton(view);
+            return;
+        }
+
         if (currentlyAddingPlace) {
             cancelAddButton(view);
             return;
         }
 
-        ImageButton addButton = ((ImageButton) view.findViewById(R.id.addPlaceButton));
-        addButton.setBackgroundResource(R.drawable.ic_close_icon);
-
+        changeAddButtonToClose("Cancel");
         currentlyAddingPlace = true;
+
         getMap().setOnMapClickListener(new GoogleMap.OnMapClickListener() {
             @Override
             public void onMapClick(LatLng latLng) {
@@ -177,6 +184,14 @@ public class QPMapFragment extends QPFragment {
                 cancelAddButton(view);
             }
         });
+    }
+
+    private void changeAddButtonToClose(String newLabel) {
+        ImageButton addButton = ((ImageButton) getActivity().findViewById(R.id.addPlaceButton));
+        addButton.setBackgroundResource(R.drawable.ic_close_icon);
+
+        TextView addLabel = (TextView) getActivity().findViewById(R.id.tv_addPlaceLabel);
+        addLabel.setText(newLabel);
     }
 
     /**
@@ -187,6 +202,9 @@ public class QPMapFragment extends QPFragment {
     public void cancelAddButton(View view) {
         ImageButton addButton = ((ImageButton) view.findViewById(R.id.addPlaceButton));
         addButton.setBackgroundResource(R.drawable.ic_add_icon);
+        TextView addLabel = (TextView) getActivity().findViewById(R.id.tv_addPlaceLabel);
+        addLabel.setText("Add"); // TODO: text
+
         getMap().setOnMapClickListener(null);
         currentlyAddingPlace = false;
     }
@@ -266,6 +284,13 @@ public class QPMapFragment extends QPFragment {
         return aprime.distanceTo(bprime);
     }
 
+    public void deleteMarkers(List<QuietPlaceMapMarker> selectedMarkers) {
+        for (QuietPlaceMapMarker qpmm : selectedMarkers) {
+            // deleteQuietPlaceMapMarker(qpmm);
+            qpmm.delete();
+        }
+    }
+
     /**
      * Delete a QuietPlaceMapMarker and the underlying object from the database.
      *
@@ -276,12 +301,14 @@ public class QPMapFragment extends QPFragment {
 
         // TODO: catch and log exception?
         mapMarkerSet.remove(qpmm);
-        markerMap.remove(qpmm.getMapMarker());
+        // markerMap.remove(qpmm.getMapMarker());
 
         QuietPlacesDataSource dataSource = new QuietPlacesDataSource(getActivity());
         dataSource.open();
         dataSource.deleteQuietPlace(qpmm.getQuietPlace());
         dataSource.close();
+
+        // TODO: delete the geofence here?
     }
 
 
@@ -310,5 +337,28 @@ public class QPMapFragment extends QPFragment {
 
     public QuietPlaceMapMarker getQPMMFromMarker(Marker marker) {
         return markerMap.get(marker);
+    }
+
+    public List<QuietPlaceMapMarker> getSelectedMarkers() {
+        List<QuietPlaceMapMarker> selectedMapMarkers = new ArrayList<QuietPlaceMapMarker>();
+        for (QuietPlaceMapMarker qpmm : mapMarkerSet) {
+            if (qpmm.isSelected()) {
+                selectedMapMarkers.add(qpmm);
+            }
+        }
+        return selectedMapMarkers;
+    }
+
+    public int numSelectedMarkers() {
+        return getSelectedMarkers().size();
+    }
+
+    public void setSelectionMode() {
+        if (numSelectedMarkers() > 0) {
+            changeAddButtonToClose("Delete"); // TODO: text
+        } else {
+            final ImageButton addButton = (ImageButton) getActivity().findViewById(R.id.addPlaceButton);
+            cancelAddButton(addButton);
+        }
     }
 }
