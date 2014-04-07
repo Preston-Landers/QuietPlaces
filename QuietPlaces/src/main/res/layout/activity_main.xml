@@ -21,6 +21,10 @@
             android:id="@+id/frame_placeholder"
             android:layout_width="match_parent"
             android:layout_height="match_parent" />
+    <FrameLayout
+            android:id="@+id/frame_settings"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent" />
 
 
     <!-- android:layout_gravity="start" tells DrawerLayout to treat

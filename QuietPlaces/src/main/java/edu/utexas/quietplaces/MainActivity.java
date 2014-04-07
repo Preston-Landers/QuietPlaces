@@ -47,6 +47,7 @@ public class MainActivity extends ActionBarActivity
     private QPMapFragment mapFragment;
     private HomeFragment homeFragment;
     private PlaceholderFragment placeholderFragment; // this is current a placeholder empty fragment, convert to something!
+    private SettingsFragment settingsFragment;
 
     // Define an object that holds accuracy and frequency parameters
     private LocationRequest mLocationRequest;
@@ -137,6 +138,7 @@ public class MainActivity extends ActionBarActivity
             mapFragment = getMapFragment();
             homeFragment = HomeFragment.newInstance(1);
             placeholderFragment = PlaceholderFragment.newInstance(3);
+            settingsFragment = new SettingsFragment();
 
             // Add all the fragments but only show the home one initially
             // Got this idea from: http://stackoverflow.com/questions/16461483/preserving-fragment-state
@@ -149,6 +151,12 @@ public class MainActivity extends ActionBarActivity
                     .hide(mapFragment)
                     .add(R.id.frame_placeholder, placeholderFragment)
                     .hide(placeholderFragment)
+                    // .add(R.id.frame_settings, settingsFragment)
+                    // .hide(settingsFragment)
+                    .commit();
+
+            getFragmentManager().beginTransaction()
+                    .add(R.id.frame_settings, settingsFragment)
                     .commit();
         }
         else {
@@ -156,6 +164,7 @@ public class MainActivity extends ActionBarActivity
             mapFragment = (QPMapFragment) getSupportFragmentManager().findFragmentById(R.id.frame_map);
             homeFragment = (HomeFragment) getSupportFragmentManager().findFragmentById(R.id.frame_home);
             placeholderFragment = (PlaceholderFragment) getSupportFragmentManager().findFragmentById(R.id.frame_placeholder);
+            settingsFragment = (SettingsFragment) getFragmentManager().findFragmentById(R.id.frame_settings);
         }
 
 
@@ -193,6 +202,10 @@ public class MainActivity extends ActionBarActivity
         // update the main content by replacing fragments
         FragmentManager fragmentManager = getSupportFragmentManager();
         FragmentTransaction transaction = fragmentManager.beginTransaction();
+
+        getFragmentManager().beginTransaction()
+                .hide(settingsFragment).commit();
+
         switch (position) {
             case 0:
                 transaction.hide(mapFragment)
@@ -206,12 +219,22 @@ public class MainActivity extends ActionBarActivity
                         .show(mapFragment);
                 mTitle = getString(R.string.title_section2);
                 break;
-            default:
+            case 2:
                 transaction.hide(mapFragment)
                         .hide(homeFragment)
                         .show(placeholderFragment);
                 mTitle = getString(R.string.title_section3);
                 break;
+            default:
+                transaction.hide(mapFragment)
+                        .hide(homeFragment)
+                        .hide(placeholderFragment);
+
+                getFragmentManager().beginTransaction()
+                        .show(settingsFragment).commit();
+                mTitle = getString(R.string.settings_activity_name);
+                break;
+
         }
 
         transaction.commit();
@@ -250,16 +273,6 @@ public class MainActivity extends ActionBarActivity
             // Maybe quit at this point?
         }
 
-        if (mapFragment != null) {
-            mapFragment.onResume();
-        }
-        if (homeFragment != null) {
-            homeFragment.onResume();
-        }
-        if (placeholderFragment != null) {
-            placeholderFragment.onResume();
-        }
-
         haveAlreadyCenteredCamera = false; /// good idea?
         setupMapIfNeeded();
 
@@ -270,20 +283,13 @@ public class MainActivity extends ActionBarActivity
 
     }
 
+    // onDestroy is not defined either
+/*
     @Override
     protected void onPause() {
         super.onPause();
-        if (mapFragment != null) {
-            mapFragment.onPause();
-        }
-        if (homeFragment != null) {
-            homeFragment.onPause();
-        }
-        if (placeholderFragment != null) {
-            placeholderFragment.onPause();
-        }
-
     }
+*/
 
     @Override
     protected void onStop() {
@@ -304,36 +310,7 @@ public class MainActivity extends ActionBarActivity
          */
         mLocationClient.disconnect();
 
-        if (mapFragment != null) {
-            mapFragment.onStop();
-        }
-        if (homeFragment != null) {
-            homeFragment.onStop();
-        }
-        if (placeholderFragment != null) {
-            placeholderFragment.onStop();
-        }
-
     }
-
-    @Override
-    protected void onDestroy() {
-        super.onDestroy();
-
-/*
-        if (mapFragment != null) {
-            mapFragment.onDestroy();
-        }
-        if (homeFragment != null) {
-            homeFragment.onDestroy();
-        }
-        if (placeholderFragment != null) {
-            placeholderFragment.onDestroy();
-        }
-*/
-
-    }
-
 
     private void setupMapIfNeeded() {
         googleMap = getMapFragment().getMap();
@@ -353,17 +330,22 @@ public class MainActivity extends ActionBarActivity
     }
 
     public void onSectionAttached(int number) {
-//        switch (number) {
-//            case 1:
-//                mTitle = getString(R.string.title_section1);
-//                break;
-//            case 2:
-//                mTitle = getString(R.string.title_section2);
-//                break;
-//            case 3:
-//                mTitle = getString(R.string.title_section3);
-//                break;
-//        }
+/*
+        switch (number) {
+            case 1:
+                mTitle = getString(R.string.title_section1);
+                break;
+            case 2:
+                mTitle = getString(R.string.title_section2);
+                break;
+            case 3:
+                mTitle = getString(R.string.title_section3);
+                break;
+            case 4:
+                mTitle = getString(R.string.settings_activity_name);
+                break;
+        }
+*/
     }
 
     public void restoreActionBar() {
@@ -380,13 +362,14 @@ public class MainActivity extends ActionBarActivity
             // Only show items in the action bar relevant to this screen
             // if the drawer is not showing. Otherwise, let the drawer
             // decide what to show in the action bar.
-            getMenuInflater().inflate(R.menu.main, menu);
+            // getMenuInflater().inflate(R.menu.main, menu);
             restoreActionBar();
             return true;
         }
         return super.onCreateOptionsMenu(menu);
     }
 
+/*
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         // Handle action bar item clicks here. The action bar will
@@ -400,6 +383,7 @@ public class MainActivity extends ActionBarActivity
         }
         return super.onOptionsItemSelected(item);
     }
+*/
 
 
     public void onClickRinger(View view) {
