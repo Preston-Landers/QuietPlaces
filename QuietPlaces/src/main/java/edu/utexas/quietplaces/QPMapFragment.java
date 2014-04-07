@@ -82,8 +82,10 @@ public class QPMapFragment extends QPFragment {
         }
 
         mMapView = (MapView) rootView.findViewById(R.id.map);
-        mMapView.onCreate(mBundle);
-        setUpMapIfNeeded(rootView);
+        if (mMapView != null) {
+            mMapView.onCreate(mBundle);
+            setUpMapIfNeeded(rootView);
+        }
 
         return rootView;
     }
