@@ -151,15 +151,14 @@ public class MainActivity extends ActionBarActivity
                     .hide(mapFragment)
                     .add(R.id.frame_placeholder, placeholderFragment)
                     .hide(placeholderFragment)
-                    // .add(R.id.frame_settings, settingsFragment)
-                    // .hide(settingsFragment)
+                            // .add(R.id.frame_settings, settingsFragment)
+                            // .hide(settingsFragment)
                     .commit();
 
             getFragmentManager().beginTransaction()
                     .add(R.id.frame_settings, settingsFragment)
                     .commit();
-        }
-        else {
+        } else {
             // Load saved fragments
             mapFragment = (QPMapFragment) getSupportFragmentManager().findFragmentById(R.id.frame_map);
             homeFragment = (HomeFragment) getSupportFragmentManager().findFragmentById(R.id.frame_home);
@@ -542,11 +541,30 @@ public class MainActivity extends ActionBarActivity
         );
     }
 
-    // Forward the "Add" button click to the fragment
+    // Forward the button clicks from the action panel to the map fragment
     public void clickAddButton(View view) {
         getMapFragment().clickAddButton(view);
     }
 
+    public void clickGrowButton(View view) {
+        getMapFragment().clickGrowButton(view);
+    }
+
+    public void clickShrinkButton(View view) {
+        getMapFragment().clickShrinkButton(view);
+    }
+
+    public void clickCenterButton(View view) {
+        getMapFragment().clickCenterButton(view);
+    }
+
+    public void clickEditButton(View view) {
+        getMapFragment().clickEditButton(view);
+    }
+
+    public void clickDeleteButton(View view) {
+        getMapFragment().clickDeleteButton(view);
+    }
 
     /*
      * Provide the implementation of

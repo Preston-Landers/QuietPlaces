@@ -35,13 +35,11 @@ screen, and a settings screen, plus a placeholder screen for future use.
 The home screen simply displays logo and credits, and a ringer on/off switch.
 
 The map screen displays and shows your current location. There is a custom map
-overlay that allows you to manually add QuietPlace zones.
+overlay that allows you to manually add QuietPlace zones. You can also move and resize
+the quiet place map markers.
 
-You can not yet move or resize the quiet places (just add or remove them at fixed sizes)
-but we hope to implement that soon.
-
-The quiet places on the map currently don't do anything. We are working on adding
-the geo-fencing and ringer control operations.
+The quiet places on the map currently don't do anything with the ringer. We are
+working on adding the geo-fencing and ringer control operations.
 
 We also have a mock location testing companion app, which is available here:
 [QuietPlacesMockLocations][QuietPlacesMockLocations]
@@ -52,11 +50,17 @@ if mock locations is enabled in the device's developer options menu.
 
 ## Current TODO List ##
 
-* Implement geofenced ringer around quiet places
-* Ability to move or resize quiet places with gestures
+* Implement actual geofenced ringer around quiet places
+* Ability to resize quiet places with scale gestures
+  * Not critical because we have buttons to resize the selected place.
 * Discover/suggest quiet places automatically from Places API
+* Selection of Quiet Place is lost when changing device orientation
+* Add About and Help screens
 
 ## Software Engineering Challenges ##
+
+This section describes some of the mobile computing and software engineering challenges
+encountered developing this project.
 
 ### Testing location-centric apps is hard. ###
 
@@ -145,5 +149,5 @@ Now you should be able to create a signed release build with:
 
 # Open Source Credits
 
-Icons from:
+Some icons from:
 http://www.iconarchive.com/show/sleek-xp-basic-icons-by-hopstarter.html

@@ -22,7 +22,8 @@
     <RelativeLayout
             android:layout_width="fill_parent"
             android:layout_height="fill_parent"
-            android:id="@+id/customControlsContainer">
+            android:id="@+id/customControlsContainer"
+            >
 
         <RelativeLayout
                 android:layout_width="wrap_content"
@@ -61,6 +62,147 @@
                     android:layout_alignParentRight="false"
                     android:layout_alignParentLeft="true"
                     android:textAppearance="@style/TextAppearance.AppCompat.SearchResult.Title"/>
+        </RelativeLayout>
+
+        <RelativeLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignParentTop="true"
+                android:layout_alignParentRight="false"
+                android:layout_alignParentEnd="false"
+                android:id="@+id/selected_info_container"
+                android:padding="10dp"
+                android:background="@drawable/map_controls"
+                android:layout_alignParentLeft="true"
+                android:layout_marginLeft="12dp"
+                android:layout_alignParentBottom="false"
+                android:layout_marginTop="10dp"
+                android:visibility="invisible">
+
+            <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Currently Selected"
+                    android:id="@+id/tv_selected_label"
+                    android:layout_alignWithParentIfMissing="false"
+                    android:layout_alignParentRight="false"
+                    android:layout_alignParentLeft="true"
+                    android:textAppearance="@style/TextAppearance.AppCompat.SearchResult.Title"/>
+
+            <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textAppearance="?android:attr/textAppearanceSmall"
+                    android:text="Small Text"
+                    android:id="@+id/tv_selected_size"
+                    android:layout_below="@+id/tv_selected_label"/>
+
+        </RelativeLayout>
+
+        <RelativeLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignParentTop="false"
+                android:layout_alignParentRight="false"
+                android:layout_alignParentEnd="false"
+                android:id="@+id/selected_action_container"
+                android:padding="5dp"
+                android:background="@drawable/map_controls"
+                android:layout_alignParentLeft="true"
+                android:layout_marginLeft="12dp"
+                android:layout_marginBottom="15dp"
+                android:layout_alignParentBottom="true"
+                android:visibility="invisible">
+
+            <ImageButton
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:id="@+id/shrinkPlaceButton"
+                    android:background="@drawable/btn_minus_default"
+                    android:layout_marginLeft="5dp"
+                    android:contentDescription="@string/shrink_place"
+                    android:layout_alignTop="@+id/growPlaceButton"
+                    android:onClick="clickShrinkButton"
+                    android:layout_toRightOf="@+id/growPlaceButton"/>
+
+            <ImageButton
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:id="@+id/growPlaceButton"
+                    android:background="@drawable/btn_plus_default"
+                    android:contentDescription="@string/grow_place"
+                    android:onClick="clickGrowButton"/>
+
+            <ImageButton
+                    android:layout_width="45dp"
+                    android:layout_height="45dp"
+                    android:id="@+id/deletePlaceButton"
+                    android:background="@drawable/ic_menu_delete"
+                    android:layout_marginLeft="10dp"
+                    android:contentDescription="@string/delete_place"
+                    android:clickable="true"
+                    android:layout_toRightOf="@+id/editPlaceButton"
+                    android:layout_alignTop="@+id/shrinkPlaceButton"
+                    android:onClick="clickDeleteButton"/>
+
+            <ImageButton
+                    android:layout_width="45dp"
+                    android:layout_height="45dp"
+                    android:id="@+id/centerPlaceButton"
+                    android:layout_toRightOf="@+id/shrinkPlaceButton"
+                    android:background="@drawable/ic_menu_mylocation"
+                    android:layout_marginLeft="10dp"
+                    android:onClick="clickCenterButton"/>
+
+            <ImageButton
+                    android:layout_width="45dp"
+                    android:layout_height="45dp"
+                    android:id="@+id/editPlaceButton"
+                    android:layout_toRightOf="@+id/centerPlaceButton"
+                    android:background="@drawable/ic_menu_edit"
+                    android:layout_marginLeft="10dp"
+                    android:focusableInTouchMode="false"
+                    android:onClick="clickEditButton"/>
+
+            <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textAppearance="?android:attr/textAppearanceSmall"
+                    android:text="@string/resize_btns_label"
+                    android:id="@+id/resizeBtnLabel"
+                    android:layout_below="@+id/growPlaceButton"
+                    android:layout_marginTop="5dp"
+                    android:layout_marginLeft="30dp"/>
+
+            <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textAppearance="?android:attr/textAppearanceSmall"
+                    android:text="@string/delete_place"
+                    android:id="@+id/tv_deletePlace"
+                    android:layout_alignLeft="@+id/deletePlaceButton"
+                    android:layout_alignTop="@+id/resizeBtnLabel"
+                    android:layout_marginLeft="5dp"/>
+
+            <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textAppearance="?android:attr/textAppearanceSmall"
+                    android:text="@string/recenter_place"
+                    android:id="@+id/tv_recenter_place"
+                    android:layout_alignLeft="@+id/centerPlaceButton"
+                    android:layout_alignTop="@+id/resizeBtnLabel"
+                    android:layout_marginLeft="1dp"/>
+
+            <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textAppearance="?android:attr/textAppearanceSmall"
+                    android:text="@string/edit_place"
+                    android:id="@+id/tv_edit_place"
+                    android:layout_alignLeft="@+id/editPlaceButton"
+                    android:layout_alignTop="@+id/resizeBtnLabel"
+                    android:layout_marginLeft="10dp"/>
         </RelativeLayout>
 
     </RelativeLayout>

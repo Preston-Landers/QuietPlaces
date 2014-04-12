@@ -15,6 +15,7 @@ public class QuietPlaceMapMarker {
     private QPMapFragment qpMapFragment;
     private Circle circle;
     private boolean selected;
+    private double scaleFactor;
 
     QuietPlaceMapMarker() {
     }
@@ -49,6 +50,8 @@ public class QuietPlaceMapMarker {
         // we need to adjust the radius size by gesture
         setCircle(addQuietPlaceCircle(quietPlace));
 
+        // TODO: highly suspect...
+        setScaleFactor(quietPlace.getRadius());
 
         setMapMarker(googleMap.addMarker(markerOptions));
         Log.w(TAG, "Added place to map: " + quietPlace);
@@ -63,10 +66,10 @@ public class QuietPlaceMapMarker {
      */
     public boolean onMarkerClick() {
         if (isSelected()) {
-            getQpMapFragment().shortToast("Marker un-selected: " + getQuietPlace().getComment());
+            // getQpMapFragment().shortToast("Marker un-selected: " + getQuietPlace().getComment());
             setSelected(false);
         } else {
-            getQpMapFragment().shortToast("Marker selected: " + getQuietPlace().getComment());
+            // getQpMapFragment().shortToast("Marker selected: " + getQuietPlace().getComment());
             setSelected(true);
         }
         return true;
@@ -141,6 +144,15 @@ public class QuietPlaceMapMarker {
         this.circle = circle;
     }
 
+    public double getScaleFactor() {
+        return scaleFactor;
+    }
+
+    public void setScaleFactor(double scaleFactor) {
+        this.scaleFactor = scaleFactor;
+        Log.w(TAG, "setting scale factor to: " + scaleFactor + " qp: " + getQuietPlace());
+    }
+
     public boolean isSelected() {
         return selected;
     }
@@ -154,15 +166,33 @@ public class QuietPlaceMapMarker {
         this.selected = selected;
 
         // Re-draw the circle to reflect the selection status
-        removeQuietPlaceCircle();
-        setCircle(addQuietPlaceCircle(quietPlace));
+        updateCircle();
 
         getQpMapFragment().setSelectionMode();
 
         // center the camera on the selection unless unselecting
         if (selected) {
-            getQpMapFragment().animateCamera(getMapMarker().getPosition());
+            centerCameraOnThis();
+
+            getQpMapFragment().showInfoBox(true, this);
+
+            // This QP is selected, so let it respond to scale gesture events.
+            // getQpMapFragment().attachScaleListener(this);
+        } else {
+
+            // Unselecting this QP, so no longer listen for scale gestures.
+            // Now we go back to regular map zooming.
+            // getQpMapFragment().detachScaleListener();
         }
+
+    }
+
+    /**
+     * Center the map camera on this map marker
+     * TODO: reset zoom to match the radius?!
+     */
+    public void centerCameraOnThis() {
+        getQpMapFragment().animateCamera(getMapMarker().getPosition());
     }
 
     /**
@@ -188,11 +218,40 @@ public class QuietPlaceMapMarker {
         getQuietPlace().setLatitude(pos.latitude);
         getQuietPlace().setLongitude(pos.longitude);
 
+        // Update the description string if any
+        if (isSelected()) {
+            getQpMapFragment().updateInfoString(getQuietPlace());
+        }
+
         if (doSave) {
             database_save();
         } else {
             Log.d(TAG, "Intermediate QuietPlace move not saved to database.");
         }
+    }
+
+    /**
+     * Sets a new radius in meters for this quiet place. Updates the visual
+     * representation and saves the new size to the database.
+     * @param radius in meters
+     */
+    public void setRadius(double radius) {
+        getQuietPlace().setRadius(radius);
+        updateCircle();
+        getQpMapFragment().updateInfoString(getQuietPlace());
+        database_save();
+    }
+
+    public double getRadius() {
+        return getQuietPlace().getRadius();
+    }
+
+    /**
+     * Re-draw the circle to reflect the selection status
+     */
+    public void updateCircle() {
+        removeQuietPlaceCircle();
+        setCircle(addQuietPlaceCircle(getQuietPlace()));
     }
 
     /**
@@ -216,4 +275,38 @@ public class QuietPlaceMapMarker {
 
         // should we null out the QP object?!
     }
+
+    /**
+     * Increase the quiet place size (radius) by a dynamically determined increment.
+     */
+    public void grow() {
+        setRadius(getRadius() + getResizeIncrement());
+    }
+
+    /**
+     * Decrease the quiet place size (radius) by a dynamically determined increment.
+     */
+    public void shrink() {
+        double radius = getRadius();
+        double newRadius = radius - getResizeIncrement();
+        if (newRadius < Config.QP_SIZE_FLOOR) {
+            newRadius = Config.QP_SIZE_FLOOR;
+        }
+        setRadius(newRadius);
+
+    }
+
+    /**
+     * Gets the distance (in meters) we should grow or shrink
+     * a quiet place circle when the button is pressed. This
+     * depends on the current scale (zoom level) of the map.
+     *
+     * @return distance in meters to change based on current map zoom level
+     *
+     */
+    private double getResizeIncrement() {
+        return getQpMapFragment().getSuggestedRadius() * Config.QP_RESIZE_INCREMENT_FACTOR;
+    }
+
+
 }

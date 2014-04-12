@@ -41,10 +41,7 @@ public class QPMapFragment extends QPFragment {
 
     private final boolean singleSelectMode = true;
 
-/*
     private ScaleGestureDetector mScaleDetector;
-    private float mScaleFactor = 1.f;
-*/
 
     /**
      * Returns a new instance of this fragment for the given section
@@ -93,22 +90,9 @@ public class QPMapFragment extends QPFragment {
             setUpMapIfNeeded(rootView);
         }
 
-/*
-        View mCustomMapControls = (View) rootView.findViewById(R.id.customControlsContainer);
-
-        mScaleDetector = new ScaleGestureDetector(getActivity(), new ScaleListener());
-        mCustomMapControls.setOnTouchListener(new View.OnTouchListener() {
-            public boolean onTouch(View v, MotionEvent event) {
-                // ... Respond to touch events
-                mScaleDetector.onTouchEvent(event);
-                return true;
-                // return false;
-            }
-        });
-
-*/
         return rootView;
     }
+
 
     @Override
     public void onAttach(Activity activity) {
@@ -207,14 +191,16 @@ public class QPMapFragment extends QPFragment {
     }
 
     @Override
-    public final void onSaveInstanceState (Bundle outState) {
+    public final void onSaveInstanceState(Bundle outState) {
+        super.onSaveInstanceState(outState);
         if (mMapView != null) {
             mMapView.onSaveInstanceState(outState);
         }
     }
 
     @Override
-    public final void onLowMemory () {
+    public final void onLowMemory() {
+        super.onLowMemory();
         if (mMapView != null) {
             mMapView.onLowMemory();
         }
@@ -228,12 +214,14 @@ public class QPMapFragment extends QPFragment {
     public void clickAddButton(final View view) {
         Log.w(TAG, "Clicked the add button");
 
+/*
         List<QuietPlaceMapMarker> selectedMarkers = getSelectedMarkers();
         if (selectedMarkers.size() > 0) {
             deleteMarkers(selectedMarkers);
             cancelAddButton(view);
             return;
         }
+*/
 
         if (currentlyAddingPlace) {
             cancelAddButton(view);
@@ -251,6 +239,58 @@ public class QPMapFragment extends QPFragment {
             }
         });
     }
+
+    /**
+     * Grow all selected places by a certain increment.
+     * @param view unused
+     */
+    public void clickGrowButton(final View view) {
+        Log.d(TAG, "Clicked grow button");
+        for (QuietPlaceMapMarker qpMapMarker : getSelectedMarkers()) {
+            qpMapMarker.grow();
+        }
+    }
+
+    /**
+     * Shrink all selected places by a certain increment.
+     * @param view unused
+     */
+    public void clickShrinkButton(final View view) {
+        Log.d(TAG, "Clicked shrink button");
+        for (QuietPlaceMapMarker qpMapMarker : getSelectedMarkers()) {
+            qpMapMarker.shrink();
+        }
+    }
+
+    /**
+     * Delete all selected places.
+     * @param view unused
+     */
+    public void clickDeleteButton(final View view) {
+        Log.d(TAG, "Clicked delete button");
+        deleteMarkers(getSelectedMarkers());
+
+        // update to non-selected mode, since we deleted selection
+        setSelectionMode();
+    }
+
+    /**
+     * Center on the first selected item.
+     * @param view unused
+     */
+    public void clickCenterButton(final View view) {
+        Log.d(TAG, "Clicked center button");
+        for (QuietPlaceMapMarker qpMapMarker : getSelectedMarkers()) {
+            qpMapMarker.centerCameraOnThis();
+            break;  // only center on the first selected on in multi-select mode...
+        }
+    }
+
+    public void clickEditButton(final View view) {
+        Log.d(TAG, "Clicked Edit button");
+        shortToast("Edit not implemented yet.");
+    }
+
 
     private void changeAddButtonToClose(String newLabel) {
         ImageButton addButton = ((ImageButton) getActivity().findViewById(R.id.addPlaceButton));
@@ -320,7 +360,7 @@ public class QPMapFragment extends QPFragment {
      *
      * @return suggested radius in meters
      */
-    private double getSuggestedRadius() {
+    public double getSuggestedRadius() {
         VisibleRegion region = getMap().getProjection().getVisibleRegion();
 
         double horizontalDistance = getDistance(region.farLeft, region.farRight);
@@ -330,7 +370,11 @@ public class QPMapFragment extends QPFragment {
             chosenDimension = verticalDistance;
         }
 
-        return chosenDimension * Config.SUGGESTED_RADIUS_MULTIPLIER;
+        double radius = chosenDimension * Config.SUGGESTED_RADIUS_MULTIPLIER;
+        if (radius < Config.QP_SIZE_FLOOR) {
+            radius = Config.QP_SIZE_FLOOR;
+        }
+        return radius;
     }
 
     /**
@@ -359,7 +403,7 @@ public class QPMapFragment extends QPFragment {
     /**
      * Removes a QuietPlaceMapMarker from this map fragment.  This is supposed to be
      * called from the delete() method of the QuietPlaceMapMarker object.
-     *
+     * <p/>
      * All this does is remove the object from our set collection.
      *
      * @param qpmm the map marker/place to remove from this map
@@ -415,10 +459,13 @@ public class QPMapFragment extends QPFragment {
 
     public void setSelectionMode() {
         if (numSelectedMarkers() > 0) {
-            changeAddButtonToClose("Delete"); // TODO: text
+            // changeAddButtonToClose("Delete"); // TODO: text
         } else {
-            final ImageButton addButton = (ImageButton) getActivity().findViewById(R.id.addPlaceButton);
-            cancelAddButton(addButton);
+//            final ImageButton addButton = (ImageButton) getActivity().findViewById(R.id.addPlaceButton);
+//            cancelAddButton(addButton);
+
+            showInfoBox(false, null);
+
         }
     }
 
@@ -438,21 +485,119 @@ public class QPMapFragment extends QPFragment {
         getMap().animateCamera(CameraUpdateFactory.newLatLng(latLng));
     }
 
+    public void showInfoBox(boolean show, QuietPlaceMapMarker qpMapMarker) {
+        View infoBox = getActivity().findViewById(R.id.selected_info_container);
+        View actionBox = getActivity().findViewById(R.id.selected_action_container);
+        View addBox = getActivity().findViewById(R.id.add_button_container);
+
+        if (infoBox == null || actionBox == null || addBox == null) {
+            Log.e(TAG, "Can't find containers...");
+            return;
+        }
 
 
-/*
+        if (!show) {
+            infoBox.setVisibility(View.INVISIBLE);
+            actionBox.setVisibility(View.INVISIBLE);
+            addBox.setVisibility(View.VISIBLE);
+            return;
+        }
+
+        infoBox.setVisibility(View.VISIBLE);
+        actionBox.setVisibility(View.VISIBLE);
+        addBox.setVisibility(View.INVISIBLE);
+
+        if (qpMapMarker != null) {
+            QuietPlace quietPlace = qpMapMarker.getQuietPlace();
+
+            TextView infoLabel = (TextView) getActivity().findViewById(R.id.tv_selected_label);
+            if (infoLabel != null) {
+                infoLabel.setText(quietPlace.getComment());
+            }
+            updateInfoString(quietPlace);
+        }
+    }
+
+    public void updateInfoString(QuietPlace quietPlace) {
+        TextView sizeLabel = (TextView) getActivity().findViewById(R.id.tv_selected_size);
+        String sizeStr = getString(R.string.size_label) + " " + quietPlace.getRadiusFormatted()
+                // + " " + getString(R.string.position_label) + " "
+                + " @ "
+                + quietPlace.getLocationFormatted();
+        sizeLabel.setText(sizeStr);
+    }
+
     private class ScaleListener
             extends ScaleGestureDetector.SimpleOnScaleGestureListener {
+
+        private QuietPlaceMapMarker qpMapMarker;
+
+        ScaleListener() {
+        }
+
+        public QuietPlaceMapMarker getQpMapMarker() {
+            return qpMapMarker;
+        }
+
+        public void setQpMapMarker(QuietPlaceMapMarker qpMapMarker) {
+            this.qpMapMarker = qpMapMarker;
+        }
+
         @Override
         public boolean onScale(ScaleGestureDetector detector) {
+            QuietPlaceMapMarker qpMapMarker = getQpMapMarker();
+            if (qpMapMarker == null) {
+                return false;
+            }
+            double mScaleFactor = qpMapMarker.getScaleFactor();
             mScaleFactor *= detector.getScaleFactor();
 
             // Don't let the object get too small or too large.
             mScaleFactor = Math.max(0.1f, Math.min(mScaleFactor, 5.0f));
 
+            qpMapMarker.setScaleFactor(mScaleFactor);
+
             // invalidate();
             return true;
         }
     }
+
+
+    // Not sure if I'm going to use this...
+
+/*
+    public void attachScaleListener(QuietPlaceMapMarker qpMapMarker) {
+        if (mScaleDetector == null) {
+            Log.i(TAG, "Creating new scale detector for QP: " + qpMapMarker.getQuietPlace());
+            ScaleListener listener = new ScaleListener();
+            listener.setQpMapMarker(qpMapMarker);
+            mScaleDetector = new ScaleGestureDetector(getActivity(), listener);
+        } else {
+            Log.i(TAG, "Reusing scale detector for QP: " + qpMapMarker.getQuietPlace());
+        }
+
+
+        View mCustomMapControls = getActivity().findViewById(R.id.customControlsContainer);
+        if (mCustomMapControls != null) {
+            mCustomMapControls.setOnTouchListener(new View.OnTouchListener() {
+                public boolean onTouch(View v, MotionEvent event) {
+                    mScaleDetector.onTouchEvent(event);
+                    return true;
+                }
+            });
+        }
+    }
 */
+
+/*
+    public void detachScaleListener() {
+        Log.i(TAG, "Removing scale detector.");
+        mScaleDetector = null;
+        View mCustomMapControls = getActivity().findViewById(R.id.customControlsContainer);
+        if (mCustomMapControls != null) {
+            mCustomMapControls.setOnTouchListener(null);
+        }
+    }
+*/
+
 }

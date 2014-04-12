@@ -102,4 +102,14 @@
     <string name="lat_lng_pattern">* ###.00000000;* -###.00000000</string>
     <string name="radius_pattern">* #.0000</string>
 
+    <string name="size_label">Radius:</string>
+    <string name="position_label">Pos:</string>
+
+    <string name="shrink_place">Smaller</string>
+    <string name="grow_place">Larger</string>
+    <string name="delete_place">Delete</string>
+    <string name="recenter_place">Center</string>
+    <string name="edit_place">Edit</string>
+    <string name="resize_btns_label">Resize</string>
+
 </resources>

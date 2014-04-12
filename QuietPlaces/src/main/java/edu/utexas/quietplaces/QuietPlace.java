@@ -89,4 +89,35 @@ public class QuietPlace {
     public void setCategory(String category) {
         this.category = category;
     }
+
+    public String getRadiusFormatted() {
+        double radius = getRadius();
+        if (radius <= 1000) {
+            return String.format("%.2f m", radius);
+        } else {
+            return String.format("%.2f km", (radius/1000));
+        }
+    }
+
+    /**
+     * Returns a formatted string with lat/long
+     * @return string
+     */
+    public String getLocationFormatted() {
+        double latitude = getLatitude();
+        double longitude = getLongitude();
+        String latStr, longStr;
+        if (latitude > 0.0) {
+            latStr = String.format("%.3f N", latitude);
+        }
+        else {
+            latStr = String.format("%.3f S", Math.abs(latitude));
+        }
+        if (longitude < 0.0) {
+            longStr = String.format("%.3f W", Math.abs(longitude));
+        } else {
+            longStr = String.format("%.3f E", longitude);
+        }
+        return latStr + ", " + longStr;
+    }
 }

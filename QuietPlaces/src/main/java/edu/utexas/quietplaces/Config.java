@@ -28,4 +28,12 @@ class Config {
     // The suggested radius of a manually added quiet place is a multiplier of the current
     // width in meters of the shortest dimension of the current map viewing region
     public static final double SUGGESTED_RADIUS_MULTIPLIER = 0.1;
+
+    // And when resizing a quiet place, we multiply the suggested radius (for the current zoom
+    // level, which may be different than the QP's current radius) by this factor to obtain
+    // the incremental size change when you hit the resize buttons.
+    public static final double QP_RESIZE_INCREMENT_FACTOR = 0.2;
+
+    // Minimum size for a quiet place in meters
+    public static final double QP_SIZE_FLOOR = 5.0;
 }
