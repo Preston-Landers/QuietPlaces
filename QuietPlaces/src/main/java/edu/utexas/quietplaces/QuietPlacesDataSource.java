@@ -45,24 +45,47 @@ public class QuietPlacesDataSource {
     }
 
     /**
-     * Save a QuietPlace object to the local database. This also returns a new instance
+     * Save a QuietPlace object (existing or new) to the local database.
+     *
+     * A ID field of 0 (default) creates a new record, otherwise we update an existing.
+     *
+     * If creating a new record, this also returns a new instance
      * of the 'same' object with the id value filled in.
      *
      * @param quietPlace the place to save
-     * @return a new copy of that place with the id field set
+     * @return new instance with updated ID field if necessary
      */
     public QuietPlace saveQuietPlace(QuietPlace quietPlace) {
         ContentValues values = new ContentValues();
+        boolean creating = true;
+        if (quietPlace.getId() != 0) {
+            values.put(QuietPlacesSQLiteHelper.COLUMN_ID, quietPlace.getId());
+            creating = false;
+        }
         values.put(QuietPlacesSQLiteHelper.COLUMN_COMMENT, quietPlace.getComment());
         values.put(QuietPlacesSQLiteHelper.COLUMN_LATITUDE, quietPlace.getLatitude());
         values.put(QuietPlacesSQLiteHelper.COLUMN_LONGITUDE, quietPlace.getLongitude());
         values.put(QuietPlacesSQLiteHelper.COLUMN_RADIUS, quietPlace.getRadius());
         values.put(QuietPlacesSQLiteHelper.COLUMN_DATETIME, quietPlace.getDatetimeString());
         values.put(QuietPlacesSQLiteHelper.COLUMN_CATEGORY, quietPlace.getCategory());
-        long insertId = database.insert(QuietPlacesSQLiteHelper.TABLE_PLACES, null,
-                values);
+
+        long objectId;
+        if (creating) {
+            objectId = database.insert(QuietPlacesSQLiteHelper.TABLE_PLACES, null,
+                    values);
+        } else {
+            objectId = quietPlace.getId();
+            String[] params = new String[] { Long.toString(objectId) };
+            database.update(
+                    QuietPlacesSQLiteHelper.TABLE_PLACES,
+                    values,
+                    QuietPlacesSQLiteHelper.COLUMN_ID + " = ?",
+                    params
+            );
+        }
+
         Cursor cursor = database.query(QuietPlacesSQLiteHelper.TABLE_PLACES,
-                allColumns, QuietPlacesSQLiteHelper.COLUMN_ID + " = " + insertId, null,
+                allColumns, QuietPlacesSQLiteHelper.COLUMN_ID + " = " + objectId, null,
                 null, null, null);
         cursor.moveToFirst();
         QuietPlace newQuietPlace = cursorToQuietPlace(cursor);

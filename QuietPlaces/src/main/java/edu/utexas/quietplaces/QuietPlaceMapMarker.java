@@ -42,6 +42,7 @@ public class QuietPlaceMapMarker {
         LatLng latLng = new LatLng(quietPlace.getLatitude(), quietPlace.getLongitude());
         markerOptions.position(latLng);
         markerOptions.title(comment);
+        markerOptions.draggable(true);
 
         // Draw a circle to represent the geofence
         // May need to hang on to this reference somehow for when
@@ -55,7 +56,7 @@ public class QuietPlaceMapMarker {
 
     /**
      * What happens when we click this map marker
-     *
+     * <p/>
      * TODO: confirm before removing... maybe that should be a pref?
      *
      * @return true if this should be considered fully handled
@@ -75,7 +76,11 @@ public class QuietPlaceMapMarker {
         getQpMapFragment().shortToast("Marker deleted: " + getQuietPlace().getComment());
         getMapMarker().remove();
         getCircle().remove();
-        getQpMapFragment().deleteQuietPlaceMapMarker(this);
+        getQpMapFragment().removeQuietPlaceMapMarker(this);
+
+        database_delete();
+
+        // TODO: delete the geofence here?
     }
 
     private Circle addQuietPlaceCircle(QuietPlace quietPlace) {
@@ -148,5 +153,57 @@ public class QuietPlaceMapMarker {
         setCircle(addQuietPlaceCircle(quietPlace));
 
         getQpMapFragment().setSelectionMode();
+    }
+
+    /**
+     * Called from onMarkerDrag when the marker moves, so
+     * we can update the database and also the circle position.
+     * <p/>
+     * TODO: this could accept and set a new marker argument.
+     * How we're doing it now implies that the underlying marker
+     * object stays the same from onMarkerDrag and it just updates
+     * the same object.
+     *
+     * @param doSave actually save the change to the database?
+     *               can speed things up by not saving intermediate changes during a drag move
+     */
+    public void moveMarker(boolean doSave) {
+        Marker marker = getMapMarker();
+
+        // Update the circle around it.
+        LatLng pos = marker.getPosition();
+        getCircle().setCenter(pos);
+
+        // Update the saved position in the database
+        getQuietPlace().setLatitude(pos.latitude);
+        getQuietPlace().setLongitude(pos.longitude);
+
+        if (doSave) {
+            database_save();
+        } else {
+            Log.d(TAG, "Intermediate QuietPlace move not saved to database.");
+        }
+    }
+
+    /**
+     * Saves any changes to the QuietPlace object to the database.
+     */
+    private void database_save() {
+        QuietPlacesDataSource dataSource = new QuietPlacesDataSource(getQpMapFragment().getActivity());
+        dataSource.open();
+        setQuietPlace(dataSource.saveQuietPlace(getQuietPlace()));
+        dataSource.close();
+        Log.w(TAG, "Saved to database: " + getQuietPlace());
+    }
+
+    private void database_delete() {
+        Log.w(TAG, "Deleting from database: " + getQuietPlace());
+        QuietPlacesDataSource dataSource = new QuietPlacesDataSource(getQpMapFragment().getActivity());
+        dataSource.open();
+        dataSource.deleteQuietPlace(getQuietPlace());
+        dataSource.close();
+        Log.d(TAG, "Deletion complete.");
+
+        // should we null out the QP object?!
     }
 }

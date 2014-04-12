@@ -4,12 +4,11 @@ import android.app.Activity;
 import android.location.Location;
 import android.os.Bundle;
 import android.util.Log;
-import android.view.LayoutInflater;
-import android.view.View;
-import android.view.ViewGroup;
+import android.view.*;
 import android.widget.ImageButton;
 import android.widget.TextView;
 import com.google.android.gms.common.GooglePlayServicesNotAvailableException;
+import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.MapView;
 import com.google.android.gms.maps.MapsInitializer;
@@ -39,6 +38,11 @@ public class QPMapFragment extends QPFragment {
 
     private Set<QuietPlaceMapMarker> mapMarkerSet;
     private Map<Marker, QuietPlaceMapMarker> markerMap;
+
+/*
+    private ScaleGestureDetector mScaleDetector;
+    private float mScaleFactor = 1.f;
+*/
 
     /**
      * Returns a new instance of this fragment for the given section
@@ -87,6 +91,20 @@ public class QPMapFragment extends QPFragment {
             setUpMapIfNeeded(rootView);
         }
 
+/*
+        View mCustomMapControls = (View) rootView.findViewById(R.id.customControlsContainer);
+
+        mScaleDetector = new ScaleGestureDetector(getActivity(), new ScaleListener());
+        mCustomMapControls.setOnTouchListener(new View.OnTouchListener() {
+            public boolean onTouch(View v, MotionEvent event) {
+                // ... Respond to touch events
+                mScaleDetector.onTouchEvent(event);
+                return true;
+                // return false;
+            }
+        });
+
+*/
         return rootView;
     }
 
@@ -125,6 +143,36 @@ public class QPMapFragment extends QPFragment {
                     Log.e(TAG, "clicking map marker but can't find QPMM object");
                     return false;
                 }
+            }
+        });
+
+        // marker dragging / moving
+        getMap().setOnMarkerDragListener(new GoogleMap.OnMarkerDragListener() {
+            @Override
+            public void onMarkerDragStart(Marker arg0) {
+                Log.d(TAG, "onMarkerDragStart..." + arg0.getPosition().latitude + "..." + arg0.getPosition().longitude);
+
+                QuietPlaceMapMarker qpmm = getQPMMFromMarker(arg0);
+                qpmm.moveMarker(false); // don't write to db just yet.
+
+            }
+
+            //@SuppressWarnings("unchecked")
+            @Override
+            public void onMarkerDragEnd(Marker arg0) {
+                Log.d(TAG, "onMarkerDragEnd..." + arg0.getPosition().latitude + "..." + arg0.getPosition().longitude);
+
+                QuietPlaceMapMarker qpmm = getQPMMFromMarker(arg0);
+                qpmm.moveMarker(true); // save this change to the database
+
+                getMap().animateCamera(CameraUpdateFactory.newLatLng(arg0.getPosition()));
+            }
+
+            @Override
+            public void onMarkerDrag(Marker arg0) {
+                Log.d(TAG, "onMarkerDrag...");
+                QuietPlaceMapMarker qpmm = getQPMMFromMarker(arg0);
+                qpmm.moveMarker(false); // don't write to db; just update circle
             }
         });
     }
@@ -302,29 +350,23 @@ public class QPMapFragment extends QPFragment {
 
     public void deleteMarkers(List<QuietPlaceMapMarker> selectedMarkers) {
         for (QuietPlaceMapMarker qpmm : selectedMarkers) {
-            // deleteQuietPlaceMapMarker(qpmm);
             qpmm.delete();
         }
     }
 
     /**
-     * Delete a QuietPlaceMapMarker and the underlying object from the database.
+     * Removes a QuietPlaceMapMarker from this map fragment.  This is supposed to be
+     * called from the delete() method of the QuietPlaceMapMarker object.
      *
-     * @param qpmm the map marker/place to delete
+     * All this does is remove the object from our set collection.
+     *
+     * @param qpmm the map marker/place to remove from this map
      */
-    public void deleteQuietPlaceMapMarker(QuietPlaceMapMarker qpmm) {
-        Log.w(TAG, "Deleting QP from db: " + qpmm.getQuietPlace());
+    public void removeQuietPlaceMapMarker(QuietPlaceMapMarker qpmm) {
+        Log.w(TAG, "Removing QP from map fragment: " + qpmm.getQuietPlace());
 
         // TODO: catch and log exception?
         mapMarkerSet.remove(qpmm);
-        // markerMap.remove(qpmm.getMapMarker());
-
-        QuietPlacesDataSource dataSource = new QuietPlacesDataSource(getActivity());
-        dataSource.open();
-        dataSource.deleteQuietPlace(qpmm.getQuietPlace());
-        dataSource.close();
-
-        // TODO: delete the geofence here?
     }
 
 
@@ -377,4 +419,20 @@ public class QPMapFragment extends QPFragment {
             cancelAddButton(addButton);
         }
     }
+
+/*
+    private class ScaleListener
+            extends ScaleGestureDetector.SimpleOnScaleGestureListener {
+        @Override
+        public boolean onScale(ScaleGestureDetector detector) {
+            mScaleFactor *= detector.getScaleFactor();
+
+            // Don't let the object get too small or too large.
+            mScaleFactor = Math.max(0.1f, Math.min(mScaleFactor, 5.0f));
+
+            // invalidate();
+            return true;
+        }
+    }
+*/
 }
