@@ -39,6 +39,8 @@ public class QPMapFragment extends QPFragment {
     private Set<QuietPlaceMapMarker> mapMarkerSet;
     private Map<Marker, QuietPlaceMapMarker> markerMap;
 
+    private final boolean singleSelectMode = true;
+
 /*
     private ScaleGestureDetector mScaleDetector;
     private float mScaleFactor = 1.f;
@@ -165,7 +167,7 @@ public class QPMapFragment extends QPFragment {
                 QuietPlaceMapMarker qpmm = getQPMMFromMarker(arg0);
                 qpmm.moveMarker(true); // save this change to the database
 
-                getMap().animateCamera(CameraUpdateFactory.newLatLng(arg0.getPosition()));
+                animateCamera(arg0.getPosition());
             }
 
             @Override
@@ -419,6 +421,24 @@ public class QPMapFragment extends QPFragment {
             cancelAddButton(addButton);
         }
     }
+
+    public void unselectAllIfSingleSelectMode() {
+        if (!singleSelectMode) {
+            return;
+        }
+
+        for (QuietPlaceMapMarker qpmm : getSelectedMarkers()) {
+            if (qpmm.isSelected()) {
+                qpmm.setSelected(false);
+            }
+        }
+    }
+
+    public void animateCamera(LatLng latLng) {
+        getMap().animateCamera(CameraUpdateFactory.newLatLng(latLng));
+    }
+
+
 
 /*
     private class ScaleListener

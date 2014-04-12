@@ -146,6 +146,11 @@ public class QuietPlaceMapMarker {
     }
 
     public void setSelected(boolean selected) {
+
+        if (selected) {
+            getQpMapFragment().unselectAllIfSingleSelectMode();
+        }
+
         this.selected = selected;
 
         // Re-draw the circle to reflect the selection status
@@ -153,6 +158,11 @@ public class QuietPlaceMapMarker {
         setCircle(addQuietPlaceCircle(quietPlace));
 
         getQpMapFragment().setSelectionMode();
+
+        // center the camera on the selection unless unselecting
+        if (selected) {
+            getQpMapFragment().animateCamera(getMapMarker().getPosition());
+        }
     }
 
     /**
