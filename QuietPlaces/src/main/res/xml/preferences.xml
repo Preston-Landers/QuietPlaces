@@ -9,4 +9,15 @@
                 android:summary="@string/pref_use_location_summary"
                 android:defaultValue="true"/>
     </PreferenceCategory>
+    <PreferenceCategory
+            android:title="@string/pref_category_map_title"
+            android:key="pref_category_map">
+        <ListPreference
+                android:key="pref_map_type"
+                android:title="@string/pref_map_type"
+                android:dialogTitle="@string/pref_map_type"
+                android:entries="@array/pref_map_type_entries"
+                android:entryValues="@array/pref_map_type_values"
+                android:defaultValue="@string/pref_map_type_default" />
+    </PreferenceCategory>
 </PreferenceScreen>

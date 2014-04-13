@@ -9,7 +9,7 @@
     <string name="title_section1">Home</string>
     <string name="title_section2">Map</string>
     <string name="title_section3">History</string>
-    <string name="title_section_about">Help/About</string>
+    <string name="title_section_about">"Help / About"</string>
     <string name="navigation_drawer_open">Open navigation drawer</string>
     <string name="navigation_drawer_close">Close navigation drawer</string>
     <string name="action_example">Example action</string>
@@ -66,8 +66,14 @@
     </string>
 
     <string name="pref_category_location_title">Location Settings</string>
+    <string name="pref_category_map_title">Map Settings</string>
     <string name="pref_use_location">Allow Location Updates</string>
     <string name="pref_use_location_summary">If this is checked the app will periodically refresh your location to check for nearby quiet places.</string>
+
+    <string name="pref_map_type">Map Type</string>
+    <string name="pref_map_type_summary">Select the type of map to be displayed.</string>
+    <string name="pref_map_type_default">MAP_TYPE_NORMAL</string>
+
     <string name="settings_activity_name">Settings</string>
     <string name="add_quiet_place_button">Add</string>
     <string name="ringer_switch">Ringer</string>

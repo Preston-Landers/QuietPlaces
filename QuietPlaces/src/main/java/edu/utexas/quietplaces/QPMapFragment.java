@@ -1,6 +1,5 @@
 package edu.utexas.quietplaces;
 
-import android.app.Activity;
 import android.location.Location;
 import android.os.Bundle;
 import android.util.Log;
@@ -101,7 +100,11 @@ public class QPMapFragment extends QPFragment {
     private void setUpMap() {
         // mMap.addMarker(new MarkerOptions().position(new LatLng(30, -90)).title("Marker"));
 
-        getMap().setMapType(GoogleMap.MAP_TYPE_HYBRID);
+        MainActivity activity = (MainActivity) getActivity();
+        SettingsFragment settingsFragment = activity.getSettingsFragment();
+        int mapTypeInt = settingsFragment.getMapTypeInt();
+        setMapType(mapTypeInt);
+
         getMap().getUiSettings().setCompassEnabled(true);
 
         loadPlacesFromDatabase();
@@ -192,6 +195,20 @@ public class QPMapFragment extends QPFragment {
         if (mMapView != null) {
             mMapView.onLowMemory();
         }
+    }
+
+    /**
+     * Change the map type
+     * @param mapType one of the constants defined in the GoogleMap object
+     */
+    public void setMapType(int mapType) {
+        Log.d(TAG, "Setting map type: " + mapType);
+        GoogleMap map = getMap();
+        if (map == null) {
+            Log.e(TAG, "null map when setting type.");
+            return;
+        }
+        map.setMapType(mapType);
     }
 
     /**

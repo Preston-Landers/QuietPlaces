@@ -257,7 +257,11 @@ public class MainActivity extends ActionBarActivity
         transaction.commit();
     }
 
-    private QPMapFragment getMapFragment() {
+    SettingsFragment getSettingsFragment() {
+        return settingsFragment;
+    }
+
+    QPMapFragment getMapFragment() {
         if (mapFragment != null) {
             return mapFragment;
         }
@@ -545,7 +549,7 @@ public class MainActivity extends ActionBarActivity
     }
 
     private boolean getPrefUsingLocation() {
-        return sharedPrefs.getBoolean(SettingsActivity.KEY_USE_LOCATION, false);
+        return sharedPrefs.getBoolean(SettingsFragment.KEY_USE_LOCATION, false);
     }
 
     private void updateUserLocationOnMap(Location location) {

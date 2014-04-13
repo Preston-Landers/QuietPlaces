@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string-array
+            name="pref_map_type_entries">
+        <item>Normal</item>
+        <item>Hybrid</item>
+        <item>Satellite</item>
+        <item>Terrain</item>
+        <item>None</item>
+    </string-array>
+    <string-array
+            name="pref_map_type_values">
+        <item>MAP_TYPE_NORMAL</item>
+        <item>MAP_TYPE_HYBRID</item>
+        <item>MAP_TYPE_SATELLITE</item>
+        <item>MAP_TYPE_TERRAIN</item>
+        <item>MAP_TYPE_NONE</item>
+    </string-array>
+</resources>

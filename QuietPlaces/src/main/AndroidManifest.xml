@@ -45,11 +45,6 @@
             </intent-filter>
         </activity>
 
-        <activity
-                android:name="SettingsActivity"
-                android:label="@string/settings_activity_name">
-        </activity>
-
         <service
                 android:name="edu.utexas.quietplaces.ReceiveTransitionsIntentService"
                 android:exported="false"></service>

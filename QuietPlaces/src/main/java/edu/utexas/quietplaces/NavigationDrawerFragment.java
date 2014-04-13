@@ -267,6 +267,7 @@ public class NavigationDrawerFragment extends QPFragment {
         mDrawerToggle.onConfigurationChanged(newConfig);
     }
 
+/*
     @Override
     public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
         // If the drawer is open, show the global app actions in the action bar. See also
@@ -277,6 +278,7 @@ public class NavigationDrawerFragment extends QPFragment {
         }
         super.onCreateOptionsMenu(menu, inflater);
     }
+*/
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
