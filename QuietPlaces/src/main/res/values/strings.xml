@@ -111,5 +111,6 @@
     <string name="recenter_place">Center</string>
     <string name="edit_place">Edit</string>
     <string name="resize_btns_label">Resize</string>
+    <string name="icon">Icon</string>
 
 </resources>

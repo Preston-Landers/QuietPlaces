@@ -1,5 +1,6 @@
 package edu.utexas.quietplaces;
 
+import android.content.Context;
 import android.support.v7.app.ActionBarActivity;
 import android.app.Activity;
 import android.support.v7.app.ActionBar;
@@ -16,10 +17,7 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.AdapterView;
-import android.widget.ArrayAdapter;
-import android.widget.ListView;
-import android.widget.Toast;
+import android.widget.*;
 
 /**
  * Fragment used for managing interactions for and presentation of a navigation drawer.
@@ -96,16 +94,51 @@ public class NavigationDrawerFragment extends QPFragment {
                 selectItem(position);
             }
         });
+
+        final String[] sectionArray = {
+                getString(R.string.title_section1),
+                getString(R.string.title_section2),
+                getString(R.string.title_section3),
+                getString(R.string.settings_activity_name)
+        };
+
         mDrawerListView.setAdapter(new ArrayAdapter<String>(
                 getActionBar().getThemedContext(),
-                android.R.layout.simple_list_item_activated_1,
+                R.layout.navigation_item,
                 android.R.id.text1,
-                new String[]{
-                        getString(R.string.title_section1),
-                        getString(R.string.title_section2),
-                        getString(R.string.title_section3),
-                        getString(R.string.settings_activity_name)
-                }));
+                sectionArray) {
+
+            @Override
+            public View getView(int position, View convertView, ViewGroup parent) {
+                LayoutInflater inflater = (LayoutInflater) getActivity().getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+                convertView = inflater.inflate(R.layout.navigation_item, parent,false);
+
+                ImageView divider = (ImageView) convertView.findViewById(R.id.nav_section_divider_imageView);
+
+                TextView tv = (TextView)convertView.findViewById(R.id.nav_item_label);
+                tv.setText(sectionArray[position]);
+
+                ImageView iv = (ImageView)convertView.findViewById(R.id.nav_icon_imageView);
+                switch (position) {
+                    case 0:
+                        iv.setImageResource(R.drawable.ic_menu_home);
+                        break;
+                    case 1:
+                        iv.setImageResource(R.drawable.ic_menu_mapmode);
+                        break;
+                    case 2:
+                        divider.setVisibility(View.VISIBLE);
+                        iv.setImageResource(R.drawable.ic_menu_moreoverflow);
+                        break;
+                    case 3:
+                        iv.setImageResource(R.drawable.ic_menu_preferences);
+                        break;
+                    default:
+                }
+                return convertView;
+            }
+
+        });
         mDrawerListView.setItemChecked(mCurrentSelectedPosition, true);
         return mDrawerListView;
     }
@@ -279,4 +312,5 @@ public class NavigationDrawerFragment extends QPFragment {
          */
         void onNavigationDrawerItemSelected(int position);
     }
+
 }

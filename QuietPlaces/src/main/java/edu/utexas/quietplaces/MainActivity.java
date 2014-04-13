@@ -511,10 +511,12 @@ public class MainActivity extends ActionBarActivity
     @Override
     public void onLocationChanged(Location location) {
         // Report to the UI that the location was updated
+/*
         String msg = "Updated Location: " +
                 Double.toString(location.getLatitude()) + "," +
                 Double.toString(location.getLongitude());
         shortToast(msg);
+*/
 
         lastKnownLocation = location;
 

@@ -152,7 +152,8 @@
                     android:layout_toRightOf="@+id/shrinkPlaceButton"
                     android:background="@drawable/ic_menu_mylocation"
                     android:layout_marginLeft="10dp"
-                    android:onClick="clickCenterButton"/>
+                    android:onClick="clickCenterButton"
+                    android:layout_alignTop="@+id/shrinkPlaceButton"/>
 
             <ImageButton
                     android:layout_width="45dp"
