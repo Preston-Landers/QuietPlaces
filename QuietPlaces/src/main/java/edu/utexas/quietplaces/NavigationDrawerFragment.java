@@ -11,9 +11,8 @@ import android.content.SharedPreferences;
 import android.content.res.Configuration;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
+import android.util.Log;
 import android.view.LayoutInflater;
-import android.view.Menu;
-import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
@@ -84,7 +83,7 @@ public class NavigationDrawerFragment extends QPFragment {
     }
 
     @Override
-    public View onCreateView(LayoutInflater inflater, ViewGroup container,
+    public View onCreateView(LayoutInflater inflater, final ViewGroup container,
             Bundle savedInstanceState) {
         mDrawerListView = (ListView) inflater.inflate(
                 R.layout.fragment_navigation_drawer, container, false);
@@ -114,8 +113,12 @@ public class NavigationDrawerFragment extends QPFragment {
                 LayoutInflater inflater = (LayoutInflater) getActivity().getSystemService(Context.LAYOUT_INFLATER_SERVICE);
                 convertView = inflater.inflate(R.layout.navigation_item, parent,false);
 
-                ImageView divider = (ImageView) convertView.findViewById(R.id.nav_section_divider_imageView);
+                if (convertView == null) {
+                    Log.e("NavigationDrawerFragment", "Can't get inflated navigation item view.");
+                    return null;
+                }
 
+                ImageView divider = (ImageView) convertView.findViewById(R.id.nav_section_divider_imageView);
                 TextView tv = (TextView)convertView.findViewById(R.id.nav_item_label);
                 tv.setText(sectionArray[position]);
 
@@ -298,12 +301,14 @@ public class NavigationDrawerFragment extends QPFragment {
      * Per the navigation drawer design guidelines, updates the action bar to show the global app
      * 'context', rather than just what's in the current screen.
      */
+/*
     private void showGlobalContextActionBar() {
         ActionBar actionBar = getActionBar();
         actionBar.setDisplayShowTitleEnabled(true);
         actionBar.setNavigationMode(ActionBar.NAVIGATION_MODE_STANDARD);
         actionBar.setTitle(R.string.app_name);
     }
+*/
 
     private ActionBar getActionBar() {
         return ((ActionBarActivity) getActivity()).getSupportActionBar();

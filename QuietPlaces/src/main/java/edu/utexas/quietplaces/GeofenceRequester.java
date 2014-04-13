@@ -37,6 +37,8 @@ public class GeofenceRequester
                     ConnectionCallbacks,
                     OnConnectionFailedListener {
 
+    private static final String TAG = Config.PACKAGE_NAME + ".GeofenceRequester";
+
     // Storage for a reference to the calling client
     private final Activity mActivity;
 
@@ -119,6 +121,8 @@ public class GeofenceRequester
 
         // If a request is in progress
         } else {
+
+            Log.e(TAG, "A geofence request is already in progress.");
 
             // Throw an exception and stop the request
             throw new UnsupportedOperationException();

@@ -7,6 +7,7 @@ import android.view.*;
 import android.widget.ImageButton;
 import android.widget.TextView;
 import com.google.android.gms.common.GooglePlayServicesNotAvailableException;
+import com.google.android.gms.location.Geofence;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.MapView;
@@ -37,6 +38,9 @@ public class QPMapFragment extends QPFragment {
 
     private ScaleGestureDetector mScaleDetector;
 
+    private List<Geofence> pendingGeofenceAdds;
+    private List<String> pendingGeofenceIdRemoves;
+
     /**
      * Returns a new instance of this fragment for the given section
      * number.
@@ -52,6 +56,8 @@ public class QPMapFragment extends QPFragment {
     public QPMapFragment() {
         mapMarkerSet = new HashSet<QuietPlaceMapMarker>();
         markerMap = new HashMap<Marker, QuietPlaceMapMarker>();
+        pendingGeofenceAdds = new ArrayList<Geofence>();
+        pendingGeofenceIdRemoves = new ArrayList<String>();
     }
 
 
@@ -68,7 +74,6 @@ public class QPMapFragment extends QPFragment {
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
-        // super.onCreateView(inflater, container, savedInstanceState); // ???
         View rootView = inflater.inflate(R.layout.fragment_map, container, false);
 
         try {
@@ -435,6 +440,8 @@ public class QPMapFragment extends QPFragment {
 
         dataSource.close();
         Log.w(TAG, "Loaded marker database.");
+
+        syncGeofences();
     }
 
     private void addQuietPlaceMapMarker(QuietPlace quietPlace) {
@@ -516,7 +523,9 @@ public class QPMapFragment extends QPFragment {
 
             TextView infoLabel = (TextView) getActivity().findViewById(R.id.tv_selected_label);
             if (infoLabel != null) {
-                infoLabel.setText(quietPlace.getComment());
+                // TODO: this is temporary, we may want to revise this format.
+                String infoLabelText = quietPlace.getId() + ": " + quietPlace.getComment();
+                infoLabel.setText(infoLabelText);
             }
             updateInfoString(quietPlace);
         }
@@ -603,5 +612,55 @@ public class QPMapFragment extends QPFragment {
         }
     }
 */
+
+    public void queueGeofenceAdd(Geofence geofence) {
+        pendingGeofenceAdds.add(geofence);
+    }
+
+    private boolean sendGeofenceAdditions() {
+        if (pendingGeofenceAdds == null ||
+                pendingGeofenceAdds.size() == 0) {
+            return false;
+        }
+        MainActivity mainActivity = (MainActivity) getActivity();
+        if (mainActivity == null) {
+            return false;
+        }
+        boolean rv = mainActivity.requestGeofences(pendingGeofenceAdds);
+
+        // Create a new array; the old one is being used by the pending request.
+        pendingGeofenceAdds = new ArrayList<Geofence>();
+        return rv;
+
+    }
+
+    public void queueGeofenceIdRemove(String geofenceId) {
+        pendingGeofenceIdRemoves.add(geofenceId);
+    }
+
+    private boolean sendGeofenceRemovals() {
+        if (pendingGeofenceIdRemoves == null ||
+                pendingGeofenceIdRemoves.size() == 0) {
+            return false;
+        }
+        MainActivity mainActivity = (MainActivity) getActivity();
+        if (mainActivity == null) {
+            return false;
+        }
+        boolean rv = mainActivity.removeGeofences(pendingGeofenceIdRemoves);
+
+        // Create a new array; the old one is being used by the pending request.
+        pendingGeofenceIdRemoves = new ArrayList<String>();
+        return rv;
+    }
+
+    public void syncGeofences() {
+        sendGeofenceRemovals();
+        if (!sendGeofenceAdditions()) {
+            Log.e(TAG, "May have failed to set geofences when syncing.");
+        } else {
+            Log.d(TAG, "Syncing geofences: add ok.");
+        }
+    }
 
 }

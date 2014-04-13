@@ -1,6 +1,5 @@
 package edu.utexas.quietplaces;
 
-import android.app.Activity;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -30,11 +29,12 @@ public class PlaceholderFragment extends QPFragment {
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
-        // super.onCreateView(inflater, container, savedInstanceState); // ???
         View rootView = inflater.inflate(R.layout.fragment_main, container, false);
-        TextView textView = (TextView) rootView.findViewById(R.id.section_label);
-        if (textView != null) {
-            textView.setText(Integer.toString(getArguments().getInt(ARG_SECTION_NUMBER)));
+        if (rootView != null) {
+            TextView textView = (TextView) rootView.findViewById(R.id.section_label);
+            if (textView != null) {
+                textView.setText(Integer.toString(getArguments().getInt(ARG_SECTION_NUMBER)));
+            }
         }
         return rootView;
     }

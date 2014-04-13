@@ -55,7 +55,10 @@ if mock locations is enabled in the device's developer options menu.
   * Not critical because we have buttons to resize the selected place.
 * Discover/suggest quiet places automatically from Places API
 * Selection of Quiet Place is lost when changing device orientation
-* Add About and Help screens
+
+* If you are currently inside a geofence, and then move the fence away from you,
+  it doesn't register as leaving the fence since it got removed and then
+  readded in the other spot.
 
 ## Software Engineering Challenges ##
 

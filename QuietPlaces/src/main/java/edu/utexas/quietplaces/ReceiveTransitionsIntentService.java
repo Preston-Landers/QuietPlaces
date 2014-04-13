@@ -89,13 +89,14 @@ public class ReceiveTransitionsIntentService extends IntentService {
                 sendNotification(transitionType, ids);
 
                 // Log the transition type and a message
-                Log.d(GeofenceUtils.APPTAG,
+                // TODO: maybe a shortToast here?
+                Log.i(GeofenceUtils.APPTAG,
                         getString(
                                 R.string.geofence_transition_notification_title,
                                 transitionType,
                                 ids)
                 );
-                Log.d(GeofenceUtils.APPTAG,
+                Log.i(GeofenceUtils.APPTAG,
                         getString(R.string.geofence_transition_notification_text));
 
             // An invalid transition was reported

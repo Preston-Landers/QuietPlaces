@@ -36,6 +36,8 @@ public class GeofenceRemover implements
         OnConnectionFailedListener,
         OnRemoveGeofencesResultListener {
 
+    private static final String TAG = Config.PACKAGE_NAME + ".GeofenceRequester";
+
     // Storage for a context from the calling client
     private Context mContext;
 

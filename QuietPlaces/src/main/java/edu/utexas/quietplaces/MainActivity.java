@@ -567,6 +567,17 @@ public class MainActivity extends ActionBarActivity
 
     // Forward the button clicks from the action panel to the map fragment
     public void clickAddButton(View view) {
+        /*
+         * Check for Google Play services. Do this after
+         * setting the request type. If connecting to Google Play services
+         * fails, onActivityResult is eventually called, and it needs to
+         * know what type of request was in progress.
+         */
+        if (!servicesConnected()) {
+            Log.e(TAG, "Can't click add button - no Google Play Services!");
+            return;
+        }
+
         getMapFragment().clickAddButton(view);
     }
 
@@ -621,6 +632,21 @@ public class MainActivity extends ActionBarActivity
         // Turn off the in progress flag and disconnect the client
 //        mInProgress = false;
 //        mLocationClient.disconnect();
+    }
+
+    public boolean requestGeofences(List<Geofence> geofenceList) {
+        try {
+            mGeofenceRequester.addGeofences(geofenceList);
+            return true;
+        } catch (UnsupportedOperationException e) {
+            Log.e(TAG, "Unable to set geofences.", e);
+            return false;
+        }
+    }
+
+    public boolean removeGeofences(List<String> geofenceIdList) {
+        mGeofenceRemover.removeGeofencesById(geofenceIdList);
+        return true;
     }
 
     /**
