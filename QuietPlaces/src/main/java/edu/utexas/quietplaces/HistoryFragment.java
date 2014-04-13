@@ -9,21 +9,21 @@ import android.widget.TextView;
 /**
  * A placeholder fragment containing a simple view.
  */
-public class PlaceholderFragment extends QPFragment {
+public class HistoryFragment extends QPFragment {
 
     /**
      * Returns a new instance of this fragment for the given section
      * number.
      */
-    protected static PlaceholderFragment newInstance(int sectionNumber) {
-        PlaceholderFragment fragment = new PlaceholderFragment();
+    protected static HistoryFragment newInstance(int sectionNumber) {
+        HistoryFragment fragment = new HistoryFragment();
         Bundle args = new Bundle();
         args.putInt(ARG_SECTION_NUMBER, sectionNumber);
         fragment.setArguments(args);
         return fragment;
     }
 
-    public PlaceholderFragment() {
+    public HistoryFragment() {
     }
 
     @Override

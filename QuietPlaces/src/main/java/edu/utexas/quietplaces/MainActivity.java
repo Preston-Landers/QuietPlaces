@@ -45,7 +45,7 @@ public class MainActivity extends ActionBarActivity
     private NavigationDrawerFragment mNavigationDrawerFragment;
     private QPMapFragment mapFragment;
     private HomeFragment homeFragment;
-    private PlaceholderFragment placeholderFragment; // this is current a placeholder fragment, convert it to the History fragment
+    private HistoryFragment historyFragment; // this is current a placeholder fragment, convert it to the History fragment
     private SettingsFragment settingsFragment;
     private AboutFragment aboutFragment;
 
@@ -135,9 +135,9 @@ public class MainActivity extends ActionBarActivity
 
         List<Fragment> currentFragments = getSupportFragmentManager().getFragments();
         if (currentFragments == null || currentFragments.size() == 0) {
-            mapFragment = getMapFragment();
+            mapFragment = getMapFragment();       // TODO: check for null map here... no Google Play Services?
             homeFragment = HomeFragment.newInstance(1);
-            placeholderFragment = PlaceholderFragment.newInstance(3);
+            historyFragment = HistoryFragment.newInstance(3);
             settingsFragment = new SettingsFragment();
             aboutFragment = AboutFragment.newInstance(5);
 
@@ -151,8 +151,8 @@ public class MainActivity extends ActionBarActivity
                     .hide(homeFragment)
                     .add(R.id.frame_map, mapFragment)
                     .hide(mapFragment)
-                    .add(R.id.frame_placeholder, placeholderFragment)
-                    .hide(placeholderFragment)
+                    .add(R.id.frame_history, historyFragment)
+                    .hide(historyFragment)
                     .add(R.id.frame_about, aboutFragment)
                     .hide(aboutFragment)
                     .commit();
@@ -165,7 +165,7 @@ public class MainActivity extends ActionBarActivity
             // Load saved fragments
             mapFragment = (QPMapFragment) getSupportFragmentManager().findFragmentById(R.id.frame_map);
             homeFragment = (HomeFragment) getSupportFragmentManager().findFragmentById(R.id.frame_home);
-            placeholderFragment = (PlaceholderFragment) getSupportFragmentManager().findFragmentById(R.id.frame_placeholder);
+            historyFragment = (HistoryFragment) getSupportFragmentManager().findFragmentById(R.id.frame_history);
             settingsFragment = (SettingsFragment) getFragmentManager().findFragmentById(R.id.frame_settings);
             aboutFragment = (AboutFragment) getSupportFragmentManager().findFragmentById(R.id.frame_about);
         }
@@ -212,14 +212,14 @@ public class MainActivity extends ActionBarActivity
         switch (position) {
             case 0:
                 transaction.hide(mapFragment)
-                        .hide(placeholderFragment)
+                        .hide(historyFragment)
                         .hide(aboutFragment)
                         .show(homeFragment);
                 mTitle = getString(R.string.title_section1);
                 break;
             case 1:
                 transaction.hide(homeFragment)
-                        .hide(placeholderFragment)
+                        .hide(historyFragment)
                         .hide(aboutFragment)
                         .show(mapFragment);
                 mTitle = getString(R.string.title_section2);
@@ -228,14 +228,14 @@ public class MainActivity extends ActionBarActivity
                 transaction.hide(mapFragment)
                         .hide(homeFragment)
                         .hide(aboutFragment)
-                        .show(placeholderFragment);
+                        .show(historyFragment);
                 mTitle = getString(R.string.title_section3);
                 break;
             case 3:
                 transaction.hide(mapFragment)
                         .hide(homeFragment)
                         .hide(aboutFragment)
-                        .hide(placeholderFragment);
+                        .hide(historyFragment);
 
                 getFragmentManager().beginTransaction()
                         .show(settingsFragment).commit();
@@ -245,7 +245,7 @@ public class MainActivity extends ActionBarActivity
             case 4:
                 transaction.hide(mapFragment)
                         .hide(homeFragment)
-                        .hide(placeholderFragment)
+                        .hide(historyFragment)
                         .show(aboutFragment);
                 mTitle = getString(R.string.title_section_about);
                 break;
@@ -271,6 +271,10 @@ public class MainActivity extends ActionBarActivity
 //        mapFragment = SupportMapFragment.newInstance(options);
         // mapFragment.setRetainInstance(true);
 
+        if (!servicesConnected()) {
+            Log.e(TAG, "Can't get Google Play services to initialize map.");
+            return null;
+        }
 
         mapFragment = QPMapFragment.newInstance(2);
         setupMapIfNeeded();
@@ -762,6 +766,8 @@ public class MainActivity extends ActionBarActivity
 
     /**
      * Verify that Google Play services is available before making a request.
+     *
+     * TODO: should be calling this when initially creating the map fragment.
      *
      * @return true if Google Play services is available, otherwise false
      */
