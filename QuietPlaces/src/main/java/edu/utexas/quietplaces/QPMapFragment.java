@@ -100,10 +100,9 @@ public class QPMapFragment extends QPFragment {
     private void setUpMap() {
         // mMap.addMarker(new MarkerOptions().position(new LatLng(30, -90)).title("Marker"));
 
+        // Set the map type from the preference.
         MainActivity activity = (MainActivity) getActivity();
-        SettingsFragment settingsFragment = activity.getSettingsFragment();
-        int mapTypeInt = settingsFragment.getMapTypeInt();
-        setMapType(mapTypeInt);
+        setMapType(activity.getSettingsFragment().getMapTypeInt());
 
         getMap().getUiSettings().setCompassEnabled(true);
 
