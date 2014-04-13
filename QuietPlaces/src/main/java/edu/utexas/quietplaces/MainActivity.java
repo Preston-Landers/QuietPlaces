@@ -16,7 +16,6 @@ import android.os.Bundle;
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.Menu;
-import android.view.MenuItem;
 import android.view.View;
 import android.support.v4.widget.DrawerLayout;
 import android.widget.Switch;
@@ -46,8 +45,9 @@ public class MainActivity extends ActionBarActivity
     private NavigationDrawerFragment mNavigationDrawerFragment;
     private QPMapFragment mapFragment;
     private HomeFragment homeFragment;
-    private PlaceholderFragment placeholderFragment; // this is current a placeholder empty fragment, convert to something!
+    private PlaceholderFragment placeholderFragment; // this is current a placeholder fragment, convert it to the History fragment
     private SettingsFragment settingsFragment;
+    private AboutFragment aboutFragment;
 
     // Define an object that holds accuracy and frequency parameters
     private LocationRequest mLocationRequest;
@@ -139,10 +139,12 @@ public class MainActivity extends ActionBarActivity
             homeFragment = HomeFragment.newInstance(1);
             placeholderFragment = PlaceholderFragment.newInstance(3);
             settingsFragment = new SettingsFragment();
+            aboutFragment = AboutFragment.newInstance(5);
 
             // Add all the fragments but only show the home one initially
             // Got this idea from: http://stackoverflow.com/questions/16461483/preserving-fragment-state
             // Main purpose of this is to avoid resetting the map state when you switch fragments
+            // It's kind of ugly because you have to manually manage hiding and showing everything
             getSupportFragmentManager()
                     .beginTransaction()
                     .add(R.id.frame_home, homeFragment)
@@ -151,12 +153,13 @@ public class MainActivity extends ActionBarActivity
                     .hide(mapFragment)
                     .add(R.id.frame_placeholder, placeholderFragment)
                     .hide(placeholderFragment)
-                            // .add(R.id.frame_settings, settingsFragment)
-                            // .hide(settingsFragment)
+                    .add(R.id.frame_about, aboutFragment)
+                    .hide(aboutFragment)
                     .commit();
 
             getFragmentManager().beginTransaction()
                     .add(R.id.frame_settings, settingsFragment)
+                    .hide(settingsFragment)
                     .commit();
         } else {
             // Load saved fragments
@@ -164,6 +167,7 @@ public class MainActivity extends ActionBarActivity
             homeFragment = (HomeFragment) getSupportFragmentManager().findFragmentById(R.id.frame_home);
             placeholderFragment = (PlaceholderFragment) getSupportFragmentManager().findFragmentById(R.id.frame_placeholder);
             settingsFragment = (SettingsFragment) getFragmentManager().findFragmentById(R.id.frame_settings);
+            aboutFragment = (AboutFragment) getSupportFragmentManager().findFragmentById(R.id.frame_about);
         }
 
 
@@ -209,24 +213,28 @@ public class MainActivity extends ActionBarActivity
             case 0:
                 transaction.hide(mapFragment)
                         .hide(placeholderFragment)
+                        .hide(aboutFragment)
                         .show(homeFragment);
                 mTitle = getString(R.string.title_section1);
                 break;
             case 1:
                 transaction.hide(homeFragment)
                         .hide(placeholderFragment)
+                        .hide(aboutFragment)
                         .show(mapFragment);
                 mTitle = getString(R.string.title_section2);
                 break;
             case 2:
                 transaction.hide(mapFragment)
                         .hide(homeFragment)
+                        .hide(aboutFragment)
                         .show(placeholderFragment);
                 mTitle = getString(R.string.title_section3);
                 break;
-            default:
+            case 3:
                 transaction.hide(mapFragment)
                         .hide(homeFragment)
+                        .hide(aboutFragment)
                         .hide(placeholderFragment);
 
                 getFragmentManager().beginTransaction()
@@ -234,6 +242,16 @@ public class MainActivity extends ActionBarActivity
                 mTitle = getString(R.string.settings_activity_name);
                 break;
 
+            case 4:
+                transaction.hide(mapFragment)
+                        .hide(homeFragment)
+                        .hide(placeholderFragment)
+                        .show(aboutFragment);
+                mTitle = getString(R.string.title_section_about);
+                break;
+
+            default:
+                shortToast("Unknown section - this is a bug");
         }
 
         transaction.commit();

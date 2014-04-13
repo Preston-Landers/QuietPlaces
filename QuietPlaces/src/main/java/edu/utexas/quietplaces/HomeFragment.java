@@ -13,11 +13,6 @@ import android.widget.Switch;
  * A fragment containing the welcome screen of the app.
  */
 public class HomeFragment extends QPFragment {
-    /**
-     * The fragment argument representing the section number for this
-     * fragment.
-     */
-    private static final String ARG_SECTION_NUMBER = "section_number";
 
     /**
      * Returns a new instance of this fragment for the given section
@@ -41,22 +36,10 @@ public class HomeFragment extends QPFragment {
         return rootView;
     }
 
-//        @Override
-//        public void onResume() {
-//            super.onResume();
-//        }
-
     @Override
     public void onStart() {
         super.onStart();
         updateSwitchWithRingerState();
-    }
-
-    @Override
-    public void onAttach(Activity activity) {
-        super.onAttach(activity);
-        ((MainActivity) activity).onSectionAttached(
-                getArguments().getInt(ARG_SECTION_NUMBER));
     }
 
     private void updateSwitchWithRingerState() {

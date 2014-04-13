@@ -147,7 +147,14 @@ Now you should be able to create a signed release build with:
 
     gradle assembleRelease
 
+# License
+
+This project is free software and is licensed by the [GNU General Public License (GPL) 2.0](http://www.gnu.org/licenses/gpl-2.0.txt).
+See LICENSE.txt for details.
+
+
 # Open Source Credits
 
 Some icons from:
 http://www.iconarchive.com/show/sleek-xp-basic-icons-by-hopstarter.html
+

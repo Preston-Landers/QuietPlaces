@@ -23,11 +23,6 @@ import java.util.*;
  * A fragment containing the MapView plus our custom controls.
  */
 public class QPMapFragment extends QPFragment {
-    /**
-     * The fragment argument representing the section number for this
-     * fragment.
-     */
-    private static final String ARG_SECTION_NUMBER = "section_number";
     private static final String TAG = Config.PACKAGE_NAME + ".QPMapFragment";
 
     private MapView mMapView;
@@ -93,13 +88,6 @@ public class QPMapFragment extends QPFragment {
         return rootView;
     }
 
-
-    @Override
-    public void onAttach(Activity activity) {
-        super.onAttach(activity);
-        ((MainActivity) activity).onSectionAttached(
-                getArguments().getInt(ARG_SECTION_NUMBER));
-    }
 
     private void setUpMapIfNeeded(View inflatedView) {
         if (mMap == null) {

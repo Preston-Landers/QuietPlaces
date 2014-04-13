@@ -99,7 +99,8 @@ public class NavigationDrawerFragment extends QPFragment {
                 getString(R.string.title_section1),
                 getString(R.string.title_section2),
                 getString(R.string.title_section3),
-                getString(R.string.settings_activity_name)
+                getString(R.string.settings_activity_name),
+                getString(R.string.title_section_about)
         };
 
         mDrawerListView.setAdapter(new ArrayAdapter<String>(
@@ -132,6 +133,9 @@ public class NavigationDrawerFragment extends QPFragment {
                         break;
                     case 3:
                         iv.setImageResource(R.drawable.ic_menu_preferences);
+                        break;
+                    case 4:
+                        iv.setImageResource(R.drawable.ic_menu_info_details);
                         break;
                     default:
                 }

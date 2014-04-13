@@ -2,9 +2,14 @@
 <resources>
 
     <string name="app_name">QuietPlaces</string>
+
+    <string name="app_version_code">1</string>
+    <string name="app_version_name">0.1</string>
+
     <string name="title_section1">Home</string>
     <string name="title_section2">Map</string>
     <string name="title_section3">History</string>
+    <string name="title_section_about">Help/About</string>
     <string name="navigation_drawer_open">Open navigation drawer</string>
     <string name="navigation_drawer_close">Close navigation drawer</string>
     <string name="action_example">Example action</string>
@@ -13,6 +18,53 @@
     <string name="current_ringer_status">Current Ringer Status</string>
     <string name="authors">Preston Landers and Abe Arredondo</string>
     <string name="authors2">Mobile Computing 2014 @ UT Austin</string>
+    <string name="about_version">"Version: "</string>
+    <string name="about_authors_1">Design: Abe Arredondo and Preston Landers</string>
+    <string name="about_authors_2">Programming: Preston Landers</string>
+    <string name="about_thanks">Thanks to: Dr. Christine Julien</string>
+
+    <string name="about_code_link">&lt;A HREF="https://bitbucket.org/planders/quietplaces">Project Home Page&lt;/A></string>
+    <string name="about_store_link">&lt;A HREF="https://bitbucket.org/planders/quietplaces">Google Play Store Page&lt;/A></string>
+
+    <string name="about_blurb">
+        This is a term project for the 2014 Mobile Computing software engineering
+        graduate course at the University of Texas at Austin.
+    </string>
+
+    <string name="help_overview_title">Overview</string>
+    <string name="help_overview">
+        This app controls your phone\'s ringer automatically based on "quiet places" you define
+        either manually or through automatic discovery of certain place categories such as movie theaters or
+        hospitals. It is currently in development and not yet finished. Please watch this space.
+    </string>
+
+    <string name="help_usage_title">Using the App</string>
+    <string name="help_usage">
+        Currently you must manually add each Quiet Place to the map. A Quiet Place is a geographic point combined with a radius.
+        If you enter this area the ringer will be silenced automatically, and if you leave it will be
+        re-enabled - unless you are still within another Quiet Place.\n\n
+        To create a Quiet Place go to the Map tab then press the green Add button. Now touch a spot on the map
+        and the place will appear.  To move the place hold down the marker and then drag it. To resize the quiet
+        place tap the marker to select it then press the Grow or Shrink buttons in the action bar. To remove
+        the quiet place select it and then tap the trash can icon.
+    </string>
+
+    <string name="help_tools_title">Development</string>
+    <string name="help_tools">This app uses the &lt;A HREF="https://developers.google.com/maps/">Google Maps 2.0 SDK&lt;/A>
+        and the &lt;A HREF="https://developers.google.com/places/documentation/">Google Places API&lt;/A>,
+        along with &lt;A HREF="https://developer.android.com/training/location/geofencing.html">Location Services geofences&lt;/A>.
+        It was developed with &lt;A HREF="http://www.jetbrains.com/idea/">JetBrains IntelliJ IDEA 13&lt;/A>.
+    </string>
+
+    <string name="help_conclusion_title">For More Info</string>
+    <string name="help_conclusion">For more information please see the
+        &lt;A HREF="https://bitbucket.org/planders/quietplaces">
+        project source code home page&lt;/A>, or the Google Play store page (coming soon).
+        \n\n
+        This application is free software and is covered by the &lt;A HREF="http://www.gnu.org/licenses/gpl-2.0.txt">
+        GNU General Public License (GPL) 2.0&lt;/A>
+    </string>
+
     <string name="pref_category_location_title">Location Settings</string>
     <string name="pref_use_location">Allow Location Updates</string>
     <string name="pref_use_location_summary">If this is checked the app will periodically refresh your location to check for nearby quiet places.</string>
@@ -102,7 +154,7 @@
     <string name="lat_lng_pattern">* ###.00000000;* -###.00000000</string>
     <string name="radius_pattern">* #.0000</string>
 
-    <string name="size_label">Radius:</string>
+    <string name="size_label">"Radius: "</string>
     <string name="position_label">Pos:</string>
 
     <string name="shrink_place">Smaller</string>
