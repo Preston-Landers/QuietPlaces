@@ -18,7 +18,6 @@
         xmlns:android="http://schemas.android.com/apk/res/android"
         android:layout_height="wrap_content"
         android:layout_width="fill_parent"
-        android:background="?android:attr/activatedBackgroundIndicator"
         android:orientation="horizontal"
         android:id="@+id/nav_item">
 
@@ -27,37 +26,48 @@
             android:layout_height="wrap_content"
             android:id="@+id/nav_section_divider_imageView"
             android:src="@drawable/overscroll_edge"
-            android:visibility="gone"
             android:layout_marginLeft="5dp"
-            android:layout_marginRight="5dp"/>
+            android:layout_marginRight="5dp"
+            android:visibility="gone"/>
 
-    <FrameLayout
-            android:layout_width="wrap_content"
+    <RelativeLayout
+            xmlns:android="http://schemas.android.com/apk/res/android"
             android:layout_height="wrap_content"
-            android:id="@+id/nav_item_icon_frame"
-            android:layout_marginLeft="15dp"
-            android:layout_alignBottom="@+id/nav_item_label"
-            android:layout_alignTop="@+id/nav_item_label">
+            android:layout_width="fill_parent"
+            android:background="?android:attr/activatedBackgroundIndicator"
+            android:orientation="horizontal"
+            android:id="@+id/nav_item_body"
+            android:layout_below="@+id/nav_section_divider_imageView">
 
-        <ImageView
-                android:layout_width="25dp"
-                android:layout_height="25dp"
-                android:id="@+id/nav_icon_imageView"
-                android:src="@drawable/ic_menu_home"
-                android:layout_gravity="center"
-                android:contentDescription="@string/icon"/>
-    </FrameLayout>
+        <FrameLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:id="@+id/nav_item_icon_frame"
+                android:layout_marginLeft="15dp"
+                android:layout_alignBottom="@+id/nav_item_label"
+                android:layout_alignTop="@+id/nav_item_label">
 
-    <TextView xmlns:android="http://schemas.android.com/apk/res/android"
-              android:id="@+id/nav_item_label"
-              android:layout_width="match_parent"
-              android:layout_height="wrap_content"
-              android:textAppearance="?android:attr/textAppearanceLarge"
-              android:gravity="center_vertical"
-              android:minHeight="?android:attr/listPreferredItemHeight"
-              android:text="@string/app_name"
-              android:layout_marginLeft="15dp"
-              android:layout_toRightOf="@+id/nav_item_icon_frame"
-              android:layout_below="@+id/nav_section_divider_imageView"/>
+            <ImageView
+                    android:layout_width="25dp"
+                    android:layout_height="25dp"
+                    android:id="@+id/nav_icon_imageView"
+                    android:src="@drawable/ic_menu_home"
+                    android:layout_gravity="center"
+                    android:contentDescription="@string/icon"/>
+        </FrameLayout>
+
+        <TextView xmlns:android="http://schemas.android.com/apk/res/android"
+                  android:id="@+id/nav_item_label"
+                  android:layout_width="match_parent"
+                  android:layout_height="wrap_content"
+                  android:textAppearance="?android:attr/textAppearanceLarge"
+                  android:gravity="center_vertical"
+                  android:minHeight="?android:attr/listPreferredItemHeight"
+                  android:text="@string/app_name"
+                  android:layout_marginLeft="15dp"
+                  android:layout_toRightOf="@+id/nav_item_icon_frame"
+                  />
+
+    </RelativeLayout>
 </RelativeLayout>
 
