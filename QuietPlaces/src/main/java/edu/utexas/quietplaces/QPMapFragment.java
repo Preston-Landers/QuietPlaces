@@ -442,6 +442,10 @@ public class QPMapFragment extends QPFragment {
         Log.w(TAG, "Loaded marker database.");
 
         syncGeofences();
+
+        // Not sure we need to keep this.
+        HistoryEvent.logEvent(getActivity(), HistoryEvent.TYPE_DATABASE_LOADED,
+                String.format("Loaded %s quiet places from the database.", quietPlaceList.size()));
     }
 
     private void addQuietPlaceMapMarker(QuietPlace quietPlace) {

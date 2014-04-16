@@ -90,6 +90,9 @@ public class QuietPlacesDataSource {
         cursor.moveToFirst();
         QuietPlace newQuietPlace = cursorToQuietPlace(cursor);
         cursor.close();
+
+        Log.d(TAG, "saved quiet place to database: " + newQuietPlace.toString());
+
         return newQuietPlace;
     }
 

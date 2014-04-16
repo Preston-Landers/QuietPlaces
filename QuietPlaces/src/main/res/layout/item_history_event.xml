@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:padding="6dp">
+
+    <FrameLayout
+            android:layout_width="wrap_content"
+            android:layout_height="fill_parent"
+            android:id="@+id/event_icon_frame"
+            android:layout_centerVertical="true">
+
+        <ImageView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:id="@+id/event_icon"
+                android:src="@drawable/ic_menu_info_details"
+                android:layout_gravity="center"
+                />
+    </FrameLayout>
+
+    <RelativeLayout
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:id="@+id/event_body"
+            android:layout_toRightOf="@+id/event_icon_frame"
+            android:paddingLeft="10dp">
+
+        <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textAppearance="?android:attr/textAppearanceMedium"
+                android:text="Event Text"
+                android:id="@+id/event_text"
+                android:layout_below="@+id/event_date"
+                android:layout_marginTop="3dp"/>
+
+        <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textAppearance="?android:attr/textAppearanceSmall"
+                android:text="Event Date"
+                android:id="@+id/event_date"
+                android:layout_alignParentRight="true"
+                />
+    </RelativeLayout>
+</RelativeLayout>

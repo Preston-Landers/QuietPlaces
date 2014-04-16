@@ -1,0 +1,38 @@
+<RelativeLayout
+        xmlns:android="http://schemas.android.com/apk/res/android"
+        xmlns:tools="http://schemas.android.com/tools"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        tools:context="edu.utexas.quietplaces.HistoryFragment">
+
+    <Button
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/clear_history_button"
+            android:id="@+id/clear_history_button"
+            android:layout_alignParentBottom="true"
+            android:layout_centerHorizontal="true"
+            android:layout_marginTop="10dp"
+            android:onClick="clickClearHistoryButton"
+            android:layout_marginBottom="10dp"/>
+
+    <FrameLayout
+            android:layout_width="fill_parent"
+            android:layout_height="fill_parent"
+            android:layout_above="@+id/clear_history_button">
+
+        <ListView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:id="@id/android:list"
+                android:headerDividersEnabled="false"/>
+    </FrameLayout>
+
+    <TextView android:id="@id/android:empty"
+              android:layout_width="match_parent"
+              android:layout_height="match_parent"
+              android:textAppearance="?android:attr/textAppearanceMedium"
+              android:text="@string/no_events_yet"
+              android:padding="10dp"/>
+
+</RelativeLayout>

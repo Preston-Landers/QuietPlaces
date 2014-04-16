@@ -78,6 +78,7 @@
     <string name="add_quiet_place_button">Add</string>
     <string name="ringer_switch">Ringer</string>
     <string name="add_button_description">Add Quiet Place</string>
+    <string name="clear_history_button">Clear History</string>
 
     <!-- Messages -->
     <string name="add_geofences_result_success">
@@ -170,5 +171,16 @@
     <string name="edit_place">Edit</string>
     <string name="resize_btns_label">Resize</string>
     <string name="icon">Icon</string>
+
+    <!-- History event types -->
+    <string name="event_type_place_add">QuietPlace added</string>
+    <string name="event_type_place_remove">QuietPlace removed</string>
+    <string name="event_type_place_update">QuietPlace updated</string>
+    <string name="event_type_place_enter">QuietPlace entered</string>
+    <string name="event_type_place_exit">QuietPlace exited</string>
+
+    <string name="event_type_database_loaded">Database loaded</string>
+    <string name="event_type_history_cleared">History cleared</string>
+    <string name="no_events_yet">No events have been registered yet.</string>
 
 </resources>

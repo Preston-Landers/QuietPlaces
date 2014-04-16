@@ -605,6 +605,8 @@ public class MainActivity extends ActionBarActivity
         getMapFragment().clickDeleteButton(view);
     }
 
+    public void clickClearHistoryButton(View view) { historyFragment.clickClearHistoryButton(view); }
+
     /*
      * Provide the implementation of
      * OnAddGeofencesResultListener.onAddGeofencesResult.
