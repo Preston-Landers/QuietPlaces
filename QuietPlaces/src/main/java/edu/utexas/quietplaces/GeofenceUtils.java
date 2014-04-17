@@ -71,6 +71,12 @@ public final class GeofenceUtils {
     public static final String EXTRA_GEOFENCE_STATUS =  Config.PACKAGE_NAME +
             ".EXTRA_GEOFENCE_STATUS";
 
+    public static final String EXTRA_GEOFENCE_IDS = Config.PACKAGE_NAME +
+            ".EXTRA_GEOFENCE_IDS";
+
+    public static final String EXTRA_GEOFENCE_ENTERED = Config.PACKAGE_NAME +
+            ".EXTRA_GEOFENCE_ENTERED";
+
     /*
      * Keys for flattened geofences stored in SharedPreferences
      */

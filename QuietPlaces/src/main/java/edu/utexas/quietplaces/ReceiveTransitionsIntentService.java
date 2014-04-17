@@ -31,8 +31,9 @@ public class ReceiveTransitionsIntentService extends IntentService {
 
     /**
      * Handles incoming intents
+     *
      * @param intent The Intent sent by Location Services. This Intent is provided
-     * to Location Services (inside a PendingIntent) when you call addGeofences()
+     *               to Location Services (inside a PendingIntent) when you call addGeofences()
      */
     @Override
     protected void onHandleIntent(Intent intent) {
@@ -59,12 +60,12 @@ public class ReceiveTransitionsIntentService extends IntentService {
 
             // Set the action and error message for the broadcast intent
             broadcastIntent.setAction(GeofenceUtils.ACTION_GEOFENCE_ERROR)
-                           .putExtra(GeofenceUtils.EXTRA_GEOFENCE_STATUS, errorMessage);
+                    .putExtra(GeofenceUtils.EXTRA_GEOFENCE_STATUS, errorMessage);
 
             // Broadcast the error *locally* to other components in this app
             LocalBroadcastManager.getInstance(this).sendBroadcast(broadcastIntent);
 
-        // If there's no error, get the transition type and create a notification
+            // If there's no error, get the transition type and create a notification
         } else {
 
             // Get the type of transition (entry or exit)
@@ -73,23 +74,21 @@ public class ReceiveTransitionsIntentService extends IntentService {
             // Test that a valid transition was reported
             if (
                     (transition == Geofence.GEOFENCE_TRANSITION_ENTER)
-                    ||
-                    (transition == Geofence.GEOFENCE_TRANSITION_EXIT)
-               ) {
+                            ||
+                            (transition == Geofence.GEOFENCE_TRANSITION_EXIT)
+                    ) {
+                boolean entered = (transition == Geofence.GEOFENCE_TRANSITION_ENTER);
 
                 // Post a notification
                 List<Geofence> geofences = LocationClient.getTriggeringGeofences(intent);
                 String[] geofenceIds = new String[geofences.size()];
-                for (int index = 0; index < geofences.size() ; index++) {
+                for (int index = 0; index < geofences.size(); index++) {
                     geofenceIds[index] = geofences.get(index).getRequestId();
                 }
                 String ids = TextUtils.join(GeofenceUtils.GEOFENCE_ID_DELIMITER, geofenceIds);
                 String transitionType = getTransitionString(transition);
 
-                sendNotification(transitionType, ids);
-
                 // Log the transition type and a message
-                // TODO: maybe a shortToast here?
                 Log.i(GeofenceUtils.APPTAG,
                         getString(
                                 R.string.geofence_transition_notification_title,
@@ -99,7 +98,21 @@ public class ReceiveTransitionsIntentService extends IntentService {
                 Log.i(GeofenceUtils.APPTAG,
                         getString(R.string.geofence_transition_notification_text));
 
-            // An invalid transition was reported
+
+                // Let the main activity know we triggered a transition.
+                broadcastIntent.setAction(GeofenceUtils.ACTION_GEOFENCE_TRANSITION)
+                        .putExtra(GeofenceUtils.EXTRA_GEOFENCE_ENTERED, entered)
+                        .putExtra(GeofenceUtils.EXTRA_GEOFENCE_IDS, geofenceIds);
+                LocalBroadcastManager.getInstance(this).sendBroadcast(broadcastIntent);
+
+                // Now handle the notification bar
+                // TODO: we probably don't want to send a notification
+                // simply on geofence enter / exit - just when the ringer is
+                // turned on/off.
+
+                sendNotification(transition, transitionType, ids);
+
+
             } else {
                 // Always log as an error
                 Log.e(GeofenceUtils.APPTAG,
@@ -111,14 +124,14 @@ public class ReceiveTransitionsIntentService extends IntentService {
     /**
      * Posts a notification in the notification bar when a transition is detected.
      * If the user clicks the notification, control goes to the main Activity.
-     * @param transitionType The type of transition that occurred.
      *
+     * @param transitionType The type of transition that occurred.
      */
-    private void sendNotification(String transitionType, String ids) {
+    private void sendNotification(int transition, String transitionType, String ids) {
 
         // Create an explicit content Intent that starts the main Activity
         Intent notificationIntent =
-                new Intent(getApplicationContext(),MainActivity.class);
+                new Intent(getApplicationContext(), MainActivity.class);
 
         // Construct a task stack
         TaskStackBuilder stackBuilder = TaskStackBuilder.create(this);
@@ -136,17 +149,23 @@ public class ReceiveTransitionsIntentService extends IntentService {
         // Get a notification builder that's compatible with platform versions >= 4
         NotificationCompat.Builder builder = new NotificationCompat.Builder(this);
 
+        int icon = HistoryEvent.ICON_PLACE_ENTER;
+        if (transition == Geofence.GEOFENCE_TRANSITION_EXIT) {
+            icon = HistoryEvent.ICON_PLACE_EXIT;
+        }
+
         // Set the notification contents
-        builder.setSmallIcon(R.drawable.ic_notification)
-               .setContentTitle(
-                       getString(R.string.geofence_transition_notification_title,
-                               transitionType, ids))
-               .setContentText(getString(R.string.geofence_transition_notification_text))
-               .setContentIntent(notificationPendingIntent);
+        builder.setSmallIcon(icon)
+                .setContentTitle(
+                        getString(R.string.geofence_transition_notification_title,
+                                transitionType, ids)
+                )
+                .setContentText(getString(R.string.geofence_transition_notification_text))
+                .setContentIntent(notificationPendingIntent);
 
         // Get an instance of the Notification manager
         NotificationManager mNotificationManager =
-            (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+                (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
 
         // Issue the notification
         mNotificationManager.notify(0, builder.build());
@@ -154,6 +173,7 @@ public class ReceiveTransitionsIntentService extends IntentService {
 
     /**
      * Maps geofence transition types to their human-readable equivalents.
+     *
      * @param transitionType A transition type constant defined in Geofence
      * @return A String indicating the type of transition
      */

@@ -52,31 +52,31 @@ public class HistoryCursorAdapter extends CursorAdapter {
 
         if (eventType.equals(HistoryEvent.TYPE_DATABASE_LOADED)) {
             tvEventType.setText(context.getResources().getString(R.string.event_type_database_loaded));
-            ivEventTypeIcon.setImageResource(R.drawable.ic_menu_rotate);
+            ivEventTypeIcon.setImageResource(HistoryEvent.ICON_DATABASE_LOADED);
 
         } else if (eventType.equals(HistoryEvent.TYPE_HISTORY_CLEARED)) {
             tvEventType.setText(context.getResources().getString(R.string.event_type_history_cleared));
-            ivEventTypeIcon.setImageResource(R.drawable.ic_menu_clear_playlist);
+            ivEventTypeIcon.setImageResource(HistoryEvent.ICON_HISTORY_CLEARED);
 
         } else if (eventType.equals(HistoryEvent.TYPE_PLACE_ADD)) {
             tvEventType.setText(context.getResources().getString(R.string.event_type_place_add));
-            ivEventTypeIcon.setImageResource(R.drawable.ic_menu_btn_add);
+            ivEventTypeIcon.setImageResource(HistoryEvent.ICON_PLACE_ADD);
 
         } else if (eventType.equals(HistoryEvent.TYPE_PLACE_REMOVE)) {
             tvEventType.setText(context.getResources().getString(R.string.event_type_place_remove));
-            ivEventTypeIcon.setImageResource(R.drawable.ic_menu_delete);
+            ivEventTypeIcon.setImageResource(HistoryEvent.ICON_PLACE_REMOVE);
 
         } else if (eventType.equals(HistoryEvent.TYPE_PLACE_UPDATE)) {
             tvEventType.setText(context.getResources().getString(R.string.event_type_place_update));
-            ivEventTypeIcon.setImageResource(R.drawable.ic_menu_save);
+            ivEventTypeIcon.setImageResource(HistoryEvent.ICON_PLACE_UPDATE);
 
         } else if (eventType.equals(HistoryEvent.TYPE_PLACE_ENTER)) {
             tvEventType.setText(context.getResources().getString(R.string.event_type_place_enter));
-            ivEventTypeIcon.setImageResource(R.drawable.ic_menu_forward);
+            ivEventTypeIcon.setImageResource(HistoryEvent.ICON_PLACE_ENTER);
 
         } else if (eventType.equals(HistoryEvent.TYPE_PLACE_EXIT)) {
             tvEventType.setText(context.getResources().getString(R.string.event_type_place_exit));
-            ivEventTypeIcon.setImageResource(R.drawable.ic_menu_revert);
+            ivEventTypeIcon.setImageResource(HistoryEvent.ICON_PLACE_EXIT);
 
         } else {
             Log.w(TAG, "Warning: unknown event type: " + eventType);

@@ -45,6 +45,8 @@ if mock locations is enabled in the device's developer options menu.
 * Ability to resize quiet places with scale gestures
   * Not critical because we have buttons to resize the selected place.
 * Discover/suggest quiet places automatically from Places API
+* Add a general purpose "active" button to the home screen - same as Use Location in settings?
+
 * Current selection (of a Quiet Place) is lost when changing device orientation
 * If you are currently inside a geofence, and then move the fence away from you,
   it doesn't register as leaving the fence since it got removed and then

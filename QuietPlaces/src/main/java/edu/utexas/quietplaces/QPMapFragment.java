@@ -31,8 +31,14 @@ public class QPMapFragment extends QPFragment {
 
     private boolean currentlyAddingPlace = false;
 
+    // general set of QPMM markers
     private Set<QuietPlaceMapMarker> mapMarkerSet;
+
+    // access our markers (QPMM) by the Google Marker
     private Map<Marker, QuietPlaceMapMarker> markerMap;
+
+    // access our markers by the geofence ID
+    private Map<String, QuietPlaceMapMarker> markerByGeofenceId;
 
     private final boolean singleSelectMode = true;
 
@@ -56,6 +62,7 @@ public class QPMapFragment extends QPFragment {
     public QPMapFragment() {
         mapMarkerSet = new HashSet<QuietPlaceMapMarker>();
         markerMap = new HashMap<Marker, QuietPlaceMapMarker>();
+        markerByGeofenceId = new HashMap<String, QuietPlaceMapMarker>();
         pendingGeofenceAdds = new ArrayList<Geofence>();
         pendingGeofenceIdRemoves = new ArrayList<String>();
     }
@@ -434,7 +441,18 @@ public class QPMapFragment extends QPFragment {
         Log.w(TAG, "Removing QP from map fragment: " + qpmm.getQuietPlace());
 
         // TODO: catch and log exception?
-        mapMarkerSet.remove(qpmm);
+        if (markerMap.remove(qpmm.getMapMarker()) == null) {
+            Log.w(TAG, "couldn't remove item from markerMap: " + qpmm.toString());
+        }
+
+        if (markerByGeofenceId.remove(qpmm.getGeofenceId()) == null) {
+            Log.w(TAG, "couldn't remove item from markerByGeofenceId: "  + qpmm.toString());
+        }
+
+        if (!mapMarkerSet.remove(qpmm)) {
+            Log.w(TAG, "couldn't remove item from mapMarkerSet: " + qpmm.toString());
+        }
+
     }
 
 
@@ -465,10 +483,16 @@ public class QPMapFragment extends QPFragment {
         QuietPlaceMapMarker qpmm = QuietPlaceMapMarker.createQuietPlaceMapMarker(quietPlace, this);
         mapMarkerSet.add(qpmm);
         markerMap.put(qpmm.getMapMarker(), qpmm);
+        markerByGeofenceId.put(qpmm.getGeofenceId(), qpmm);
+
     }
 
     public QuietPlaceMapMarker getQPMMFromMarker(Marker marker) {
         return markerMap.get(marker);
+    }
+
+    public QuietPlaceMapMarker getQPMMFromGeofenceId(String geofenceId) {
+        return markerByGeofenceId.get(geofenceId);
     }
 
     public List<QuietPlaceMapMarker> getSelectedMarkers() {
@@ -557,6 +581,11 @@ public class QPMapFragment extends QPFragment {
         sizeLabel.setText(sizeStr);
     }
 
+
+    // Not sure if I'm going to use this scale gesture stuff...
+
+
+/*
     private class ScaleListener
             extends ScaleGestureDetector.SimpleOnScaleGestureListener {
 
@@ -591,9 +620,7 @@ public class QPMapFragment extends QPFragment {
             return true;
         }
     }
-
-
-    // Not sure if I'm going to use this...
+*/
 
 /*
     public void attachScaleListener(QuietPlaceMapMarker qpMapMarker) {
@@ -680,4 +707,26 @@ public class QPMapFragment extends QPFragment {
         }
     }
 
+    /**
+     * Notify one or more Quiet Places that they have been entered or exited
+     * @param geofenceIds array of geofence / QP string IDs
+     * @param entered true if we're entering this geofence, otherwise we're exiting
+     */
+    void handleGeofenceTransitions(String[] geofenceIds, boolean entered) {
+        for (String geofenceId : geofenceIds) {
+            if (geofenceId == null) {
+                continue;
+            }
+            QuietPlaceMapMarker qpmm = getQPMMFromGeofenceId(geofenceId);
+            if (qpmm == null) {
+                Log.e(TAG, "Can't find QuietPlaceMapMarker from geofence ID: " + geofenceId);
+                continue;
+            }
+            if (entered) {
+                qpmm.enterGeofence();
+            } else {
+                qpmm.exitGeofence();
+            }
+        }
+    }
 }

@@ -4,7 +4,9 @@ package edu.utexas.quietplaces;
 import org.joda.time.DateTime;
 
 /**
- * Data model object for a single QuietPlace
+ * Data model object for a single QuietPlace as stored in the database.
+ * The QuietPlaceMapMarker class is also important because it combines
+ * this object plus the Google map marker and related functionality.
  */
 public class QuietPlace {
     private long id;

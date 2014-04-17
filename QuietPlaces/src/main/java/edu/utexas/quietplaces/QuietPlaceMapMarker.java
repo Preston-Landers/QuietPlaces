@@ -18,8 +18,17 @@ public class QuietPlaceMapMarker {
     private Geofence geofence;
     private boolean selected;
     private double scaleFactor;
+    private boolean currentlyInside;
+    // TODO: add a "use geofence" setting?
 
     QuietPlaceMapMarker() {
+        currentlyInside = false;
+        selected = false;
+    }
+
+    @Override
+    public String toString() {
+        return "Quiet Place Map Marker " + getQuietPlace().toString();
     }
 
     /**
@@ -205,6 +214,14 @@ public class QuietPlaceMapMarker {
             // getQpMapFragment().detachScaleListener();
         }
 
+    }
+
+    public boolean isCurrentlyInside() {
+        return currentlyInside;
+    }
+
+    public void setCurrentlyInside(boolean currentlyInside) {
+        this.currentlyInside = currentlyInside;
     }
 
     /**
@@ -396,7 +413,7 @@ public class QuietPlaceMapMarker {
         int transitionType = Geofence.GEOFENCE_TRANSITION_ENTER | Geofence.GEOFENCE_TRANSITION_EXIT;
         float radius = (float) getRadius();
         return new Geofence.Builder()
-                .setRequestId(Long.toString(quietPlace.getId()))
+                .setRequestId(getNewGeofenceId())
                 .setTransitionTypes(transitionType)
                 .setCircularRegion(
                         quietPlace.getLatitude(),
@@ -408,4 +425,48 @@ public class QuietPlaceMapMarker {
                 .build();
     }
 
+    public void enterGeofence() {
+        setCurrentlyInside(true);
+
+        Log.w(TAG, "Entered Geofence! " + quietPlace.toString());
+
+        // SILENCE RINGER HERE....
+
+        HistoryEvent.logEvent(
+                getQpMapFragment().getActivity(),
+                HistoryEvent.TYPE_PLACE_ENTER,
+                quietPlace.getHistoryEventFormatted()
+        );
+
+    }
+
+    public void exitGeofence() {
+        setCurrentlyInside(false);
+
+        Log.w(TAG, "Exited Geofence! " + quietPlace.toString());
+
+        // UNSILENCE RINGER HERE....
+        // only if all other zones are clear also.
+
+        HistoryEvent.logEvent(
+                getQpMapFragment().getActivity(),
+                HistoryEvent.TYPE_PLACE_EXIT,
+                quietPlace.getHistoryEventFormatted()
+        );
+
+    }
+
+    public String getNewGeofenceId() {
+        if (quietPlace == null) {
+            return null;
+        }
+        return Long.toString(quietPlace.getId());
+    }
+
+    public String getGeofenceId() {
+        if (geofence == null) {
+            return getNewGeofenceId();
+        }
+        return geofence.getRequestId();
+    }
 }

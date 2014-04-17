@@ -61,6 +61,8 @@ public class MainActivity extends ActionBarActivity
 
     private boolean haveAlreadyCenteredCamera = false;
 
+    private boolean haveRegisteredBroadcastReceiver = false;
+
     /**
      * Used to store the last screen title. For use in {@link #restoreActionBar()}.
      */
@@ -88,7 +90,7 @@ public class MainActivity extends ActionBarActivity
      * An instance of an inner class that receives broadcasts from listeners and from the
      * IntentService that receives geofence transition events
      */
-    private GeofenceSampleReceiver mBroadcastReceiver;
+    private GeofenceReceiver mBroadcastReceiver;
 
     // An intent filter for the broadcast receiver
     private IntentFilter mIntentFilter;
@@ -116,7 +118,7 @@ public class MainActivity extends ActionBarActivity
         mGeofenceRemover = new GeofenceRemover(this);
 
         // Create a new broadcast receiver to receive updates from the listeners and service
-        mBroadcastReceiver = new GeofenceSampleReceiver();
+        mBroadcastReceiver = new GeofenceReceiver();
 
         // Create an intent filter for the broadcast receiver
         mIntentFilter = new IntentFilter();
@@ -129,6 +131,9 @@ public class MainActivity extends ActionBarActivity
 
         // Action for broadcast Intents containing various types of geofencing errors
         mIntentFilter.addAction(GeofenceUtils.ACTION_GEOFENCE_ERROR);
+
+        // Action for broadcast Intents when we perform a geofence transition.
+        mIntentFilter.addAction(GeofenceUtils.ACTION_GEOFENCE_TRANSITION);
 
         // All Location Services sample apps use this category
         mIntentFilter.addCategory(GeofenceUtils.CATEGORY_LOCATION_SERVICES);
@@ -304,7 +309,11 @@ public class MainActivity extends ActionBarActivity
         mUpdatesRequested = getPrefUsingLocation();
 
         // Register the broadcast receiver to receive status updates
-        LocalBroadcastManager.getInstance(this).registerReceiver(mBroadcastReceiver, mIntentFilter);
+        if (!haveRegisteredBroadcastReceiver) {
+            LocalBroadcastManager.getInstance(this).registerReceiver(mBroadcastReceiver, mIntentFilter);
+            haveRegisteredBroadcastReceiver = true;
+        }
+
 
     }
 
@@ -659,7 +668,7 @@ public class MainActivity extends ActionBarActivity
      * Define a Broadcast receiver that receives updates from connection listeners and
      * the geofence transition service.
      */
-    public class GeofenceSampleReceiver extends BroadcastReceiver {
+    public class GeofenceReceiver extends BroadcastReceiver {
         /*
          * Define the required method for broadcast receivers
          * This method is invoked when a broadcast Intent triggers the receiver
@@ -702,7 +711,8 @@ public class MainActivity extends ActionBarActivity
          * @param intent  The received broadcast Intent
          */
         private void handleGeofenceStatus(Context context, Intent intent) {
-
+            // TODO: I'm not sure this code will be called.
+            Log.i(TAG, "Geofence was added.");
         }
 
         /**
@@ -717,6 +727,12 @@ public class MainActivity extends ActionBarActivity
              * here. The current design of the app uses a notification to inform the
              * user that a transition has occurred.
              */
+
+            String[] geofenceIds = intent.getStringArrayExtra(GeofenceUtils.EXTRA_GEOFENCE_IDS);
+            boolean entered = intent.getBooleanExtra(GeofenceUtils.EXTRA_GEOFENCE_ENTERED, true);
+
+            // Log.i(TAG, "Geofence TRANSITION!");
+            getMapFragment().handleGeofenceTransitions(geofenceIds, entered);
         }
 
         /**
@@ -726,8 +742,8 @@ public class MainActivity extends ActionBarActivity
          */
         private void handleGeofenceError(Context context, Intent intent) {
             String msg = intent.getStringExtra(GeofenceUtils.EXTRA_GEOFENCE_STATUS);
-            Log.e(GeofenceUtils.APPTAG, msg);
-            Toast.makeText(context, msg, Toast.LENGTH_LONG).show();
+            Log.e(TAG, msg);
+            longToast(msg);
         }
     }
 

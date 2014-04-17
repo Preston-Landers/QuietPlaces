@@ -18,6 +18,16 @@ public class HistoryEvent {
     public static final String TYPE_DATABASE_LOADED = "event_type_database_loaded";
     public static final String TYPE_HISTORY_CLEARED = "event_type_history_cleared";
 
+    // Define icons in one place.
+    public static final int ICON_PLACE_ENTER = R.drawable.ic_menu_forward;
+    public static final int ICON_PLACE_EXIT = R.drawable.ic_menu_revert;
+    public static final int ICON_PLACE_ADD = R.drawable.ic_menu_btn_add;
+    public static final int ICON_PLACE_REMOVE = R.drawable.ic_menu_delete;
+    public static final int ICON_PLACE_UPDATE = R.drawable.ic_menu_save;
+    public static final int ICON_DATABASE_LOADED = R.drawable.ic_menu_rotate;
+    public static final int ICON_HISTORY_CLEARED = R.drawable.ic_menu_clear_playlist;
+
+
     private long id;
     private String type;
     private String text;
