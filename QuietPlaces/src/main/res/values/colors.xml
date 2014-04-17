@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="item_history_event_bg_odd">#F2F4FC</color>
+    <color name="item_history_event_bg_even">#FCFAF2</color>
+</resources>

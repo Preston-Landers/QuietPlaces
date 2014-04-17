@@ -5,9 +5,6 @@ import com.google.android.gms.location.Geofence;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.model.*;
 
-import java.util.ArrayList;
-import java.util.List;
-
 /**
  * Contains an association of a QuietPlace and a MapMarker.
  */
@@ -25,6 +22,12 @@ public class QuietPlaceMapMarker {
     QuietPlaceMapMarker() {
     }
 
+    /**
+     * Main function for creating new map markers
+     * @param quietPlace the place to add
+     * @param qpMapFragment the containing map fragment
+     * @return a QuietPlaceMapMarker instance
+     */
     public static QuietPlaceMapMarker createQuietPlaceMapMarker(
             QuietPlace quietPlace,
             QPMapFragment qpMapFragment
@@ -83,7 +86,8 @@ public class QuietPlaceMapMarker {
     }
 
     public void delete() {
-        getQpMapFragment().shortToast("Marker deleted: " + getQuietPlace().getComment());
+        String logMsg = getQuietPlace().getHistoryEventFormatted();
+        getQpMapFragment().shortToast("Marker deleted: " + logMsg);
 
         // delete the geofence here
         removeGeofence();
@@ -93,6 +97,12 @@ public class QuietPlaceMapMarker {
         getQpMapFragment().removeQuietPlaceMapMarker(this);
 
         database_delete();
+
+        HistoryEvent.logEvent(
+                getQpMapFragment().getActivity(),
+                HistoryEvent.TYPE_PLACE_REMOVE,
+                logMsg
+        );
 
     }
 
@@ -239,6 +249,13 @@ public class QuietPlaceMapMarker {
         if (doSave) {
             database_save();
             getQpMapFragment().syncGeofences();
+
+            HistoryEvent.logEvent(
+                    getQpMapFragment().getActivity(),
+                    HistoryEvent.TYPE_PLACE_UPDATE,
+                    getQuietPlace().getHistoryEventFormatted()
+            );
+
         } else {
             Log.d(TAG, "Intermediate QuietPlace move not saved to database.");
         }
@@ -258,6 +275,12 @@ public class QuietPlaceMapMarker {
         getQpMapFragment().updateInfoString(getQuietPlace());
         database_save();
         setGeofence();
+
+        HistoryEvent.logEvent(
+                getQpMapFragment().getActivity(),
+                HistoryEvent.TYPE_PLACE_UPDATE,
+                getQuietPlace().getHistoryEventFormatted()
+        );
 
         getQpMapFragment().syncGeofences();
     }

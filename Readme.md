@@ -1,16 +1,20 @@
 
 # Welcome to QuietPlaces #
 
-This is the source code repository for QuietPlaces, an Android app to automatically
-silence your phone when you enter quiet places. You can create, remove and adjust your
-quiet places at any time, and quiet places can be automatically suggested based on
-categories obtained from the Google Places API.
+This is the source code repository for QuietPlaces, an Android app that automatically
+silences your phone when you enter quiet places that you have defined. When you leave
+the quiet zone your ringer is automatically re-enabled. Quiet Place zones are defined as
+circles centered around a geographic point.
+
+You can create, remove or adjust your quiet places at any time using an interactive map,
+and new quiet places can be automatically suggested based on categories obtained from
+the Google Places API.
 
 ## About QuietPlace ##
 
 This is a project for a Mobile Computing class at UT Austin. The goal is to combine the
 Google Maps and Places APIs to enable intelligent control over the phone ringer by sensing
- when the user has entered a place categorized as a silent zone, such as hospitals or museums.
+ when the user has entered places categorized as silent zones, such as hospitals or museums.
 
 
 ## Authors ##
@@ -29,36 +33,23 @@ Dr. Christine Julien
 
 See the section below for building the app from source code.
 
-We have a simple navigation drawer based app that has a home screen, a map
-screen, and a settings screen, plus a placeholder screen for future use.
-
-The home screen simply displays logo and credits, and a ringer on/off switch.
-
-The map screen displays and shows your current location. There is a custom map
-overlay that allows you to manually add QuietPlace zones. You can also move and resize
-the quiet place map markers.
-
-The quiet places on the map currently don't do anything with the ringer. We are
-working on adding the geo-fencing and ringer control operations.
-
 We also have a mock location testing companion app, which is available here:
-[QuietPlacesMockLocations][QuietPlacesMockLocations]
-
+[QuietPlacesMockLocations]
 
 The Mock Location app will feed a series of fake location events to the location service,
 if mock locations is enabled in the device's developer options menu.
 
-## Current TODO List ##
+## Current TODO List and Known Bugs ##
 
 * Implement actual geofenced ringer around quiet places
 * Ability to resize quiet places with scale gestures
   * Not critical because we have buttons to resize the selected place.
 * Discover/suggest quiet places automatically from Places API
-* Selection of Quiet Place is lost when changing device orientation
-
+* Current selection (of a Quiet Place) is lost when changing device orientation
 * If you are currently inside a geofence, and then move the fence away from you,
   it doesn't register as leaving the fence since it got removed and then
   readded in the other spot.
+* Put a confirmation dialog on delete place, and clear history?
 
 ## Software Engineering Challenges ##
 
@@ -71,8 +62,8 @@ One approach is to feed mock location data to the app with the assistance of ano
 location provider. This has the benefit of working inside the emulator and allows testing a sequence
 of location events without physically moving the device.
 
-I have started a [QuietPlacesMockLocations][mock location provider app] from
-the [Location Testing][sample code provided by Google].  Currently this has just a single
+I have started a [mock location provider app][QuietPlacesMockLocations] from
+the [sample code provided by Google][Location Testing].  Currently this has just a single
 hardcoded location provided by the sample code. We can customize that app to put in our own
 sequence of events, or even better, make the app retrieve the sequence from a website that we
 set up. This allows us to change the mock locations without updating the app.
@@ -91,11 +82,9 @@ Gradle-aware IDEs such as IntelliJ IDEA 13 or Android Studio. It should work wit
 Eclipse but I haven't tried that.
 
 *Important*: In order to build and run the app from source, you must create a new private.xml file
-and put in a Google API key as described below.
+and put in a Google API key as described below. The app won't compile unless you take this extra
+step of creating a file and inserting a new API key that you got from Google.
 
-Note: IntelliJ IDEA 13 keeps creating 'duplicate' libraries. I'm experiencing this but don't have a fix yet:
-
- http://stackoverflow.com/questions/20728492/how-to-avoid-mirroring-libraries-in-intellij-idea-using-gradle
 
 ## Add the API Key in res/values/private.xml ##
 
@@ -121,10 +110,12 @@ Contents should be like:
 Replace `PROJECT_NUMBER` with the project number from the Google API console, and the `API_KEY` from the
 key you got from the Public API Access area of the console.
 
-`API_KEY` will look something like `AIzaSyBdVl-cTICSwYKrZ95SuvNw7dbMuDt1KG0` (that's not a valid one)
+`API_KEY` will look something like `AIzaSyBdVl-cTICSwYKrZ95SuvNw7dbMuDt1KG0` (this is not a valid key)
 
 
 ## Debug and Release builds ##
+
+This section is only relevant if you are trying to build a public release version for the stores.
 
 Debug builds will be signed with your default debug keystore. To build a debug version with gradle run:
 
@@ -152,7 +143,8 @@ Now you should be able to create a signed release build with:
 
 # License
 
-This project is free software and is licensed by the [GNU General Public License (GPL) 2.0](http://www.gnu.org/licenses/gpl-2.0.txt).
+The code in this project is free software and is licensed by the
+[GNU General Public License (GPL) 2.0](http://www.gnu.org/licenses/gpl-2.0.txt).
 See LICENSE.txt for details.
 
 

@@ -203,6 +203,7 @@ public class QPMapFragment extends QPFragment {
 
     /**
      * Change the map type
+     *
      * @param mapType one of the constants defined in the GoogleMap object
      */
     public void setMapType(int mapType) {
@@ -251,6 +252,7 @@ public class QPMapFragment extends QPFragment {
 
     /**
      * Grow all selected places by a certain increment.
+     *
      * @param view unused
      */
     public void clickGrowButton(final View view) {
@@ -262,6 +264,7 @@ public class QPMapFragment extends QPFragment {
 
     /**
      * Shrink all selected places by a certain increment.
+     *
      * @param view unused
      */
     public void clickShrinkButton(final View view) {
@@ -273,6 +276,7 @@ public class QPMapFragment extends QPFragment {
 
     /**
      * Delete all selected places.
+     *
      * @param view unused
      */
     public void clickDeleteButton(final View view) {
@@ -285,6 +289,7 @@ public class QPMapFragment extends QPFragment {
 
     /**
      * Center on the first selected item.
+     *
      * @param view unused
      */
     public void clickCenterButton(final View view) {
@@ -353,6 +358,14 @@ public class QPMapFragment extends QPFragment {
         quietPlace = dataSource.saveQuietPlace(quietPlace);
         Log.w(TAG, "Saved place to db: " + quietPlace);
         dataSource.close();
+
+        // we do this outside of addQuietPlaceMapMarker because
+        // we don't want these logged when loaded from the database load method.
+        HistoryEvent.logEvent(
+                getActivity(),
+                HistoryEvent.TYPE_PLACE_ADD,
+                quietPlace.getHistoryEventFormatted()
+        );
 
         addQuietPlaceMapMarker(quietPlace);
     }

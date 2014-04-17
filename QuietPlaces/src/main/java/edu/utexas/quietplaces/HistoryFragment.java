@@ -7,7 +7,6 @@ import android.support.v4.app.ListFragment;
 import android.support.v4.app.LoaderManager;
 import android.support.v4.content.CursorLoader;
 import android.support.v4.content.Loader;
-import android.support.v4.widget.SimpleCursorAdapter;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -28,7 +27,7 @@ public class HistoryFragment
      */
     protected static final String ARG_SECTION_NUMBER = "section_number";
 
-    private SimpleCursorAdapter adapter;
+    private HistoryCursorAdapter adapter;
 
     /**
      * Returns a new instance of this fragment for the given section
@@ -79,7 +78,7 @@ public class HistoryFragment
 
         HistoryEvent.logEvent(activity,
                 HistoryEvent.TYPE_HISTORY_CLEARED,
-                "History cleared."
+                "History cleared."  // TODO: resource string
         );
     }
 
@@ -87,8 +86,14 @@ public class HistoryFragment
     @Override
     public Loader<Cursor> onCreateLoader(int id, Bundle args) {
         String[] projection = HistoryEventsTable.allColumns ;
+
+        // Load the history by newest first
+        String sortOrder = HistoryEventsTable.COLUMN_DATETIME + " DESC";
+
+        // TODO: other data limit for very large tables? such as limit by time?
+
         CursorLoader cursorLoader = new CursorLoader(getActivity(),
-                HistoryEventsContentProvider.CONTENT_URI, projection, null, null, null);
+                HistoryEventsContentProvider.CONTENT_URI, projection, null, null, sortOrder);
         return cursorLoader;
     }
 
@@ -105,26 +110,9 @@ public class HistoryFragment
 
     private void fillData() {
 
-        // Fields from the database (projection)
-        // Must include the _id column for the adapter to work
-        // String[] from = HistoryEventsTable.allColumns;
-        String[] from = {
-                // HistoryEventsTable.COLUMN_TYPE,
-                HistoryEventsTable.COLUMN_TEXT,
-                HistoryEventsTable.COLUMN_DATETIME
-        };
-
-        // Fields on the UI to which we map
-        int[] to = new int[] {
-                // R.id.event_type,
-                R.id.event_text,
-                R.id.event_date
-        };
-
         getLoaderManager().initLoader(0, null, this);
-        adapter = new SimpleCursorAdapter(getActivity(),
-                R.layout.item_history_event, null,
-                from, to, 0);
+
+        adapter = new HistoryCursorAdapter(getActivity(), null, 0);
 
         setListAdapter(adapter);
     }

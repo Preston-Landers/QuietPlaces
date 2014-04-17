@@ -33,7 +33,7 @@
                 android:textAppearance="?android:attr/textAppearanceMedium"
                 android:text="Event Text"
                 android:id="@+id/event_text"
-                android:layout_below="@+id/event_date"
+                android:layout_below="@+id/event_type"
                 android:layout_marginTop="3dp"/>
 
         <TextView
@@ -44,5 +44,15 @@
                 android:id="@+id/event_date"
                 android:layout_alignParentRight="true"
                 />
+
+        <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textAppearance="?android:attr/textAppearanceSmall"
+                android:text="Event Type"
+                android:id="@+id/event_type"
+                android:layout_alignParentRight="false"
+                android:textStyle="italic"
+                android:textColor="#767977"/>
     </RelativeLayout>
 </RelativeLayout>

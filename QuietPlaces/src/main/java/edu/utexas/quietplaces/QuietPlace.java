@@ -17,11 +17,14 @@ public class QuietPlace {
 
     @Override
     public String toString() {
+/*
         return String.format(
                 "QP Lat: %s Long: %s Rad: %s - Cat: %s - %s - %s",
                 getLatitude(), getLongitude(), getRadius(), getCategory(),
                 getDatetimeString(), getComment()
         );
+*/
+        return getHistoryEventFormatted();
     }
 
     public long getId() {
@@ -120,4 +123,18 @@ public class QuietPlace {
         }
         return latStr + ", " + longStr;
     }
+
+    /**
+     * Returns a suitable description of this quiet place
+     * for the history event message when we add it to the DB.
+     * @return a formatted string representation of the current status
+     */
+    public String getHistoryEventFormatted() {
+        // is this good enough?
+        return String.format(
+                "%s: %s - %s %s",
+                getId(), getComment(), getLocationFormatted(), getRadiusFormatted()
+        );
+    }
+
 }

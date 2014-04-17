@@ -195,7 +195,12 @@ public class HistoryEventsContentProvider extends ContentProvider {
         return deletedRows;
     }
 
-    private static HistoryEvent cursorToHistoryEvent(Cursor cursor) {
+    /**
+     * Load a HistoryEvent object out of a cursor.
+     * @param cursor active cursor
+     * @return new HistoryEvent from the current record in the cursor.
+     */
+    protected static HistoryEvent cursorToHistoryEvent(Cursor cursor) {
         HistoryEvent event = new HistoryEvent();
         event.setId(cursor.getLong(0));
         event.setType(cursor.getString(1));

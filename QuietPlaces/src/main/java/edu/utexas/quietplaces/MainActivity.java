@@ -482,7 +482,7 @@ public class MainActivity extends ActionBarActivity
     public void onConnected(Bundle dataBundle) {
         // Display the connection status
         if (mUpdatesRequested) {
-            shortToast("Requesting Location Services");
+            // shortToast("Requesting Location Services");
             mLocationClient.requestLocationUpdates(mLocationRequest, this);
         } else {
             shortToast("Location Services Disabled");
