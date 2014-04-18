@@ -95,9 +95,10 @@ public class MainActivity extends ActionBarActivity
     // An intent filter for the broadcast receiver
     private IntentFilter mIntentFilter;
 
-    // Store the list of geofences to remove
-    private List<String> mGeofenceIdsToRemove;
-
+    // We don't want to un-silence if the device was manually silenced before
+    // entering the quiet zone. So keep track of whether we were the ones to engage
+    // the silence.
+    private boolean weSilencedTheDevice;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -422,15 +423,88 @@ public class MainActivity extends ActionBarActivity
 
     public void onClickRinger(View view) {
         Switch ringerSwitch = (Switch) findViewById(R.id.switch_home_ringer);
-        // String result = "Ringer turned off.";
-        boolean ringerState = false;
         if (ringerSwitch.isChecked()) {
-            // result = "Ringer turned on.";
-            ringerState = true;
+            unsilenceDevice();
+        } else {
+            silenceDevice();
         }
-        // shortToast(result);
-        setRinger(ringerState);
     }
+
+    /**
+     * Silence the device according to current preference (silent or vibrate).
+     *
+     * @return false if the device was already silent, true if we engaged silent mode.
+     */
+    public boolean silenceDevice() {
+        boolean wasSilent = isRingerSilentOrVibrate();
+        if (wasSilent) {
+            Log.d(TAG, "device was already silent when silenceDevice() was called.");
+            return false;
+        }
+        Switch ringerSwitch = (Switch) findViewById(R.id.switch_home_ringer);
+        ringerSwitch.setChecked(false);
+        setRinger(false);
+        weSilencedTheDevice = true;
+        return true;
+    }
+
+    /**
+     * Restore normal ringer mode.
+     *
+     * @return false if the ringer was already in normal mode, otherwise true
+     */
+    public boolean unsilenceDevice() {
+        boolean wasSilent = isRingerSilentOrVibrate();
+        if (!wasSilent) {
+            Log.d(TAG, "device was already in normal ringer mode when unsilenceDevice() was called.");
+            return false;
+        }
+        Switch ringerSwitch = (Switch) findViewById(R.id.switch_home_ringer);
+        ringerSwitch.setChecked(true);
+        setRinger(true);
+        weSilencedTheDevice = false;
+        return true;
+    }
+
+    /**
+     * Restore normal ringer mode, but only if this app had put it in silent mode.
+     *
+     * @return false if the ringer was already in normal mode, or we didn't silence it before.
+     */
+    public boolean unsilenceDeviceIfWeSilenced() {
+        if (weSilencedTheDevice) {
+            return unsilenceDevice();
+        }
+        Log.i(TAG, "Unsilence request skipped because we did not silence the device.");
+        return false;
+    }
+
+
+    // Todo: support separate vibration setting?
+    private void setRinger(boolean ringerState) {
+        AudioManager audioManager = (AudioManager) getSystemService(AUDIO_SERVICE);
+        int ringerMode = AudioManager.RINGER_MODE_NORMAL;
+        if (!ringerState) {
+            if (getPrefUsingVibrate()) {
+                ringerMode = AudioManager.RINGER_MODE_VIBRATE;
+                Log.i(TAG, "Setting ringer state to VIBRATE");
+            } else {
+                ringerMode = AudioManager.RINGER_MODE_SILENT;
+                Log.i(TAG, "Setting ringer state to SILENT");
+            }
+        } else {
+            Log.i(TAG, "Setting ringer state to NORMAL");
+        }
+        audioManager.setRingerMode(ringerMode);
+
+    }
+
+    private boolean isRingerSilentOrVibrate() {
+        AudioManager audioManager = (AudioManager) getSystemService(AUDIO_SERVICE);
+        int ringerMode = audioManager.getRingerMode();
+        return (ringerMode == AudioManager.RINGER_MODE_SILENT || ringerMode == AudioManager.RINGER_MODE_VIBRATE);
+    }
+
 
     public void shortToast(String msg) {
         Toast.makeText(MainActivity.this, msg, Toast.LENGTH_SHORT).show();
@@ -438,17 +512,6 @@ public class MainActivity extends ActionBarActivity
 
     public void longToast(String msg) {
         Toast.makeText(MainActivity.this, msg, Toast.LENGTH_LONG).show();
-    }
-
-    // Todo: support separate vibration setting?
-    private void setRinger(boolean ringerState) {
-        AudioManager audioManager = (AudioManager) getSystemService(AUDIO_SERVICE);
-        int ringerMode = AudioManager.RINGER_MODE_NORMAL;
-        if (!ringerState) {
-            ringerMode = AudioManager.RINGER_MODE_SILENT;
-        }
-        audioManager.setRingerMode(ringerMode);
-
     }
 
     /**
@@ -565,6 +628,10 @@ public class MainActivity extends ActionBarActivity
         return sharedPrefs.getBoolean(SettingsFragment.KEY_USE_LOCATION, false);
     }
 
+    private boolean getPrefUsingVibrate() {
+        return sharedPrefs.getBoolean(SettingsFragment.KEY_USE_VIBRATE, false);
+    }
+
     private void updateUserLocationOnMap(Location location) {
         // setupMapIfNeeded();
         if (googleMap == null) {
@@ -614,7 +681,9 @@ public class MainActivity extends ActionBarActivity
         getMapFragment().clickDeleteButton(view);
     }
 
-    public void clickClearHistoryButton(View view) { historyFragment.clickClearHistoryButton(view); }
+    public void clickClearHistoryButton(View view) {
+        historyFragment.clickClearHistoryButton(view);
+    }
 
     /*
      * Provide the implementation of
@@ -784,7 +853,7 @@ public class MainActivity extends ActionBarActivity
 
     /**
      * Verify that Google Play services is available before making a request.
-     *
+     * <p/>
      * TODO: should be calling this when initially creating the map fragment.
      *
      * @return true if Google Play services is available, otherwise false

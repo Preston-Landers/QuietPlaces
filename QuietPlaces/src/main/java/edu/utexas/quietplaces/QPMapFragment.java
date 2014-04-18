@@ -729,4 +729,21 @@ public class QPMapFragment extends QPFragment {
             }
         }
     }
+
+    /**
+     * Return true if we are currently inside any geofences other than the given one.
+     * @param excludeQPMM exclude this one from the check (can be null)
+     * @return true if we are currently inside at least 1 QuietPlaceMapMarker other than the given one.
+     */
+    public boolean areWeInsideOtherGeofences(QuietPlaceMapMarker excludeQPMM) {
+        for (QuietPlaceMapMarker qpmm : mapMarkerSet ) {
+            if (qpmm.equals(excludeQPMM)) {
+                continue;
+            }
+            if (qpmm.isCurrentlyInside()) {
+                return true;
+            }
+        }
+        return false;
+    }
 }

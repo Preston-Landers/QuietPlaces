@@ -428,31 +428,48 @@ public class QuietPlaceMapMarker {
     public void enterGeofence() {
         setCurrentlyInside(true);
 
-        Log.w(TAG, "Entered Geofence! " + quietPlace.toString());
+        Log.w(TAG, "Entered Geofence! " + quietPlace);
 
         // SILENCE RINGER HERE....
+        MainActivity mainActivity = (MainActivity) getQpMapFragment().getActivity();
+        if (mainActivity.silenceDevice()) {
+            Log.i(TAG, "Entered geofence and silenced the ringer. Entered: " + quietPlace);
 
-        HistoryEvent.logEvent(
-                getQpMapFragment().getActivity(),
-                HistoryEvent.TYPE_PLACE_ENTER,
-                quietPlace.getHistoryEventFormatted()
-        );
+            HistoryEvent.logEvent(
+                    getQpMapFragment().getActivity(),
+                    HistoryEvent.TYPE_PLACE_ENTER,
+                    quietPlace.getHistoryEventFormatted()
+            );
+        } else {
+            Log.i(TAG, "Entered geofence but ringer was already silenced. Entered: " + quietPlace);
+        }
 
     }
 
     public void exitGeofence() {
         setCurrentlyInside(false);
 
-        Log.w(TAG, "Exited Geofence! " + quietPlace.toString());
+        Log.w(TAG, "Exited Geofence! " + quietPlace);
 
         // UNSILENCE RINGER HERE....
         // only if all other zones are clear also.
+        if (getQpMapFragment().areWeInsideOtherGeofences(this)) {
+            Log.i(TAG, "Exited geofence but we're still inside another geofence. Exited: " + quietPlace);
+            return;
+        }
 
-        HistoryEvent.logEvent(
-                getQpMapFragment().getActivity(),
-                HistoryEvent.TYPE_PLACE_EXIT,
-                quietPlace.getHistoryEventFormatted()
-        );
+        MainActivity mainActivity = (MainActivity) getQpMapFragment().getActivity();
+        if (mainActivity.unsilenceDeviceIfWeSilenced()) {
+            Log.i(TAG, "Exited geofence and re-activated the ringer. Exited: " + quietPlace);
+            HistoryEvent.logEvent(
+                    getQpMapFragment().getActivity(),
+                    HistoryEvent.TYPE_PLACE_EXIT,
+                    quietPlace.getHistoryEventFormatted()
+            );
+        } else {
+            Log.w(TAG, "Exited geofence and the ringer was either already active or else we " +
+                    "left it silent because we didn't silence in the first place. Exited gfence: " + quietPlace);
+        }
 
     }
 

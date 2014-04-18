@@ -26,6 +26,7 @@ public class SettingsFragment extends PreferenceFragment
 
     public static final String KEY_USE_LOCATION = "pref_use_location";
     public static final String KEY_MAP_TYPE = "pref_map_type";
+    public static final String KEY_USE_VIBRATE = "pref_use_vibrate";
 
     private static final String MAP_TYPE_NORMAL = "MAP_TYPE_NORMAL";
     private static final String MAP_TYPE_HYBRID = "MAP_TYPE_HYBRID";

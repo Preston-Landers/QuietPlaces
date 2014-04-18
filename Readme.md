@@ -33,24 +33,31 @@ Dr. Christine Julien
 
 See the section below for building the app from source code.
 
+The app has basic functionality with user-defined quiet places (geofences). Automatic
+suggestions of places based on the Places API is not implemented yet.
+
 We also have a mock location testing companion app, which is available here:
 [QuietPlacesMockLocations]
 
 The Mock Location app will feed a series of fake location events to the location service,
 if mock locations is enabled in the device's developer options menu.
 
-## Current TODO List and Known Bugs ##
+## Current TODO List  ##
 
-* Implement actual geofenced ringer around quiet places
+* Discover/suggest quiet places automatically from Places API
+* Generate more interesting names for the places and allow name editing
 * Ability to resize quiet places with scale gestures
   * Not critical because we have buttons to resize the selected place.
-* Discover/suggest quiet places automatically from Places API
 * Add a general purpose "active" button to the home screen - same as Use Location in settings?
+
+## Known Bugs ##
 
 * Current selection (of a Quiet Place) is lost when changing device orientation
 * If you are currently inside a geofence, and then move the fence away from you,
   it doesn't register as leaving the fence since it got removed and then
   readded in the other spot.
+* If you create a new QP that you are currently inside, it doesn't trigger the silence.
+  * Should it?
 * Put a confirmation dialog on delete place, and clear history?
 
 ## Software Engineering Challenges ##

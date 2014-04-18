@@ -1,13 +1,18 @@
 <?xml version="1.0" encoding="utf-8"?>
 <PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
     <PreferenceCategory
-            android:title="@string/pref_category_location_title"
+            android:title="@string/pref_category_device_title"
             android:key="pref_category_location">
         <CheckBoxPreference
                 android:key="pref_use_location"
                 android:title="@string/pref_use_location"
                 android:summary="@string/pref_use_location_summary"
                 android:defaultValue="true"/>
+        <CheckBoxPreference
+                android:key="pref_use_vibrate"
+                android:title="@string/pref_use_vibrate"
+                android:summary="@string/pref_use_vibrate_summary"
+                android:defaultValue="false"/>
     </PreferenceCategory>
     <PreferenceCategory
             android:title="@string/pref_category_map_title"
