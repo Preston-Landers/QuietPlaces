@@ -59,6 +59,8 @@ if mock locations is enabled in the device's developer options menu.
 * If you create a new QP that you are currently inside, it doesn't trigger the silence.
   * Should it?
 * Put a confirmation dialog on delete place, and clear history?
+* If the app has not received location updates in a while, we may miss some geofence
+  transitions and may need to do a manual check.
 
 ## Software Engineering Challenges ##
 

@@ -23,6 +23,7 @@ android {
         versionName "0.2"
     }
 
+/*
     signingConfigs {
         release {
             storeFile file(QP_RELEASE_STORE_FILE)
@@ -39,12 +40,13 @@ android {
             signingConfig signingConfigs.release
         }
     }
+*/
 }
 
 dependencies {
-    compile 'com.android.support:support-v4:19.0.+'
-    compile 'com.android.support:appcompat-v7:19.0.+'
-    compile 'com.google.android.gms:play-services:4.0.30'
+    compile 'com.android.support:support-v4:19.1.0'
+    compile 'com.android.support:appcompat-v7:19.1.0'
+    compile 'com.google.android.gms:play-services:4.3.23'
     compile 'joda-time:joda-time:2.3'
     // compile fileTree(dir: 'libs', include: ['*.jar'])
 }
