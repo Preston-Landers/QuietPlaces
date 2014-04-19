@@ -1,12 +1,15 @@
 package edu.utexas.quietplaces;
 
+import android.app.AlertDialog;
+import android.content.DialogInterface;
 import android.location.Location;
 import android.os.Bundle;
+import android.text.Editable;
 import android.util.Log;
 import android.view.*;
+import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.TextView;
-import com.google.android.gms.common.GooglePlayServicesNotAvailableException;
 import com.google.android.gms.location.Geofence;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
@@ -83,12 +86,7 @@ public class QPMapFragment extends QPFragment {
                              Bundle savedInstanceState) {
         View rootView = inflater.inflate(R.layout.fragment_map, container, false);
 
-        try {
-            MapsInitializer.initialize(getActivity());
-        } catch (GooglePlayServicesNotAvailableException e) {
-            // TODO handle this situation better
-            longToast("Error: no Google Play Services!");
-        }
+        MapsInitializer.initialize(getActivity());
 
         mMapView = (MapView) rootView.findViewById(R.id.map);
         if (mMapView != null) {
@@ -309,7 +307,47 @@ public class QPMapFragment extends QPFragment {
 
     public void clickEditButton(final View view) {
         Log.d(TAG, "Clicked Edit button");
-        shortToast("Edit not implemented yet.");
+        // shortToast("Edit not implemented yet.");
+
+        // which selection are we dealing with?
+        // multiple selection is not implemented here...
+        List<QuietPlaceMapMarker> markerList = getSelectedMarkers();
+        if (markerList == null || markerList.size() > 1) {
+            Log.e(TAG, "Can't edit markers; zero or >1 selected");
+            return;
+        }
+        final QuietPlaceMapMarker selectedMarker = markerList.get(0);
+
+        final EditText input = new EditText(getActivity());
+        input.setText(selectedMarker.getQuietPlace().getComment());
+        input.setSelectAllOnFocus(true); // select exiting text on focus
+
+        AlertDialog alert = new AlertDialog.Builder(getActivity())
+                .setTitle(getString(R.string.edit_placename_dialog_title, selectedMarker.getQuietPlace().getId()))
+                .setMessage(getString(R.string.edit_placename_dialog_msg))
+                .setView(input)
+                .setPositiveButton("Ok", new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int whichButton) {
+                        Editable value = input.getText();
+                        if (value != null) {
+                            selectedMarker.setComment(value.toString());
+
+                            // update the info display with the new value
+                            showInfoBox(true, selectedMarker);
+                        }
+                    }
+                }).setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int whichButton) {
+                        // Do nothing.
+                        Log.d(TAG, "User canceled comment edit.");
+                    }
+                }).create();
+
+
+        // does this soft keyboard still appear when a hardware kb is present?
+        alert.getWindow().setSoftInputMode(
+                WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_VISIBLE);
+        alert.show();
     }
 
 
@@ -446,7 +484,7 @@ public class QPMapFragment extends QPFragment {
         }
 
         if (markerByGeofenceId.remove(qpmm.getGeofenceId()) == null) {
-            Log.w(TAG, "couldn't remove item from markerByGeofenceId: "  + qpmm.toString());
+            Log.w(TAG, "couldn't remove item from markerByGeofenceId: " + qpmm.toString());
         }
 
         if (!mapMarkerSet.remove(qpmm)) {
@@ -709,8 +747,9 @@ public class QPMapFragment extends QPFragment {
 
     /**
      * Notify one or more Quiet Places that they have been entered or exited
+     *
      * @param geofenceIds array of geofence / QP string IDs
-     * @param entered true if we're entering this geofence, otherwise we're exiting
+     * @param entered     true if we're entering this geofence, otherwise we're exiting
      */
     void handleGeofenceTransitions(String[] geofenceIds, boolean entered) {
         for (String geofenceId : geofenceIds) {
@@ -732,11 +771,12 @@ public class QPMapFragment extends QPFragment {
 
     /**
      * Return true if we are currently inside any geofences other than the given one.
+     *
      * @param excludeQPMM exclude this one from the check (can be null)
      * @return true if we are currently inside at least 1 QuietPlaceMapMarker other than the given one.
      */
     public boolean areWeInsideOtherGeofences(QuietPlaceMapMarker excludeQPMM) {
-        for (QuietPlaceMapMarker qpmm : mapMarkerSet ) {
+        for (QuietPlaceMapMarker qpmm : mapMarkerSet) {
             if (qpmm.equals(excludeQPMM)) {
                 continue;
             }

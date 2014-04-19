@@ -186,4 +186,6 @@
     <string name="event_type_history_cleared">History cleared</string>
     <string name="no_events_yet">No events have been registered yet.</string>
 
+    <string name="edit_placename_dialog_title">Quiet Place (%1$d)</string>
+    <string name="edit_placename_dialog_msg">What is the name of this Quiet Place?</string>
 </resources>

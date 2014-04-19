@@ -280,6 +280,21 @@ public class QuietPlaceMapMarker {
     }
 
     /**
+     * Change the comment/name field of this quiet place with database save.
+     *
+     * @param comment new string name/comment for this quiet place
+     */
+    public void setComment(String comment) {
+        getQuietPlace().setComment(comment);
+        database_save();
+        HistoryEvent.logEvent(
+                getQpMapFragment().getActivity(),
+                HistoryEvent.TYPE_PLACE_UPDATE,
+                getQuietPlace().getHistoryEventFormatted()
+        );
+    }
+
+    /**
      * Sets a new radius in meters for this quiet place. Updates the visual
      * representation and saves the new size to the database and syncs the geofence.
      *
