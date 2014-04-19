@@ -450,11 +450,21 @@ public class QuietPlaceMapMarker {
         if (mainActivity.silenceDevice()) {
             Log.i(TAG, "Entered geofence and silenced the ringer. Entered: " + quietPlace);
 
+            // History event
             HistoryEvent.logEvent(
                     getQpMapFragment().getActivity(),
                     HistoryEvent.TYPE_PLACE_ENTER,
                     quietPlace.getHistoryEventFormatted()
             );
+
+            // Notification bar. TODO: hardcoded string
+            int transition = Geofence.GEOFENCE_TRANSITION_ENTER;
+            String subtext = "Ringer disabled. " + getQuietPlace().getComment();
+            mainActivity.sendGeofenceNotification(
+                    transition,
+                    Config.getTransitionString(getQpMapFragment().getActivity(), transition),
+                    Long.toString(getQuietPlace().getId()),
+                    subtext);
         } else {
             Log.i(TAG, "Entered geofence but ringer was already silenced. Entered: " + quietPlace);
         }
@@ -481,6 +491,17 @@ public class QuietPlaceMapMarker {
                     HistoryEvent.TYPE_PLACE_EXIT,
                     quietPlace.getHistoryEventFormatted()
             );
+
+            // Notification bar.
+            int transition = Geofence.GEOFENCE_TRANSITION_EXIT;
+            // TODO: hardcoded string
+            String subtext = "Ringer enabled. " + getQuietPlace().getComment();
+            mainActivity.sendGeofenceNotification(
+                    transition,
+                    Config.getTransitionString(getQpMapFragment().getActivity(), transition),
+                    Long.toString(getQuietPlace().getId()),
+                    subtext);
+
         } else {
             Log.w(TAG, "Exited geofence and the ringer was either already active or else we " +
                     "left it silent because we didn't silence in the first place. Exited gfence: " + quietPlace);

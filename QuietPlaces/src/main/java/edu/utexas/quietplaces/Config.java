@@ -1,6 +1,8 @@
 package edu.utexas.quietplaces;
 
+import android.content.Context;
 import android.graphics.Color;
+import com.google.android.gms.location.Geofence;
 
 /**
  * Generic bucket for configuration values.
@@ -36,4 +38,24 @@ class Config {
 
     // Minimum size for a quiet place in meters
     public static final double QP_SIZE_FLOOR = 5.0;
+
+    /**
+     * Maps geofence transition types to their human-readable equivalents.
+     *
+     * @param transitionType A transition type constant defined in Geofence
+     * @return A String indicating the type of transition
+     */
+    static String getTransitionString(Context context, int transitionType) {
+        switch (transitionType) {
+
+            case Geofence.GEOFENCE_TRANSITION_ENTER:
+                return context.getString(R.string.geofence_transition_entered);
+
+            case Geofence.GEOFENCE_TRANSITION_EXIT:
+                return context.getString(R.string.geofence_transition_exited);
+
+            default:
+                return context.getString(R.string.geofence_transition_unknown);
+        }
+    }
 }

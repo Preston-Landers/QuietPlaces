@@ -1,17 +1,16 @@
 package edu.utexas.quietplaces;
 
 import android.app.Dialog;
+import android.app.NotificationManager;
+import android.app.PendingIntent;
 import android.content.*;
 import android.location.Location;
 import android.media.AudioManager;
 import android.preference.PreferenceManager;
-import android.support.v4.app.DialogFragment;
-import android.support.v4.app.Fragment;
-import android.support.v4.app.FragmentTransaction;
+import android.support.v4.app.*;
 import android.support.v4.content.LocalBroadcastManager;
 import android.support.v7.app.ActionBarActivity;
 import android.support.v7.app.ActionBar;
-import android.support.v4.app.FragmentManager;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.util.Log;
@@ -886,4 +885,56 @@ public class MainActivity extends ActionBarActivity
             return false;
         }
     }
+
+
+    /**
+     * Posts a notification in the notification bar when a transition is detected.
+     * If the user clicks the notification, control goes to the main Activity.
+     *
+     * @param transitionType The type of transition that occurred.
+     */
+    protected void sendGeofenceNotification(int transition, String transitionType, String ids, String subtext) {
+
+        // Create an explicit content Intent that starts the main Activity
+        Intent notificationIntent =
+                new Intent(getApplicationContext(), MainActivity.class);
+
+        // Construct a task stack
+        TaskStackBuilder stackBuilder = TaskStackBuilder.create(this);
+
+        // Adds the main Activity to the task stack as the parent
+        stackBuilder.addParentStack(MainActivity.class);
+
+        // Push the content Intent onto the stack
+        stackBuilder.addNextIntent(notificationIntent);
+
+        // Get a PendingIntent containing the entire back stack
+        PendingIntent notificationPendingIntent =
+                stackBuilder.getPendingIntent(0, PendingIntent.FLAG_UPDATE_CURRENT);
+
+        // Get a notification builder that's compatible with platform versions >= 4
+        NotificationCompat.Builder builder = new NotificationCompat.Builder(this);
+
+        int icon = HistoryEvent.ICON_PLACE_ENTER;
+        if (transition == Geofence.GEOFENCE_TRANSITION_EXIT) {
+            icon = HistoryEvent.ICON_PLACE_EXIT;
+        }
+
+        // Set the notification contents
+        builder.setSmallIcon(icon)
+                .setContentTitle(
+                        getString(R.string.geofence_transition_notification_title,
+                                transitionType, ids)
+                )
+                .setContentText(subtext)
+                .setContentIntent(notificationPendingIntent);
+
+        // Get an instance of the Notification manager
+        NotificationManager mNotificationManager =
+                (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+
+        // Issue the notification
+        mNotificationManager.notify(0, builder.build());
+    }
+
 }
