@@ -447,7 +447,7 @@ public class QuietPlaceMapMarker {
 
         // SILENCE RINGER HERE....
         MainActivity mainActivity = (MainActivity) getQpMapFragment().getActivity();
-        if (mainActivity.silenceDevice()) {
+        if (mainActivity != null && mainActivity.silenceDevice()) {
             Log.i(TAG, "Entered geofence and silenced the ringer. Entered: " + quietPlace);
 
             // History event
@@ -484,7 +484,7 @@ public class QuietPlaceMapMarker {
         }
 
         MainActivity mainActivity = (MainActivity) getQpMapFragment().getActivity();
-        if (mainActivity.unsilenceDeviceIfWeSilenced()) {
+        if (mainActivity != null && mainActivity.unsilenceDeviceIfWeSilenced()) {
             Log.i(TAG, "Exited geofence and re-activated the ringer. Exited: " + quietPlace);
             HistoryEvent.logEvent(
                     getQpMapFragment().getActivity(),
