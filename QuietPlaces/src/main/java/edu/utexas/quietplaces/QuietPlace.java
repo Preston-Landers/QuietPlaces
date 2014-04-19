@@ -112,16 +112,16 @@ public class QuietPlace {
         double latitude = getLatitude();
         double longitude = getLongitude();
         String latStr, longStr;
-        if (latitude > 0.0) {
-            latStr = String.format("%.3f N", latitude);
+        if (latitude > 0) {
+            latStr = String.format("%.5f N", latitude);
         }
         else {
-            latStr = String.format("%.3f S", Math.abs(latitude));
+            latStr = String.format("%.5f S", Math.abs(latitude));
         }
-        if (longitude < 0.0) {
-            longStr = String.format("%.3f W", Math.abs(longitude));
+        if (longitude < 0) {
+            longStr = String.format("%.5f W", Math.abs(longitude));
         } else {
-            longStr = String.format("%.3f E", longitude);
+            longStr = String.format("%.5f E", longitude);
         }
         return latStr + ", " + longStr;
     }
