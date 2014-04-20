@@ -1,4 +1,4 @@
-package edu.utexas.quietplaces;
+package edu.utexas.quietplaces.fragments;
 
 import android.app.Activity;
 import android.content.Context;
@@ -8,17 +8,18 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Switch;
+import edu.utexas.quietplaces.R;
 
 /**
  * A fragment containing the welcome screen of the app.
  */
-public class HomeFragment extends QPFragment {
+public class HomeFragment extends BaseFragment {
 
     /**
      * Returns a new instance of this fragment for the given section
      * number.
      */
-    protected static HomeFragment newInstance(int sectionNumber) {
+    public static HomeFragment newInstance(int sectionNumber) {
         HomeFragment fragment = new HomeFragment();
         Bundle args = new Bundle();
         args.putInt(ARG_SECTION_NUMBER, sectionNumber);
@@ -32,8 +33,7 @@ public class HomeFragment extends QPFragment {
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
-        View rootView = inflater.inflate(R.layout.fragment_home, container, false);
-        return rootView;
+        return inflater.inflate(R.layout.fragment_home, container, false);
     }
 
     @Override

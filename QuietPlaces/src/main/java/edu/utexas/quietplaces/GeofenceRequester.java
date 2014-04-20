@@ -15,6 +15,7 @@ import com.google.android.gms.location.Geofence;
 import com.google.android.gms.location.LocationClient;
 import com.google.android.gms.location.LocationClient.OnAddGeofencesResultListener;
 import com.google.android.gms.location.LocationStatusCodes;
+import edu.utexas.quietplaces.services.ReceiveTransitionsIntentService;
 
 import java.util.ArrayList;
 import java.util.Arrays;

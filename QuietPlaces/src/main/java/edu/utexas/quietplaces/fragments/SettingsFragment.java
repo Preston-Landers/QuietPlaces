@@ -1,4 +1,4 @@
-package edu.utexas.quietplaces;
+package edu.utexas.quietplaces.fragments;
 
 import android.app.Activity;
 import android.content.SharedPreferences;
@@ -8,6 +8,9 @@ import android.preference.PreferenceFragment;
 import android.preference.PreferenceManager;
 import android.util.Log;
 import com.google.android.gms.maps.GoogleMap;
+import edu.utexas.quietplaces.Config;
+import edu.utexas.quietplaces.MainActivity;
+import edu.utexas.quietplaces.R;
 
 
 /**
@@ -80,17 +83,13 @@ public class SettingsFragment extends PreferenceFragment
         String mapTypeLabel = MAP_TYPE_NORMAL_LABEL;
         if (mapType.equals(MAP_TYPE_NORMAL)) {
             mapTypeLabel = MAP_TYPE_NORMAL_LABEL;
-        }
-        else if (mapType.equals(MAP_TYPE_HYBRID)) {
+        } else if (mapType.equals(MAP_TYPE_HYBRID)) {
             mapTypeLabel = MAP_TYPE_HYBRID_LABEL;
-        }
-        else if (mapType.equals(MAP_TYPE_SATELLITE)) {
+        } else if (mapType.equals(MAP_TYPE_SATELLITE)) {
             mapTypeLabel = MAP_TYPE_SATELLITE_LABEL;
-        }
-        else if (mapType.equals(MAP_TYPE_TERRAIN)) {
+        } else if (mapType.equals(MAP_TYPE_TERRAIN)) {
             mapTypeLabel = MAP_TYPE_TERRAIN_LABEL;
-        }
-        else if (mapType.equals(MAP_TYPE_NONE)) {
+        } else if (mapType.equals(MAP_TYPE_NONE)) {
             mapTypeLabel = MAP_TYPE_NONE_LABEL;
         }
         return mapTypeLabel;
@@ -100,17 +99,13 @@ public class SettingsFragment extends PreferenceFragment
         int newMapType = GoogleMap.MAP_TYPE_NORMAL;
         if (mapType.equals(MAP_TYPE_NORMAL)) {
             newMapType = GoogleMap.MAP_TYPE_NORMAL;
-        }
-        else if (mapType.equals(MAP_TYPE_HYBRID)) {
+        } else if (mapType.equals(MAP_TYPE_HYBRID)) {
             newMapType = GoogleMap.MAP_TYPE_HYBRID;
-        }
-        else if (mapType.equals(MAP_TYPE_SATELLITE)) {
+        } else if (mapType.equals(MAP_TYPE_SATELLITE)) {
             newMapType = GoogleMap.MAP_TYPE_SATELLITE;
-        }
-        else if (mapType.equals(MAP_TYPE_TERRAIN)) {
+        } else if (mapType.equals(MAP_TYPE_TERRAIN)) {
             newMapType = GoogleMap.MAP_TYPE_TERRAIN;
-        }
-        else if (mapType.equals(MAP_TYPE_NONE)) {
+        } else if (mapType.equals(MAP_TYPE_NONE)) {
             newMapType = GoogleMap.MAP_TYPE_NONE;
         }
         return newMapType;

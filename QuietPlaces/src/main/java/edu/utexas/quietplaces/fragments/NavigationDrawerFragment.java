@@ -1,4 +1,4 @@
-package edu.utexas.quietplaces;
+package edu.utexas.quietplaces.fragments;
 
 import android.content.Context;
 import android.support.v7.app.ActionBarActivity;
@@ -17,13 +17,14 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.*;
+import edu.utexas.quietplaces.R;
 
 /**
  * Fragment used for managing interactions for and presentation of a navigation drawer.
  * See the <a href="https://developer.android.com/design/patterns/navigation-drawer.html#Interaction">
  * design guidelines</a> for a complete explanation of the behaviors implemented here.
  */
-public class NavigationDrawerFragment extends QPFragment {
+public class NavigationDrawerFragment extends BaseFragment {
 
     /**
      * Remember the position of the selected item.
@@ -76,7 +77,7 @@ public class NavigationDrawerFragment extends QPFragment {
     }
 
     @Override
-    public void onActivityCreated (Bundle savedInstanceState) {
+    public void onActivityCreated(Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
         // Indicate that this fragment would like to influence the set of actions in the action bar.
         setHasOptionsMenu(true);
@@ -84,7 +85,7 @@ public class NavigationDrawerFragment extends QPFragment {
 
     @Override
     public View onCreateView(LayoutInflater inflater, final ViewGroup container,
-            Bundle savedInstanceState) {
+                             Bundle savedInstanceState) {
         mDrawerListView = (ListView) inflater.inflate(
                 R.layout.fragment_navigation_drawer, container, false);
         mDrawerListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
@@ -111,7 +112,7 @@ public class NavigationDrawerFragment extends QPFragment {
             @Override
             public View getView(int position, View convertView, ViewGroup parent) {
                 LayoutInflater inflater = (LayoutInflater) getActivity().getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-                convertView = inflater.inflate(R.layout.navigation_item, parent,false);
+                convertView = inflater.inflate(R.layout.navigation_item, parent, false);
 
                 if (convertView == null) {
                     Log.e("NavigationDrawerFragment", "Can't get inflated navigation item view.");
@@ -119,10 +120,10 @@ public class NavigationDrawerFragment extends QPFragment {
                 }
 
                 ImageView divider = (ImageView) convertView.findViewById(R.id.nav_section_divider_imageView);
-                TextView tv = (TextView)convertView.findViewById(R.id.nav_item_label);
+                TextView tv = (TextView) convertView.findViewById(R.id.nav_item_label);
                 tv.setText(sectionArray[position]);
 
-                ImageView iv = (ImageView)convertView.findViewById(R.id.nav_icon_imageView);
+                ImageView iv = (ImageView) convertView.findViewById(R.id.nav_icon_imageView);
                 switch (position) {
                     case 0:
                         iv.setImageResource(R.drawable.ic_menu_home);
@@ -309,7 +310,6 @@ public class NavigationDrawerFragment extends QPFragment {
         actionBar.setTitle(R.string.app_name);
     }
 */
-
     private ActionBar getActionBar() {
         return ((ActionBarActivity) getActivity()).getSupportActionBar();
     }

@@ -1,4 +1,4 @@
-package edu.utexas.quietplaces;
+package edu.utexas.quietplaces.fragments;
 
 import android.app.Activity;
 import android.database.Cursor;
@@ -11,6 +11,7 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import edu.utexas.quietplaces.*;
 import edu.utexas.quietplaces.content_providers.HistoryEventsContentProvider;
 
 /**
@@ -34,7 +35,7 @@ public class HistoryFragment
      * Returns a new instance of this fragment for the given section
      * number.
      */
-    protected static HistoryFragment newInstance(int sectionNumber) {
+    public static HistoryFragment newInstance(int sectionNumber) {
         HistoryFragment fragment = new HistoryFragment();
         Bundle args = new Bundle();
         args.putInt(ARG_SECTION_NUMBER, sectionNumber);
@@ -67,11 +68,10 @@ public class HistoryFragment
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
-        View rootView = inflater.inflate(R.layout.fragment_history, container, false);
-        return rootView;
+        return inflater.inflate(R.layout.fragment_history, container, false);
     }
 
-    public void clickClearHistoryButton(View view) {
+    public void clickClearHistoryButton(@SuppressWarnings("UnusedParameters") View view) {
         Log.w(TAG, "Someone clicked the Clear History button.");
         MainActivity activity = (MainActivity) getActivity();
 
@@ -86,16 +86,15 @@ public class HistoryFragment
     // creates a new loader after the initLoader () call
     @Override
     public Loader<Cursor> onCreateLoader(int id, Bundle args) {
-        String[] projection = HistoryEventsContentProvider.allColumns ;
+        String[] projection = HistoryEventsContentProvider.allColumns;
 
         // Load the history by newest first
         String sortOrder = HistoryEventsContentProvider.COLUMN_DATETIME + " DESC";
 
         // TODO: other data limit for very large tables? such as limit by time?
 
-        CursorLoader cursorLoader = new CursorLoader(getActivity(),
+        return new CursorLoader(getActivity(),
                 HistoryEventsContentProvider.CONTENT_URI, projection, null, null, sortOrder);
-        return cursorLoader;
     }
 
     @Override

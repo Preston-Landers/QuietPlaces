@@ -14,11 +14,12 @@
  * limitations under the License.
  */
 
-package edu.utexas.quietplaces;
+package edu.utexas.quietplaces.services;
 
 import android.content.Context;
 import android.content.res.Resources;
 import com.google.android.gms.common.ConnectionResult;
+import edu.utexas.quietplaces.R;
 
 /**
  * Map error codes to error messages.

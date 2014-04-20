@@ -45,7 +45,7 @@ public class Config {
      * @param transitionType A transition type constant defined in Geofence
      * @return A String indicating the type of transition
      */
-    static String getTransitionString(Context context, int transitionType) {
+    public static String getTransitionString(Context context, int transitionType) {
         switch (transitionType) {
 
             case Geofence.GEOFENCE_TRANSITION_ENTER:

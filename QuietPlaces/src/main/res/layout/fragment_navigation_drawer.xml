@@ -7,4 +7,4 @@
     android:divider="@android:color/darker_gray"
     android:dividerHeight="0dp"
     android:background="#cccc"
-    tools:context="edu.utexas.quietplaces.NavigationDrawerFragment" />
+    tools:context="edu.utexas.quietplaces.fragments.NavigationDrawerFragment" />

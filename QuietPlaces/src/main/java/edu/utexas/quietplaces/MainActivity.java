@@ -26,6 +26,7 @@ import com.google.android.gms.location.*;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.model.LatLng;
+import edu.utexas.quietplaces.fragments.*;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -193,13 +194,14 @@ public class MainActivity extends ActionBarActivity
         // TODO: make this a setting?
         mLocationRequest = LocationRequest.create();
         mLocationRequest.setPriority(
-                LocationRequest.PRIORITY_BALANCED_POWER_ACCURACY
+                // LocationRequest.PRIORITY_BALANCED_POWER_ACCURACY
                 // LocationRequest.PRIORITY_HIGH_ACCURACY
-                // LocationRequest.PRIORITY_LOW_POWER
+                LocationRequest.PRIORITY_LOW_POWER
         );
-        // Set the update interval to 5 seconds
+
+        // Set the normal update interval
         mLocationRequest.setInterval(Config.LOCATION_UPDATE_INTERVAL_MS);
-        // Set the fastest update interval to 1 second
+        // Set the fastest accepted update interval
         mLocationRequest.setFastestInterval(Config.LOCATION_FASTEST_INTERVAL_MS);
 
         mLocationClient = new LocationClient(this, this, this);
@@ -262,11 +264,11 @@ public class MainActivity extends ActionBarActivity
         transaction.commit();
     }
 
-    SettingsFragment getSettingsFragment() {
+    public SettingsFragment getSettingsFragment() {
         return settingsFragment;
     }
 
-    QPMapFragment getMapFragment() {
+    public QPMapFragment getMapFragment() {
         if (mapFragment != null) {
             return mapFragment;
         }

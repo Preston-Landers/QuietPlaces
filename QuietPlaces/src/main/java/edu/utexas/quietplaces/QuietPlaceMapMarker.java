@@ -5,6 +5,7 @@ import com.google.android.gms.location.Geofence;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.model.*;
 import edu.utexas.quietplaces.content_providers.QuietPlacesContentProvider;
+import edu.utexas.quietplaces.fragments.QPMapFragment;
 
 /**
  * Contains an association of a QuietPlace and a MapMarker.
@@ -190,7 +191,7 @@ public class QuietPlaceMapMarker {
     public void setSelected(boolean selected) {
 
         if (selected) {
-            getQpMapFragment().unselectAllIfSingleSelectMode();
+            getQpMapFragment().unselectAll();
         }
 
         this.selected = selected;

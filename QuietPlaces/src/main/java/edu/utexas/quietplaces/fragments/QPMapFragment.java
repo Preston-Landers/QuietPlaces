@@ -1,4 +1,4 @@
-package edu.utexas.quietplaces;
+package edu.utexas.quietplaces.fragments;
 
 import android.app.AlertDialog;
 import android.content.DialogInterface;
@@ -18,6 +18,7 @@ import com.google.android.gms.maps.MapsInitializer;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.VisibleRegion;
+import edu.utexas.quietplaces.*;
 import edu.utexas.quietplaces.content_providers.QuietPlacesContentProvider;
 import org.joda.time.DateTime;
 
@@ -26,7 +27,7 @@ import java.util.*;
 /**
  * A fragment containing the MapView plus our custom controls.
  */
-public class QPMapFragment extends QPFragment {
+public class QPMapFragment extends BaseFragment {
     private static final String TAG = Config.PACKAGE_NAME + ".QPMapFragment";
 
     private MapView mMapView;
@@ -44,9 +45,7 @@ public class QPMapFragment extends QPFragment {
     // access our markers by the geofence ID
     private Map<String, QuietPlaceMapMarker> markerByGeofenceId;
 
-    private final boolean singleSelectMode = true;
-
-    private ScaleGestureDetector mScaleDetector;
+    // private ScaleGestureDetector mScaleDetector;
 
     private List<Geofence> pendingGeofenceAdds;
     private List<String> pendingGeofenceIdRemoves;
@@ -55,7 +54,7 @@ public class QPMapFragment extends QPFragment {
      * Returns a new instance of this fragment for the given section
      * number.
      */
-    protected static QPMapFragment newInstance(int sectionNumber) {
+    public static QPMapFragment newInstance(int sectionNumber) {
         QPMapFragment fragment = new QPMapFragment();
         Bundle args = new Bundle();
         args.putInt(ARG_SECTION_NUMBER, sectionNumber);
@@ -86,6 +85,10 @@ public class QPMapFragment extends QPFragment {
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         View rootView = inflater.inflate(R.layout.fragment_map, container, false);
+        if (rootView == null) {
+            Log.e(TAG, "rootView is null in onCreateView in QPMapFragment");
+            return null;
+        }
 
         MapsInitializer.initialize(getActivity());
 
@@ -261,7 +264,7 @@ public class QPMapFragment extends QPFragment {
      *
      * @param view unused
      */
-    public void clickGrowButton(final View view) {
+    public void clickGrowButton(@SuppressWarnings("UnusedParameters") final View view) {
         Log.d(TAG, "Clicked grow button");
         for (QuietPlaceMapMarker qpMapMarker : getSelectedMarkers()) {
             qpMapMarker.grow();
@@ -273,7 +276,7 @@ public class QPMapFragment extends QPFragment {
      *
      * @param view unused
      */
-    public void clickShrinkButton(final View view) {
+    public void clickShrinkButton(@SuppressWarnings("UnusedParameters") final View view) {
         Log.d(TAG, "Clicked shrink button");
         for (QuietPlaceMapMarker qpMapMarker : getSelectedMarkers()) {
             qpMapMarker.shrink();
@@ -285,7 +288,7 @@ public class QPMapFragment extends QPFragment {
      *
      * @param view unused
      */
-    public void clickDeleteButton(final View view) {
+    public void clickDeleteButton(@SuppressWarnings("UnusedParameters") final View view) {
         Log.d(TAG, "Clicked delete button");
         deleteMarkers(getSelectedMarkers());
 
@@ -298,15 +301,16 @@ public class QPMapFragment extends QPFragment {
      *
      * @param view unused
      */
-    public void clickCenterButton(final View view) {
+    public void clickCenterButton(@SuppressWarnings("UnusedParameters") final View view) {
         Log.d(TAG, "Clicked center button");
+        //noinspection LoopStatementThatDoesntLoop
         for (QuietPlaceMapMarker qpMapMarker : getSelectedMarkers()) {
             qpMapMarker.centerCameraOnThis();
             break;  // only center on the first selected on in multi-select mode...
         }
     }
 
-    public void clickEditButton(final View view) {
+    public void clickEditButton(@SuppressWarnings("UnusedParameters") final View view) {
         Log.d(TAG, "Clicked Edit button");
         // shortToast("Edit not implemented yet.");
 
@@ -553,21 +557,12 @@ public class QPMapFragment extends QPFragment {
     }
 
     public void setSelectionMode() {
-        if (numSelectedMarkers() > 0) {
-            // changeAddButtonToClose("Delete"); // TODO: text
-        } else {
-//            final ImageButton addButton = (ImageButton) getActivity().findViewById(R.id.addPlaceButton);
-//            cancelAddButton(addButton);
-
+        if (numSelectedMarkers() <= 0) {
             showInfoBox(false, null);
-
         }
     }
 
-    public void unselectAllIfSingleSelectMode() {
-        if (!singleSelectMode) {
-            return;
-        }
+    public void unselectAll() {
 
         for (QuietPlaceMapMarker qpmm : getSelectedMarkers()) {
             if (qpmm.isSelected()) {
@@ -756,7 +751,7 @@ public class QPMapFragment extends QPFragment {
      * @param geofenceIds array of geofence / QP string IDs
      * @param entered     true if we're entering this geofence, otherwise we're exiting
      */
-    void handleGeofenceTransitions(String[] geofenceIds, boolean entered) {
+    public void handleGeofenceTransitions(String[] geofenceIds, boolean entered) {
         for (String geofenceId : geofenceIds) {
             if (geofenceId == null) {
                 continue;

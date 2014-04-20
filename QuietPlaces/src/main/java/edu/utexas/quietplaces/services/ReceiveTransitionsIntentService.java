@@ -1,4 +1,4 @@
-package edu.utexas.quietplaces;
+package edu.utexas.quietplaces.services;
 
 import android.app.IntentService;
 import android.content.Intent;
@@ -7,6 +7,9 @@ import android.text.TextUtils;
 import android.util.Log;
 import com.google.android.gms.location.Geofence;
 import com.google.android.gms.location.LocationClient;
+import edu.utexas.quietplaces.Config;
+import edu.utexas.quietplaces.GeofenceUtils;
+import edu.utexas.quietplaces.R;
 
 import java.util.List;
 
