@@ -18,6 +18,7 @@ import com.google.android.gms.maps.MapsInitializer;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.VisibleRegion;
+import edu.utexas.quietplaces.content_providers.QuietPlacesContentProvider;
 import org.joda.time.DateTime;
 
 import java.util.*;
@@ -381,8 +382,6 @@ public class QPMapFragment extends QPFragment {
      */
     private void addNewQuietPlace(LatLng latLng) {
         // shortToast("Clicked at: " + latLng);
-        QuietPlacesDataSource dataSource = new QuietPlacesDataSource(getActivity());
-        dataSource.open();
 
         // temporary stuff
         DateTime now = new DateTime();
@@ -400,9 +399,9 @@ public class QPMapFragment extends QPFragment {
         quietPlace.setComment(comment);
         quietPlace.setRadius(radius);
 
-        quietPlace = dataSource.saveQuietPlace(quietPlace);
+        Log.v(TAG, "About to add new quiet place to db: " + quietPlace);
+        quietPlace = QuietPlacesContentProvider.saveQuietPlace(getActivity(), quietPlace);
         Log.w(TAG, "Saved place to db: " + quietPlace);
-        dataSource.close();
 
         // we do this outside of addQuietPlaceMapMarker because
         // we don't want these logged when loaded from the database load method.
@@ -498,16 +497,22 @@ public class QPMapFragment extends QPFragment {
      * Load the database into markers
      */
     private void loadPlacesFromDatabase() {
-        QuietPlacesDataSource dataSource = new QuietPlacesDataSource(getActivity());
-        dataSource.open();
 
-        List<QuietPlace> quietPlaceList = dataSource.getAllQuietPlaces();
+        List<QuietPlace> quietPlaceList = QuietPlacesContentProvider.getAllQuietPlaces(getActivity());
+        if (quietPlaceList == null) {
+            Log.e(TAG, "Unable to load quiet place marker database.");
+            return;
+        }
+
+        if (quietPlaceList.size() == 0) {
+            Log.i(TAG, "QuietPlace database is currently empty.");
+            return;
+        }
 
         for (QuietPlace quietPlace : quietPlaceList) {
             addQuietPlaceMapMarker(quietPlace);
         }
 
-        dataSource.close();
         Log.w(TAG, "Loaded marker database.");
 
         syncGeofences();

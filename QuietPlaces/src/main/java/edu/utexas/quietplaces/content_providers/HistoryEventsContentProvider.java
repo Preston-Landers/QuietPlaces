@@ -1,12 +1,16 @@
-package edu.utexas.quietplaces;
+package edu.utexas.quietplaces.content_providers;
 
 import android.content.*;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
+import android.database.sqlite.SQLiteException;
+import android.database.sqlite.SQLiteOpenHelper;
 import android.database.sqlite.SQLiteQueryBuilder;
 import android.net.Uri;
 import android.text.TextUtils;
 import android.util.Log;
+import edu.utexas.quietplaces.Config;
+import edu.utexas.quietplaces.HistoryEvent;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -18,18 +22,31 @@ import java.util.List;
  */
 public class HistoryEventsContentProvider extends ContentProvider {
 
-    private final static String TAG = Config.PACKAGE_NAME + ".HistoryEventsContentProvider";
+    private final static String TAG = Config.PACKAGE_NAME + ".content_providers.HistoryEventsContentProvider";
 
-    private HistoryEventsTable database;
+    private SQLiteDatabase database;
 
-    private static String[] allColumns = HistoryEventsTable.allColumns;
+    public static final String TABLE_EVENTS = "events";
+    public static final String COLUMN_ID = "_id";
+    public static final String COLUMN_TYPE = "type";
+    public static final String COLUMN_TEXT = "text";
+    public static final String COLUMN_DATETIME = "datetime";
+    public static final String COLUMN_SEEN = "seen";
+
+    public static String[] allColumns = {
+            COLUMN_ID,
+            COLUMN_TYPE,
+            COLUMN_TEXT,
+            COLUMN_DATETIME,
+            COLUMN_SEEN
+    };
 
     // used for the UriMatcher
     private static final int EVENTS = 10;
     private static final int EVENT_ID = 20;
 
-    private static final String AUTHORITY = Config.PACKAGE_NAME + ".events.contentprovider";
-    private static final String BASE_PATH = HistoryEventsTable.TABLE_EVENTS;
+    private static final String AUTHORITY = Config.PACKAGE_NAME + ".provider.historyevents";
+    private static final String BASE_PATH = TABLE_EVENTS;
 
     public static final Uri CONTENT_URI = Uri.parse("content://" + AUTHORITY + "/" + BASE_PATH);
     public static final String CONTENT_TYPE = ContentResolver.CURSOR_DIR_BASE_TYPE + "/events";
@@ -44,9 +61,19 @@ public class HistoryEventsContentProvider extends ContentProvider {
 
     @Override
     public boolean onCreate() {
-        database = new HistoryEventsTable(getContext());
-        return false;
+        Context context = getContext();
+
+        HistoryEventsDatabaseHelper dbHelper = new HistoryEventsDatabaseHelper(context);
+        try {
+            database = dbHelper.getWritableDatabase();
+        } catch (SQLiteException e) {
+            database = null;
+            Log.d(TAG, "Database Opening exception");
+        }
+
+        return (database != null);
     }
+
 
     /**
      * Save a history event object to the database - either updates existing or creates new.
@@ -64,13 +91,13 @@ public class HistoryEventsContentProvider extends ContentProvider {
         ContentResolver resolver = context.getContentResolver();
         boolean creating = true;
         if (historyEvent.getId() != 0) {
-            values.put(HistoryEventsTable.COLUMN_ID, historyEvent.getId());
+            values.put(COLUMN_ID, historyEvent.getId());
             creating = false;
         }
-        values.put(HistoryEventsTable.COLUMN_TYPE, historyEvent.getType());
-        values.put(HistoryEventsTable.COLUMN_TEXT, historyEvent.getText());
-        values.put(HistoryEventsTable.COLUMN_DATETIME, historyEvent.getDatetimeString());
-        values.put(HistoryEventsTable.COLUMN_SEEN, historyEvent.isSeen() ? 1 : 0);
+        values.put(COLUMN_TYPE, historyEvent.getType());
+        values.put(COLUMN_TEXT, historyEvent.getText());
+        values.put(COLUMN_DATETIME, historyEvent.getDatetimeString());
+        values.put(COLUMN_SEEN, historyEvent.isSeen() ? 1 : 0);
 
         long objectId;
         if (creating) {
@@ -87,7 +114,7 @@ public class HistoryEventsContentProvider extends ContentProvider {
             resolver.update(
                     CONTENT_URI,
                     values,
-                    HistoryEventsTable.COLUMN_ID + " LIKE ?",
+                    COLUMN_ID + " LIKE ?",
                     params
             );
             Log.i(TAG, "updated history event: " + historyEvent.toString());
@@ -98,7 +125,7 @@ public class HistoryEventsContentProvider extends ContentProvider {
 
     public static HistoryEvent loadHistoryEventById(Context context, Long objectId) {
 
-        String mSelectionClause = HistoryEventsTable.COLUMN_ID + " = ?";
+        String mSelectionClause = COLUMN_ID + " = ?";
 
         // This defines a one-element String array to contain the selection argument.
         String[] mSelectionArgs = {Long.toString(objectId)};
@@ -137,7 +164,7 @@ public class HistoryEventsContentProvider extends ContentProvider {
      */
     public static List<HistoryEvent> getAllHistoryEvents(Context context, boolean orderedByTime) {
 
-        String sortOrder = orderedByTime ? HistoryEventsTable.COLUMN_DATETIME + " ASC " : null;
+        String sortOrder = orderedByTime ? COLUMN_DATETIME + " ASC " : null;
 
         // Does a query against the table and returns a Cursor object
         Cursor mCursor = context.getContentResolver().query(
@@ -169,7 +196,7 @@ public class HistoryEventsContentProvider extends ContentProvider {
 
     public static void deleteHistoryEvent(Context context, HistoryEvent event) {
         long objectId = event.getId();
-        String mSelectionClause = HistoryEventsTable.COLUMN_ID + " LIKE ?";
+        String mSelectionClause = COLUMN_ID + " LIKE ?";
         String[] mSelectionArgs = {Long.toString(objectId)};
         int deletedRows = context.getContentResolver().delete(
                 CONTENT_URI,
@@ -200,7 +227,7 @@ public class HistoryEventsContentProvider extends ContentProvider {
      * @param cursor active cursor
      * @return new HistoryEvent from the current record in the cursor.
      */
-    protected static HistoryEvent cursorToHistoryEvent(Cursor cursor) {
+    public static HistoryEvent cursorToHistoryEvent(Cursor cursor) {
         HistoryEvent event = new HistoryEvent();
         event.setId(cursor.getLong(0));
         event.setType(cursor.getString(1));
@@ -222,7 +249,7 @@ public class HistoryEventsContentProvider extends ContentProvider {
         checkColumns(projection);
 
         // Set the table
-        queryBuilder.setTables(HistoryEventsTable.TABLE_EVENTS);
+        queryBuilder.setTables(TABLE_EVENTS);
 
         int uriType = sURIMatcher.match(uri);
         switch (uriType) {
@@ -230,7 +257,7 @@ public class HistoryEventsContentProvider extends ContentProvider {
                 break;
             case EVENT_ID:
                 // adding the ID to the original query
-                queryBuilder.appendWhere(HistoryEventsTable.COLUMN_ID + "="
+                queryBuilder.appendWhere(COLUMN_ID + "="
                         + uri.getLastPathSegment());
                 break;
             // TODO: add other selections here?
@@ -238,8 +265,7 @@ public class HistoryEventsContentProvider extends ContentProvider {
                 throw new IllegalArgumentException("Unknown URI: " + uri);
         }
 
-        SQLiteDatabase sqlDB = database.getWritableDatabase();
-        Cursor cursor = queryBuilder.query(sqlDB, projection, selection,
+        Cursor cursor = queryBuilder.query(database, projection, selection,
                 selectionArgs, null, null, sortOrder);
 
         // make sure that potential listeners are getting notified
@@ -273,11 +299,10 @@ public class HistoryEventsContentProvider extends ContentProvider {
     @Override
     public Uri insert(Uri uri, ContentValues values) {
         int uriType = sURIMatcher.match(uri);
-        SQLiteDatabase sqlDB = getWritableDatabase();
         long id;
         switch (uriType) {
             case EVENTS:
-                id = sqlDB.insert(HistoryEventsTable.TABLE_EVENTS, null, values);
+                id = database.insert(TABLE_EVENTS, null, values);
                 break;
             default:
                 throw new IllegalArgumentException("Unknown URI: " + uri);
@@ -289,22 +314,21 @@ public class HistoryEventsContentProvider extends ContentProvider {
     @Override
     public int delete(Uri uri, String selection, String[] selectionArgs) {
         int uriType = sURIMatcher.match(uri);
-        SQLiteDatabase sqlDB = getWritableDatabase();
-        String tableName = HistoryEventsTable.TABLE_EVENTS;
+        String tableName = TABLE_EVENTS;
         int rowsDeleted;
         switch (uriType) {
             case EVENTS:
-                rowsDeleted = sqlDB.delete(tableName, selection, selectionArgs);
+                rowsDeleted = database.delete(tableName, selection, selectionArgs);
                 break;
             case EVENT_ID:
                 String id = uri.getLastPathSegment();
                 if (TextUtils.isEmpty(selection)) {
-                    rowsDeleted = sqlDB.delete(tableName,
-                            HistoryEventsTable.COLUMN_ID + "=" + id,
+                    rowsDeleted = database.delete(tableName,
+                            COLUMN_ID + "=" + id,
                             null);
                 } else {
-                    rowsDeleted = sqlDB.delete(tableName,
-                            HistoryEventsTable.COLUMN_ID + "=" + id
+                    rowsDeleted = database.delete(tableName,
+                            COLUMN_ID + "=" + id
                                     + " and " + selection,
                             selectionArgs
                     );
@@ -322,12 +346,11 @@ public class HistoryEventsContentProvider extends ContentProvider {
                       String[] selectionArgs) {
 
         int uriType = sURIMatcher.match(uri);
-        SQLiteDatabase sqlDB = getWritableDatabase();
-        String tableName = HistoryEventsTable.TABLE_EVENTS;
+        String tableName = TABLE_EVENTS;
         int rowsUpdated;
         switch (uriType) {
             case EVENTS:
-                rowsUpdated = sqlDB.update(tableName,
+                rowsUpdated = database.update(tableName,
                         values,
                         selection,
                         selectionArgs);
@@ -335,14 +358,14 @@ public class HistoryEventsContentProvider extends ContentProvider {
             case EVENT_ID:
                 String id = uri.getLastPathSegment();
                 if (TextUtils.isEmpty(selection)) {
-                    rowsUpdated = sqlDB.update(tableName,
+                    rowsUpdated = database.update(tableName,
                             values,
-                            HistoryEventsTable.COLUMN_ID + "=" + id,
+                            COLUMN_ID + "=" + id,
                             null);
                 } else {
-                    rowsUpdated = sqlDB.update(tableName,
+                    rowsUpdated = database.update(tableName,
                             values,
-                            HistoryEventsTable.COLUMN_ID + "=" + id
+                            COLUMN_ID + "=" + id
                                     + " and "
                                     + selection,
                             selectionArgs
@@ -355,22 +378,6 @@ public class HistoryEventsContentProvider extends ContentProvider {
         notifyChange(uri);
         return rowsUpdated;
     }
-
-    /**
-     * Get a writable database and throw an error if we can't
-     *
-     * @return writable SQLiteDatabase
-     */
-    private SQLiteDatabase getWritableDatabase() {
-        SQLiteDatabase sqlDB = database.getWritableDatabase();
-        if (sqlDB == null) {
-            String msg = "Unable to get writable database";
-            Log.e(TAG, msg);
-            throw new RuntimeException(msg);
-        }
-        return sqlDB;
-    }
-
 
     /**
      * Notify the content resolver of any changes to this table.
@@ -386,5 +393,42 @@ public class HistoryEventsContentProvider extends ContentProvider {
         }
     }
 
+    /**
+     * A database to store history events.
+     */
+    private class HistoryEventsDatabaseHelper extends SQLiteOpenHelper {
+
+        private static final String DATABASE_NAME = "events.db";
+        private static final int DATABASE_VERSION = 1;
+
+        // Database creation sql statement
+        private static final String DATABASE_CREATE = "create table "
+                + TABLE_EVENTS + "(" +
+                COLUMN_ID + " integer primary key autoincrement, " +
+                COLUMN_TYPE + " text not null, " +
+                COLUMN_TEXT + " text not null, " +
+                COLUMN_DATETIME + " text not null, " +
+                COLUMN_SEEN + " integer not null " +
+                ");";
+
+        public HistoryEventsDatabaseHelper(Context context) {
+            super(context, DATABASE_NAME, null, DATABASE_VERSION);
+        }
+
+        @Override
+        public void onCreate(SQLiteDatabase database) {
+            database.execSQL(DATABASE_CREATE);
+        }
+
+        @Override
+        public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
+            Log.w(TAG,
+                    "Upgrading database from version " + oldVersion + " to "
+                            + newVersion + ", which will destroy all old data");
+            db.execSQL("DROP TABLE IF EXISTS " + TABLE_EVENTS);
+            onCreate(db);
+        }
+
+    }
 
 }

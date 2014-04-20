@@ -54,8 +54,16 @@
                 android:value="@string/google_public_api_key"/>
 
         <provider
-                android:name=".HistoryEventsContentProvider"
-                android:authorities="edu.utexas.quietplaces.events.contentprovider" >
+                android:name=".content_providers.HistoryEventsContentProvider"
+                android:authorities="edu.utexas.quietplaces.provider.historyevents" >
+        </provider>
+        <provider
+                android:name=".content_providers.QuietPlacesContentProvider"
+                android:authorities="edu.utexas.quietplaces.provider.quietplaces" >
+        </provider>
+        <provider
+                android:name=".content_providers.PlacesContentProvider"
+                android:authorities="edu.utexas.quietplaces.provider.gplaces" >
         </provider>
     </application>
 

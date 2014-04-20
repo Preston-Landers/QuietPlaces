@@ -1,6 +1,7 @@
 package edu.utexas.quietplaces;
 
 import android.content.Context;
+import edu.utexas.quietplaces.content_providers.HistoryEventsContentProvider;
 import org.joda.time.DateTime;
 
 /**

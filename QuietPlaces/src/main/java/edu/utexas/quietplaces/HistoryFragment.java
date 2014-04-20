@@ -11,6 +11,7 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import edu.utexas.quietplaces.content_providers.HistoryEventsContentProvider;
 
 /**
  * A fragment containing an event history view.
@@ -85,10 +86,10 @@ public class HistoryFragment
     // creates a new loader after the initLoader () call
     @Override
     public Loader<Cursor> onCreateLoader(int id, Bundle args) {
-        String[] projection = HistoryEventsTable.allColumns ;
+        String[] projection = HistoryEventsContentProvider.allColumns ;
 
         // Load the history by newest first
-        String sortOrder = HistoryEventsTable.COLUMN_DATETIME + " DESC";
+        String sortOrder = HistoryEventsContentProvider.COLUMN_DATETIME + " DESC";
 
         // TODO: other data limit for very large tables? such as limit by time?
 

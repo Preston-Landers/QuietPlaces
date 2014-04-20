@@ -9,6 +9,7 @@ import android.view.ViewGroup;
 import android.widget.CursorAdapter;
 import android.widget.ImageView;
 import android.widget.TextView;
+import edu.utexas.quietplaces.content_providers.HistoryEventsContentProvider;
 
 /**
  * A cursor adapter for the HistoryFragment ListView

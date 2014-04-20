@@ -8,7 +8,7 @@ import com.google.android.gms.location.Geofence;
  * Generic bucket for configuration values.
  *
  */
-class Config {
+public class Config {
     public static final String APP_NAME = "QuietPlaces";
     public static final String PACKAGE_NAME = "edu.utexas.quietplaces";
 

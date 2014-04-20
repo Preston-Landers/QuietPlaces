@@ -4,6 +4,7 @@ import android.util.Log;
 import com.google.android.gms.location.Geofence;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.model.*;
+import edu.utexas.quietplaces.content_providers.QuietPlacesContentProvider;
 
 /**
  * Contains an association of a QuietPlace and a MapMarker.
@@ -333,19 +334,19 @@ public class QuietPlaceMapMarker {
      * Saves any changes to the QuietPlace object to the database.
      */
     private void database_save() {
-        QuietPlacesDataSource dataSource = new QuietPlacesDataSource(getQpMapFragment().getActivity());
-        dataSource.open();
-        setQuietPlace(dataSource.saveQuietPlace(getQuietPlace()));
-        dataSource.close();
+        Log.v(TAG, "Saving to database: " + getQuietPlace());
+        QuietPlace qp = QuietPlacesContentProvider.saveQuietPlace(getQpMapFragment().getActivity(), getQuietPlace());
+        if (qp == null) {
+            Log.e(TAG, "Unable to database_save quietplace: " + getQuietPlace());
+            return;
+        }
+        setQuietPlace(qp);
         Log.w(TAG, "Saved to database: " + getQuietPlace());
     }
 
     private void database_delete() {
-        Log.w(TAG, "Deleting from database: " + getQuietPlace());
-        QuietPlacesDataSource dataSource = new QuietPlacesDataSource(getQpMapFragment().getActivity());
-        dataSource.open();
-        dataSource.deleteQuietPlace(getQuietPlace());
-        dataSource.close();
+        Log.i(TAG, "Deleting from database: " + getQuietPlace());
+        QuietPlacesContentProvider.deleteQuietPlace(getQpMapFragment().getActivity(), getQuietPlace());
         Log.d(TAG, "Deletion complete.");
 
         // should we null out the QP object?!
