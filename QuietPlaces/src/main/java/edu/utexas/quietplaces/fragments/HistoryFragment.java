@@ -21,7 +21,7 @@ public class HistoryFragment
         extends ListFragment
         implements LoaderManager.LoaderCallbacks<Cursor> {
 
-    private static final String TAG = Config.PACKAGE_NAME + ".HistoryFragment";
+    private static final String TAG = Config.PACKAGE_NAME + ".fragments.HistoryFragment";
 
     /**
      * The fragment argument representing the section number for this
@@ -86,10 +86,10 @@ public class HistoryFragment
     // creates a new loader after the initLoader () call
     @Override
     public Loader<Cursor> onCreateLoader(int id, Bundle args) {
-        String[] projection = HistoryEventsContentProvider.allColumns;
+        String[] projection = HistoryEventsContentProvider.ALL_KEYS;
 
         // Load the history by newest first
-        String sortOrder = HistoryEventsContentProvider.COLUMN_DATETIME + " DESC";
+        String sortOrder = HistoryEventsContentProvider.KEY_DATETIME + " DESC";
 
         // TODO: other data limit for very large tables? such as limit by time?
 

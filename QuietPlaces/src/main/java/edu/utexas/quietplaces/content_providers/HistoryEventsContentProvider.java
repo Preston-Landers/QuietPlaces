@@ -27,18 +27,18 @@ public class HistoryEventsContentProvider extends ContentProvider {
     private SQLiteDatabase database;
 
     public static final String TABLE_EVENTS = "events";
-    public static final String COLUMN_ID = "_id";
-    public static final String COLUMN_TYPE = "type";
-    public static final String COLUMN_TEXT = "text";
-    public static final String COLUMN_DATETIME = "datetime";
-    public static final String COLUMN_SEEN = "seen";
+    public static final String KEY_ID = "_id";
+    public static final String KEY_TYPE = "type";
+    public static final String KEY_TEXT = "text";
+    public static final String KEY_DATETIME = "datetime";
+    public static final String KEY_SEEN = "seen";
 
-    public static String[] allColumns = {
-            COLUMN_ID,
-            COLUMN_TYPE,
-            COLUMN_TEXT,
-            COLUMN_DATETIME,
-            COLUMN_SEEN
+    public static String[] ALL_KEYS = {
+            KEY_ID,
+            KEY_TYPE,
+            KEY_TEXT,
+            KEY_DATETIME,
+            KEY_SEEN
     };
 
     // used for the UriMatcher
@@ -49,8 +49,8 @@ public class HistoryEventsContentProvider extends ContentProvider {
     private static final String BASE_PATH = TABLE_EVENTS;
 
     public static final Uri CONTENT_URI = Uri.parse("content://" + AUTHORITY + "/" + BASE_PATH);
-    public static final String CONTENT_TYPE = ContentResolver.CURSOR_DIR_BASE_TYPE + "/events";
-    public static final String CONTENT_ITEM_TYPE = ContentResolver.CURSOR_ITEM_BASE_TYPE + "/event";
+    public static final String CONTENT_TYPE = ContentResolver.CURSOR_DIR_BASE_TYPE + "/vnd.quietplaces.events";
+    public static final String CONTENT_ITEM_TYPE = ContentResolver.CURSOR_ITEM_BASE_TYPE + "/vnd.quietplaces.event";
 
     private static final UriMatcher sURIMatcher = new UriMatcher(UriMatcher.NO_MATCH);
 
@@ -91,13 +91,13 @@ public class HistoryEventsContentProvider extends ContentProvider {
         ContentResolver resolver = context.getContentResolver();
         boolean creating = true;
         if (historyEvent.getId() != 0) {
-            values.put(COLUMN_ID, historyEvent.getId());
+            values.put(KEY_ID, historyEvent.getId());
             creating = false;
         }
-        values.put(COLUMN_TYPE, historyEvent.getType());
-        values.put(COLUMN_TEXT, historyEvent.getText());
-        values.put(COLUMN_DATETIME, historyEvent.getDatetimeString());
-        values.put(COLUMN_SEEN, historyEvent.isSeen() ? 1 : 0);
+        values.put(KEY_TYPE, historyEvent.getType());
+        values.put(KEY_TEXT, historyEvent.getText());
+        values.put(KEY_DATETIME, historyEvent.getDatetimeString());
+        values.put(KEY_SEEN, historyEvent.isSeen() ? 1 : 0);
 
         long objectId;
         if (creating) {
@@ -114,7 +114,7 @@ public class HistoryEventsContentProvider extends ContentProvider {
             resolver.update(
                     CONTENT_URI,
                     values,
-                    COLUMN_ID + " LIKE ?",
+                    KEY_ID + " LIKE ?",
                     params
             );
             Log.i(TAG, "updated history event: " + historyEvent.toString());
@@ -125,7 +125,7 @@ public class HistoryEventsContentProvider extends ContentProvider {
 
     public static HistoryEvent loadHistoryEventById(Context context, Long objectId) {
 
-        String mSelectionClause = COLUMN_ID + " = ?";
+        String mSelectionClause = KEY_ID + " = ?";
 
         // This defines a one-element String array to contain the selection argument.
         String[] mSelectionArgs = {Long.toString(objectId)};
@@ -133,7 +133,7 @@ public class HistoryEventsContentProvider extends ContentProvider {
         // Does a query against the table and returns a Cursor object
         Cursor mCursor = context.getContentResolver().query(
                 CONTENT_URI,
-                allColumns,
+                ALL_KEYS,
                 mSelectionClause,
                 mSelectionArgs,
                 null);                          // The sort order for the returned rows
@@ -164,12 +164,12 @@ public class HistoryEventsContentProvider extends ContentProvider {
      */
     public static List<HistoryEvent> getAllHistoryEvents(Context context, boolean orderedByTime) {
 
-        String sortOrder = orderedByTime ? COLUMN_DATETIME + " ASC " : null;
+        String sortOrder = orderedByTime ? KEY_DATETIME + " ASC " : null;
 
         // Does a query against the table and returns a Cursor object
         Cursor mCursor = context.getContentResolver().query(
                 CONTENT_URI,
-                allColumns,
+                ALL_KEYS,
                 null,
                 null,
                 sortOrder);                          // The sort order for the returned rows
@@ -196,7 +196,7 @@ public class HistoryEventsContentProvider extends ContentProvider {
 
     public static void deleteHistoryEvent(Context context, HistoryEvent event) {
         long objectId = event.getId();
-        String mSelectionClause = COLUMN_ID + " LIKE ?";
+        String mSelectionClause = KEY_ID + " LIKE ?";
         String[] mSelectionArgs = {Long.toString(objectId)};
         int deletedRows = context.getContentResolver().delete(
                 CONTENT_URI,
@@ -257,7 +257,7 @@ public class HistoryEventsContentProvider extends ContentProvider {
                 break;
             case EVENT_ID:
                 // adding the ID to the original query
-                queryBuilder.appendWhere(COLUMN_ID + "="
+                queryBuilder.appendWhere(KEY_ID + "="
                         + uri.getLastPathSegment());
                 break;
             // TODO: add other selections here?
@@ -281,7 +281,7 @@ public class HistoryEventsContentProvider extends ContentProvider {
 
         if (projection != null) {
             HashSet<String> requestedColumns = new HashSet<String>(Arrays.asList(projection));
-            HashSet<String> availableColumns = new HashSet<String>(Arrays.asList(allColumns));
+            HashSet<String> availableColumns = new HashSet<String>(Arrays.asList(ALL_KEYS));
             // check if all columns which are requested are available
             if (!availableColumns.containsAll(requestedColumns)) {
                 throw new IllegalArgumentException("Unknown columns in events table query");
@@ -291,9 +291,14 @@ public class HistoryEventsContentProvider extends ContentProvider {
 
     @Override
     public String getType(Uri uri) {
-        // TODO: investigate what this should really do...
-        // MIME type, which doesn't really apply here I guess
-        return null;
+        switch (sURIMatcher.match(uri)) {
+            case EVENTS:
+                return CONTENT_TYPE;
+            case EVENT_ID:
+                return CONTENT_ITEM_TYPE;
+            default:
+                throw new IllegalArgumentException("Unsupported URI: " + uri);
+        }
     }
 
     @Override
@@ -324,11 +329,11 @@ public class HistoryEventsContentProvider extends ContentProvider {
                 String id = uri.getLastPathSegment();
                 if (TextUtils.isEmpty(selection)) {
                     rowsDeleted = database.delete(tableName,
-                            COLUMN_ID + "=" + id,
+                            KEY_ID + "=" + id,
                             null);
                 } else {
                     rowsDeleted = database.delete(tableName,
-                            COLUMN_ID + "=" + id
+                            KEY_ID + "=" + id
                                     + " and " + selection,
                             selectionArgs
                     );
@@ -360,12 +365,12 @@ public class HistoryEventsContentProvider extends ContentProvider {
                 if (TextUtils.isEmpty(selection)) {
                     rowsUpdated = database.update(tableName,
                             values,
-                            COLUMN_ID + "=" + id,
+                            KEY_ID + "=" + id,
                             null);
                 } else {
                     rowsUpdated = database.update(tableName,
                             values,
-                            COLUMN_ID + "=" + id
+                            KEY_ID + "=" + id
                                     + " and "
                                     + selection,
                             selectionArgs
@@ -404,11 +409,11 @@ public class HistoryEventsContentProvider extends ContentProvider {
         // Database creation sql statement
         private static final String DATABASE_CREATE = "create table "
                 + TABLE_EVENTS + "(" +
-                COLUMN_ID + " integer primary key autoincrement, " +
-                COLUMN_TYPE + " text not null, " +
-                COLUMN_TEXT + " text not null, " +
-                COLUMN_DATETIME + " text not null, " +
-                COLUMN_SEEN + " integer not null " +
+                KEY_ID + " integer primary key autoincrement, " +
+                KEY_TYPE + " text not null, " +
+                KEY_TEXT + " text not null, " +
+                KEY_DATETIME + " text not null, " +
+                KEY_SEEN + " integer not null " +
                 ");";
 
         public HistoryEventsDatabaseHelper(Context context) {

@@ -14,22 +14,20 @@ import android.util.Log;
 import edu.utexas.quietplaces.Config;
 
 /**
- * Content Provider and database for storing the list of
- * places nearby our current location
+ * Content Provider and database for storing the details for
+ * places whose details we've either viewed or prefetched.
  */
-public class PlacesContentProvider extends ContentProvider {
+public class PlaceDetailsContentProvider extends ContentProvider {
 
-    // private final static String TAG = Config.PACKAGE_NAME + ".content_providers.PlacesContentProvider";
+    private static final String TAG = Config.PACKAGE_NAME + ".content_providers.PlacesDetailsContentProvider";
 
     /**
      * The underlying database
      */
-    private SQLiteDatabase placesDB;
-
-    private static final String TAG = "PlacesContentProvider";
-    private static final String DATABASE_NAME = "gplaces.db";
-    private static final int DATABASE_VERSION = 7;
-    private static final String PLACES_TABLE = "gplaces";
+    private SQLiteDatabase database;
+    private static final String DATABASE_NAME = "gplacedetails.db";
+    private static final int DATABASE_VERSION = 4;
+    private static final String PLACEDETAILS_TABLE = "gplacedetails";
 
     // Column Names
     public static final String KEY_ID = "_id";
@@ -42,31 +40,19 @@ public class PlacesContentProvider extends ContentProvider {
     public static final String KEY_ICON = "icon";
     public static final String KEY_REFERENCE = "reference";
     public static final String KEY_DISTANCE = "distance";
+    public static final String KEY_PHONE = "phone";
+    public static final String KEY_ADDRESS = "address";
+    public static final String KEY_RATING = "rating";
+    public static final String KEY_URL = "url";
     public static final String KEY_LAST_UPDATE_TIME = "lastupdatetime";
+    public static final String KEY_FORCE_CACHE = "forcecache";
 
-/*
-    private static String[] allColumns = {
-            KEY_ID,
-            KEY_NAME,
-            KEY_VICINITY,
-            KEY_LOCATION_LAT,
-            KEY_LOCATION_LNG,
-            KEY_TYPES,
-            KEY_VIEWPORT,
-            KEY_ICON,
-            KEY_REFERENCE,
-            KEY_DISTANCE,
-            KEY_LAST_UPDATE_TIME
-    };
-*/
-
-    private static final String AUTHORITY = Config.PACKAGE_NAME + ".provider.gplaces";
-    private static final String BASE_PATH = PLACES_TABLE;
+    private static final String AUTHORITY = Config.PACKAGE_NAME + ".provider.gplacedetails";
+    private static final String BASE_PATH = PLACEDETAILS_TABLE;
 
     public static final Uri CONTENT_URI = Uri.parse("content://" + AUTHORITY + "/" + BASE_PATH);
-
-    public static final String CONTENT_TYPE = ContentResolver.CURSOR_DIR_BASE_TYPE + "/vnd.quietplaces.gplaces";
-    public static final String CONTENT_ITEM_TYPE = ContentResolver.CURSOR_ITEM_BASE_TYPE + "/vnd.quietplaces.gplace";
+    public static final String CONTENT_TYPE = ContentResolver.CURSOR_DIR_BASE_TYPE + "/vnd.quietplaces.gplacesdetails";
+    public static final String CONTENT_ITEM_TYPE = ContentResolver.CURSOR_ITEM_BASE_TYPE + "/vnd.quietplaces.gplacedetails";
 
     //Create the constants used to differentiate between the different URI requests.
     private static final int PLACES = 1;
@@ -78,24 +64,24 @@ public class PlacesContentProvider extends ContentProvider {
 
     static {
         uriMatcher = new UriMatcher(UriMatcher.NO_MATCH);
-        uriMatcher.addURI(AUTHORITY, PLACES_TABLE, PLACES);
-        uriMatcher.addURI(AUTHORITY, PLACES_TABLE + "/*", PLACE_ID);
+        uriMatcher.addURI(AUTHORITY, PLACEDETAILS_TABLE, PLACES);
+        uriMatcher.addURI(AUTHORITY, PLACEDETAILS_TABLE + "/*", PLACE_ID);
     }
+
 
     @Override
     public boolean onCreate() {
         Context context = getContext();
 
-        PlacesDatabaseHelper dbHelper = new PlacesDatabaseHelper(context, DATABASE_NAME,
-                null, DATABASE_VERSION);
+        PlacesDatabaseHelper dbHelper = new PlacesDatabaseHelper(context, DATABASE_NAME, null, DATABASE_VERSION);
         try {
-            placesDB = dbHelper.getWritableDatabase();
+            database = dbHelper.getWritableDatabase();
         } catch (SQLiteException e) {
-            placesDB = null;
-            Log.d(TAG, "Database Opening exception");
+            database = null;
+            Log.e(TAG, "Database Opening exception");
         }
 
-        return (placesDB == null) ? false : true;
+        return (database == null) ? false : true;
     }
 
     @Override
@@ -114,12 +100,12 @@ public class PlacesContentProvider extends ContentProvider {
     @Override
     public Cursor query(Uri uri, String[] projection, String selection, String[] selectionArgs, String sort) {
         SQLiteQueryBuilder qb = new SQLiteQueryBuilder();
-        qb.setTables(PLACES_TABLE);
+        qb.setTables(PLACEDETAILS_TABLE);
 
         // If this is a row query, limit the result set to the passed in row.
         switch (uriMatcher.match(uri)) {
             case PLACE_ID:
-                qb.appendWhere(KEY_ID + "=" + uri.getPathSegments().get(1));
+                qb.appendWhere(KEY_ID + "='" + uri.getPathSegments().get(1) + "'");
                 break;
             default:
                 break;
@@ -134,7 +120,7 @@ public class PlacesContentProvider extends ContentProvider {
         }
 
         // Apply the query to the underlying database.
-        Cursor c = qb.query(placesDB,
+        Cursor c = qb.query(database,
                 projection,
                 selection, selectionArgs,
                 null, null, orderBy);
@@ -150,7 +136,7 @@ public class PlacesContentProvider extends ContentProvider {
     @Override
     public Uri insert(Uri _uri, ContentValues _initialValues) {
         // Insert the new row, will return the row number if successful.
-        long rowID = placesDB.insert(PLACES_TABLE, "nullhack", _initialValues);
+        long rowID = database.insert(PLACEDETAILS_TABLE, "not_null", _initialValues);
 
         // Return a URI to the newly inserted row on success.
         if (rowID > 0) {
@@ -167,12 +153,12 @@ public class PlacesContentProvider extends ContentProvider {
 
         switch (uriMatcher.match(uri)) {
             case PLACES:
-                count = placesDB.delete(PLACES_TABLE, where, whereArgs);
+                count = database.delete(PLACEDETAILS_TABLE, where, whereArgs);
                 break;
 
             case PLACE_ID:
                 String segment = uri.getPathSegments().get(1);
-                count = placesDB.delete(PLACES_TABLE, KEY_ID + "="
+                count = database.delete(PLACEDETAILS_TABLE, KEY_ID + "="
                         + segment
                         + (!TextUtils.isEmpty(where) ? " AND ("
                         + where + ')' : ""), whereArgs);
@@ -191,12 +177,12 @@ public class PlacesContentProvider extends ContentProvider {
         int count;
         switch (uriMatcher.match(uri)) {
             case PLACES:
-                count = placesDB.update(PLACES_TABLE, values, where, whereArgs);
+                count = database.update(PLACEDETAILS_TABLE, values, where, whereArgs);
                 break;
 
             case PLACE_ID:
                 String segment = uri.getPathSegments().get(1);
-                count = placesDB.update(PLACES_TABLE, values, KEY_ID
+                count = database.update(PLACEDETAILS_TABLE, values, KEY_ID
                         + "=" + segment
                         + (!TextUtils.isEmpty(where) ? " AND ("
                         + where + ')' : ""), whereArgs);
@@ -210,11 +196,10 @@ public class PlacesContentProvider extends ContentProvider {
         return count;
     }
 
-
     // Helper class for opening, creating, and managing database version control
     private static class PlacesDatabaseHelper extends SQLiteOpenHelper {
         private static final String DATABASE_CREATE =
-                "create table " + PLACES_TABLE + " ("
+                "create table " + PLACEDETAILS_TABLE + " ("
                         + KEY_ID + " TEXT primary key, "
                         + KEY_NAME + " TEXT, "
                         + KEY_VICINITY + " TEXT, "
@@ -225,7 +210,12 @@ public class PlacesContentProvider extends ContentProvider {
                         + KEY_ICON + " TEXT, "
                         + KEY_REFERENCE + " TEXT, "
                         + KEY_DISTANCE + " FLOAT, "
-                        + KEY_LAST_UPDATE_TIME + " LONG); ";
+                        + KEY_PHONE + " TEXT, "
+                        + KEY_ADDRESS + " TEXT, "
+                        + KEY_RATING + " FLOAT, "
+                        + KEY_URL + " TEXT, "
+                        + KEY_LAST_UPDATE_TIME + " LONG, "
+                        + KEY_FORCE_CACHE + " BOOLEAN); ";
 
         public PlacesDatabaseHelper(Context context, String name, CursorFactory factory, int version) {
             super(context, name, factory, version);
@@ -241,7 +231,7 @@ public class PlacesContentProvider extends ContentProvider {
             Log.w(TAG, "Upgrading database from version " + oldVersion + " to "
                     + newVersion + ", which will destroy all old data");
 
-            db.execSQL("DROP TABLE IF EXISTS " + PLACES_TABLE);
+            db.execSQL("DROP TABLE IF EXISTS " + PLACEDETAILS_TABLE);
             onCreate(db);
         }
     }

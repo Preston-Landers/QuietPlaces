@@ -4,36 +4,48 @@ import android.app.Dialog;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.content.*;
+import android.location.Criteria;
 import android.location.Location;
+import android.location.LocationManager;
 import android.media.AudioManager;
+import android.os.AsyncTask;
+import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.support.v4.app.*;
 import android.support.v4.content.LocalBroadcastManager;
-import android.support.v7.app.ActionBarActivity;
+import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBar;
-import android.os.Bundle;
+import android.support.v7.app.ActionBarActivity;
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.Menu;
 import android.view.View;
-import android.support.v4.widget.DrawerLayout;
 import android.widget.Switch;
 import android.widget.Toast;
 import com.google.android.gms.common.ConnectionResult;
-import com.google.android.gms.common.GooglePlayServicesClient;
 import com.google.android.gms.common.GooglePlayServicesUtil;
-import com.google.android.gms.location.*;
+import com.google.android.gms.location.Geofence;
+import com.google.android.gms.location.LocationClient;
+import com.google.android.gms.location.LocationListener;
+import com.google.android.gms.location.LocationStatusCodes;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.model.LatLng;
 import edu.utexas.quietplaces.fragments.*;
+import edu.utexas.quietplaces.receivers.LocationChangedReceiver;
+import edu.utexas.quietplaces.receivers.PassiveLocationChangedReceiver;
+import edu.utexas.quietplaces.services.EclairPlacesUpdateService;
+import edu.utexas.quietplaces.services.PlacesUpdateService;
+import edu.utexas.quietplaces.utils.LocationUpdateRequester;
+import edu.utexas.quietplaces.utils.PlatformSpecificImplementationFactory;
+import edu.utexas.quietplaces.utils.base.ILastLocationFinder;
+import edu.utexas.quietplaces.utils.base.SharedPreferenceSaver;
 
 import java.util.ArrayList;
 import java.util.List;
 
 public class MainActivity extends ActionBarActivity
         implements NavigationDrawerFragment.NavigationDrawerCallbacks,
-        GooglePlayServicesClient.ConnectionCallbacks, GooglePlayServicesClient.OnConnectionFailedListener,
         LocationListener, LocationClient.OnAddGeofencesResultListener {
 
     private static final String TAG = Config.PACKAGE_NAME + ".MainActivity";
@@ -43,17 +55,29 @@ public class MainActivity extends ActionBarActivity
      * Fragment managing the behaviors, interactions and presentation of the navigation drawer.
      */
     private NavigationDrawerFragment mNavigationDrawerFragment;
+
+    // The rest of our fragments - each is a tab in the navigation
     private QPMapFragment mapFragment;
     private HomeFragment homeFragment;
-    private HistoryFragment historyFragment; // this is current a placeholder fragment, convert it to the History fragment
+    private HistoryFragment historyFragment;
     private SettingsFragment settingsFragment;
     private AboutFragment aboutFragment;
 
     // Define an object that holds accuracy and frequency parameters
-    private LocationRequest mLocationRequest;
-    private LocationClient mLocationClient;
+//    private LocationRequest mLocationRequest;
+//    private LocationClient mLocationClient;
 
-    private SharedPreferences sharedPrefs;
+    protected LocationManager locationManager;
+    protected SharedPreferences.Editor prefsEditor;
+    protected SharedPreferenceSaver sharedPreferenceSaver;
+
+    protected Criteria criteria;
+    protected ILastLocationFinder lastLocationFinder;
+    protected LocationUpdateRequester locationUpdateRequester;
+    protected PendingIntent locationListenerPendingIntent;
+    protected PendingIntent locationListenerPassivePendingIntent;
+
+    private SharedPreferences prefs;
 
     private GoogleMap googleMap = null;
     private boolean mUpdatesRequested = false;
@@ -104,10 +128,47 @@ public class MainActivity extends ActionBarActivity
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
+        locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
+
         // Initialize preference defaults
         PreferenceManager.setDefaultValues(this, R.xml.preferences, false);
         // Get preference object
-        sharedPrefs = PreferenceManager.getDefaultSharedPreferences(this);
+        prefs = PreferenceManager.getDefaultSharedPreferences(this);
+        prefsEditor = prefs.edit();
+
+        // Instantiate a SharedPreferenceSaver class based on the available platform version.
+        // This will be used to save shared preferences
+        sharedPreferenceSaver = PlatformSpecificImplementationFactory.getSharedPreferenceSaver(this);
+
+        // Save that we've been run once.
+        prefsEditor.putBoolean(PlacesConstants.SP_KEY_RUN_ONCE, true);
+        sharedPreferenceSaver.savePreferences(prefsEditor, false);
+
+        // Specify the Criteria to use when requesting location updates while the application is Active
+        criteria = new Criteria();
+        if (PlacesConstants.USE_GPS_WHEN_ACTIVITY_VISIBLE) {
+            criteria.setAccuracy(Criteria.ACCURACY_FINE);
+        } else {
+            criteria.setPowerRequirement(Criteria.POWER_LOW);
+        }
+
+        // Setup the location update Pending Intents
+        Intent activeIntent = new Intent(this, LocationChangedReceiver.class);
+        locationListenerPendingIntent = PendingIntent.getBroadcast(this, 0, activeIntent, PendingIntent.FLAG_UPDATE_CURRENT);
+
+        Intent passiveIntent = new Intent(this, PassiveLocationChangedReceiver.class);
+        locationListenerPassivePendingIntent = PendingIntent.getBroadcast(this, 0, passiveIntent, PendingIntent.FLAG_UPDATE_CURRENT);
+        locationManager.removeUpdates(locationListenerPassivePendingIntent);
+
+        // Instantiate a LastLocationFinder class.
+        // This will be used to find the last known location when the application starts.
+        lastLocationFinder = PlatformSpecificImplementationFactory.getLastLocationFinder(this);
+        lastLocationFinder.setChangedLocationListener(oneShotLastLocationUpdateListener);
+
+        // Instantiate a Location Update Requester class based on the available platform version.
+        // This will be used to request location updates.
+        locationUpdateRequester = PlatformSpecificImplementationFactory.getLocationUpdateRequester(locationManager);
+
 
         // Instantiate the current List of geofences
         mCurrentGeofences = new ArrayList<Geofence>();
@@ -177,6 +238,7 @@ public class MainActivity extends ActionBarActivity
         }
 
 
+        // Inflate the layout
         setContentView(R.layout.activity_main);
 
         // Create objects for all of our primary fragments
@@ -192,6 +254,7 @@ public class MainActivity extends ActionBarActivity
 
         // Set up location updates.
         // TODO: make this a setting?
+        /*
         mLocationRequest = LocationRequest.create();
         mLocationRequest.setPriority(
                 // LocationRequest.PRIORITY_BALANCED_POWER_ACCURACY
@@ -205,6 +268,7 @@ public class MainActivity extends ActionBarActivity
         mLocationRequest.setFastestInterval(Config.LOCATION_FASTEST_INTERVAL_MS);
 
         mLocationClient = new LocationClient(this, this, this);
+        */
     }
 
     @Override
@@ -292,12 +356,14 @@ public class MainActivity extends ActionBarActivity
     @Override
     protected void onStart() {
         super.onStart();
-        mLocationClient.connect();
+        // mLocationClient.connect();
+        Log.d(TAG, "onStart");
     }
 
     @Override
     protected void onResume() {
         super.onResume();
+        Log.d(TAG, "onResume");
 
         if (!checkGooglePlayServicesAvailable()) {
             Log.e(TAG, "Can't find Google Play Services needed for maps and location.");
@@ -307,10 +373,23 @@ public class MainActivity extends ActionBarActivity
 
         haveAlreadyCenteredCamera = false; /// good idea?
         setupMapIfNeeded();
-
         mUpdatesRequested = getPrefUsingLocation();
 
-        // Register the broadcast receiver to receive status updates
+        /// FROM LOCATION BEST PRACTICES
+
+        // Commit shared preference that says we're in the foreground.
+        prefsEditor.putBoolean(PlacesConstants.EXTRA_KEY_IN_BACKGROUND, false);
+        sharedPreferenceSaver.savePreferences(prefsEditor, false);
+
+        // Get the last known location (and optionally request location updates) and
+        // update the place list.
+        if (mUpdatesRequested) {
+            boolean followLocationChanges = prefs.getBoolean(PlacesConstants.SP_KEY_FOLLOW_LOCATION_CHANGES, true);
+            getLocationAndUpdatePlaces(followLocationChanges);
+        }
+
+
+        // Register the broadcast receiver to receive geofence status updates
         if (!haveRegisteredBroadcastReceiver) {
             LocalBroadcastManager.getInstance(this).registerReceiver(mBroadcastReceiver, mIntentFilter);
             haveRegisteredBroadcastReceiver = true;
@@ -319,32 +398,51 @@ public class MainActivity extends ActionBarActivity
 
     }
 
-    // onDestroy is not defined either
-/*
+    @Override
+    protected void onDestroy() {
+        Log.d(TAG, "onDestroy");
+        disableLocationUpdates();
+        super.onDestroy();
+    }
+
     @Override
     protected void onPause() {
+        Log.d(TAG, "onPause");
+        // Commit shared preference that says we're in the background.
+        prefsEditor.putBoolean(PlacesConstants.EXTRA_KEY_IN_BACKGROUND, true);
+        sharedPreferenceSaver.savePreferences(prefsEditor, false);
+
+        // Stop listening for location updates when the Activity is inactive.
+        // NOTE: this was in the Location Best Practices app, but having
+        // location and GPlaces updates in the background is crucial to our
+        // apps's functionality with automatic place discovery.  However this could
+        // impact the battery....
+        // We still do it in onDestroy().
+
+        // disableLocationUpdates();
+
         super.onPause();
     }
-*/
 
     @Override
     protected void onStop() {
+        Log.d(TAG, "onStop");
         super.onStop();
 
-        // If the client is connected
-        if (mLocationClient.isConnected()) {
-            /*
-             * Remove location updates for a listener.
-             * The current Activity is the listener, so
-             * the argument is "this".
-             */
-            mLocationClient.removeLocationUpdates(this);
-        }
-        /*
-         * After disconnect() is called, the client is
-         * considered "dead".
-         */
-        mLocationClient.disconnect();
+//        // If the client is connected
+//        if (mLocationClient.isConnected()) {
+//            /*
+//             * Remove location updates for a listener.
+//             * The current Activity is the listener, so
+//             * the argument is "this".
+//             */
+//            mLocationClient.removeLocationUpdates(this);
+//        }
+//        /*
+//         * After disconnect() is called, the client is
+//         * considered "dead".
+//         */
+//        mLocationClient.disconnect();
 
     }
 
@@ -551,6 +649,7 @@ public class MainActivity extends ActionBarActivity
      * client finishes successfully. At this point, you can
      * request the current location or start periodic updates
      */
+/*
     @Override
     public void onConnected(Bundle dataBundle) {
         // Display the connection status
@@ -561,55 +660,59 @@ public class MainActivity extends ActionBarActivity
             shortToast("Location Services Disabled");
         }
     }
+*/
 
     /*
      * Called by Location Services if the connection to the
      * location client drops because of an error.
      */
+/*
     @Override
     public void onDisconnected() {
         // Display the connection status
         shortToast("Disconnected from Location Services. Please re-connect.");
     }
+*/
 
     /*
      * Called by Location Services if the attempt to
      * Location Services fails.
      */
-    @Override
-    public void onConnectionFailed(ConnectionResult connectionResult) {
-        /*
-         * Google Play services can resolve some errors it detects.
-         * If the error has a resolution, try sending an Intent to
-         * start a Google Play services activity that can resolve
-         * error.
-         */
-        if (connectionResult.hasResolution()) {
-            try {
-                // Start an Activity that tries to resolve the error
-                connectionResult.startResolutionForResult(
-                        this,
-                        REQUEST_GOOGLE_PLAY_SERVICES); // Not sure if this is right...
-                /*
-                * Thrown if Google Play services canceled the original
-                * PendingIntent
-                */
-            } catch (IntentSender.SendIntentException e) {
-                // Log the error
-                e.printStackTrace();
-            }
-        } else {
-            /*
-             * If no resolution is available, display a dialog to the
-             * user with the error.
-             */
-            showGooglePlayServicesAvailabilityErrorDialog(connectionResult.getErrorCode());
-        }
-    }
+//    @Override
+//    public void onConnectionFailed(ConnectionResult connectionResult) {
+//        /*
+//         * Google Play services can resolve some errors it detects.
+//         * If the error has a resolution, try sending an Intent to
+//         * start a Google Play services activity that can resolve
+//         * error.
+//         */
+//        if (connectionResult.hasResolution()) {
+//            try {
+//                // Start an Activity that tries to resolve the error
+//                connectionResult.startResolutionForResult(
+//                        this,
+//                        REQUEST_GOOGLE_PLAY_SERVICES); // Not sure if this is right...
+//                /*
+//                * Thrown if Google Play services canceled the original
+//                * PendingIntent
+//                */
+//            } catch (IntentSender.SendIntentException e) {
+//                // Log the error
+//                e.printStackTrace();
+//            }
+//        } else {
+//            /*
+//             * If no resolution is available, display a dialog to the
+//             * user with the error.
+//             */
+//            showGooglePlayServicesAvailabilityErrorDialog(connectionResult.getErrorCode());
+//        }
+//    }
 
     @Override
     public void onLocationChanged(Location location) {
         // Report to the UI that the location was updated
+        // TODO: handle this w/ new location stuff
 /*
         String msg = "Updated Location: " +
                 Double.toString(location.getLatitude()) + "," +
@@ -626,11 +729,11 @@ public class MainActivity extends ActionBarActivity
     }
 
     private boolean getPrefUsingLocation() {
-        return sharedPrefs.getBoolean(SettingsFragment.KEY_USE_LOCATION, false);
+        return prefs.getBoolean(SettingsFragment.KEY_USE_LOCATION, false);
     }
 
     private boolean getPrefUsingVibrate() {
-        return sharedPrefs.getBoolean(SettingsFragment.KEY_USE_VIBRATE, false);
+        return prefs.getBoolean(SettingsFragment.KEY_USE_VIBRATE, false);
     }
 
     private void updateUserLocationOnMap(Location location) {
@@ -938,5 +1041,178 @@ public class MainActivity extends ActionBarActivity
         // Issue the notification
         mNotificationManager.notify(0, builder.build());
     }
+
+    /**
+     * Update the list of nearby places centered on the specified Location, within the specified radius.
+     * This will start the {@link edu.utexas.quietplaces.services.PlacesUpdateService}
+     * that will poll the underlying web service.
+     *
+     * @param location     Location
+     * @param radius       Radius (meters)
+     * @param forceRefresh Force Refresh
+     */
+    protected void updatePlaces(Location location, int radius, boolean forceRefresh) {
+        if (location != null) {
+            Log.d(TAG, "Updating place list.");
+            // Start the PlacesUpdateService. Note that we use an action rather than specifying the
+            // class directly. That's because we have different variations of the Service for different
+            // platform versions.
+            Intent updateServiceIntent = new Intent(this, PlacesConstants.SUPPORTS_ECLAIR ? EclairPlacesUpdateService.class : PlacesUpdateService.class);
+            updateServiceIntent.putExtra(PlacesConstants.EXTRA_KEY_LOCATION, location);
+            updateServiceIntent.putExtra(PlacesConstants.EXTRA_KEY_RADIUS, radius);
+            updateServiceIntent.putExtra(PlacesConstants.EXTRA_KEY_FORCEREFRESH, forceRefresh);
+            startService(updateServiceIntent);
+        } else
+            Log.d(TAG, "Updating place list for: No Previous Location Found");
+    }
+
+    /**
+     * Find the last known location (using a {@link edu.utexas.quietplaces.utils.GingerbreadLastLocationFinder})
+     * and updates theplace list accordingly.
+     *
+     * @param updateWhenLocationChanges Request location updates
+     */
+    protected void getLocationAndUpdatePlaces(boolean updateWhenLocationChanges) {
+        // This isn't directly affecting the UI, so put it on a worker thread.
+        AsyncTask<Void, Void, Void> findLastLocationTask = new AsyncTask<Void, Void, Void>() {
+            @Override
+            protected Void doInBackground(Void... params) {
+                // Find the last known location, specifying a required accuracy of within the min distance between updates
+                // and a required latency of the minimum time required between updates.
+                Location lastKnownLocation = lastLocationFinder.getLastBestLocation(PlacesConstants.MAX_DISTANCE,
+                        System.currentTimeMillis() - PlacesConstants.MAX_TIME);
+
+                // Update the place list based on the last known location within a defined radius.
+                // Note that this is *not* a forced update. The Place List Service has settings to
+                // determine how frequently the underlying web service should be pinged. This function
+                // is called everytime the Activity becomes active, so we don't want to flood the server
+                // unless the location has changed or a minimum latency or distance has been covered.
+                // TODO Modify the search radius based on user settings?
+                updatePlaces(lastKnownLocation, PlacesConstants.DEFAULT_RADIUS, false);
+                return null;
+            }
+        };
+        findLastLocationTask.execute();
+
+        // If we have requested location updates, turn them on here.
+        toggleUpdatesWhenLocationChanges(updateWhenLocationChanges);
+    }
+
+    /**
+     * Choose if we should receive location updates.
+     *
+     * @param updateWhenLocationChanges Request location updates
+     */
+    protected void toggleUpdatesWhenLocationChanges(boolean updateWhenLocationChanges) {
+        // Save the location update status in shared preferences
+        prefsEditor.putBoolean(PlacesConstants.SP_KEY_FOLLOW_LOCATION_CHANGES, updateWhenLocationChanges);
+        sharedPreferenceSaver.savePreferences(prefsEditor, true);
+
+        // Start or stop listening for location changes
+        if (updateWhenLocationChanges)
+            requestLocationUpdates();
+        else
+            disableLocationUpdates();
+    }
+
+    /**
+     * Start listening for location updates.
+     */
+    protected void requestLocationUpdates() {
+        // Normal updates while activity is visible.
+        locationUpdateRequester.requestLocationUpdates(PlacesConstants.MAX_TIME, PlacesConstants.MAX_DISTANCE, criteria, locationListenerPendingIntent);
+
+        // Passive location updates from 3rd party apps when the Activity isn't visible.
+        locationUpdateRequester.requestPassiveLocationUpdates(PlacesConstants.PASSIVE_MAX_TIME, PlacesConstants.PASSIVE_MAX_DISTANCE, locationListenerPassivePendingIntent);
+
+        // Register a receiver that listens for when the provider I'm using has been disabled.
+        IntentFilter intentFilter = new IntentFilter(PlacesConstants.ACTIVE_LOCATION_UPDATE_PROVIDER_DISABLED);
+        registerReceiver(locProviderDisabledReceiver, intentFilter);
+
+        // Register a receiver that listens for when a better provider than I'm using becomes available.
+        String bestProvider = locationManager.getBestProvider(criteria, false);
+        String bestAvailableProvider = locationManager.getBestProvider(criteria, true);
+        if (bestProvider != null && !bestProvider.equals(bestAvailableProvider)) {
+            locationManager.requestLocationUpdates(bestProvider, 0, 0, bestInactiveLocationProviderListener, getMainLooper());
+        }
+    }
+
+    /**
+     * Stop listening for location updates
+     */
+    protected void disableLocationUpdates() {
+        Log.d(TAG, "disabling location updates.");
+        unregisterReceiver(locProviderDisabledReceiver);
+        locationManager.removeUpdates(locationListenerPendingIntent);
+        locationManager.removeUpdates(bestInactiveLocationProviderListener);
+        if (isFinishing()) {
+            lastLocationFinder.cancel();
+        }
+
+        if (PlacesConstants.DISABLE_PASSIVE_LOCATION_WHEN_USER_EXIT && isFinishing()) {
+            locationManager.removeUpdates(locationListenerPassivePendingIntent);
+        } else {
+            // https://code.google.com/p/android-protips-location/issues/detail?id=5
+            locationUpdateRequester.requestPassiveLocationUpdates(PlacesConstants.PASSIVE_MAX_TIME,
+                    PlacesConstants.PASSIVE_MAX_DISTANCE, locationListenerPassivePendingIntent);
+        }
+    }
+
+    /**
+     * One-off location listener that receives updates from the {@link edu.utexas.quietplaces.utils.GingerbreadLastLocationFinder}.
+     * This is triggered where the last known location is outside the bounds of our maximum
+     * distance and latency.
+     */
+    protected android.location.LocationListener oneShotLastLocationUpdateListener = new android.location.LocationListener() {
+        public void onLocationChanged(Location l) {
+            updatePlaces(l, PlacesConstants.DEFAULT_RADIUS, true);
+        }
+
+        public void onProviderDisabled(String provider) {
+        }
+
+        public void onStatusChanged(String provider, int status, Bundle extras) {
+        }
+
+        public void onProviderEnabled(String provider) {
+        }
+    };
+
+    /**
+     * If the best Location Provider (usually GPS) is not available when we request location
+     * updates, this listener will be notified if / when it becomes available. It calls
+     * requestLocationUpdates to re-register the location listeners using the better Location
+     * Provider.
+     */
+    protected android.location.LocationListener bestInactiveLocationProviderListener = new android.location.LocationListener() {
+        public void onLocationChanged(Location l) {
+        }
+
+        public void onProviderDisabled(String provider) {
+        }
+
+        public void onStatusChanged(String provider, int status, Bundle extras) {
+        }
+
+        public void onProviderEnabled(String provider) {
+            // Re-register the location listeners using the better Location Provider.
+            requestLocationUpdates();
+        }
+    };
+
+    /**
+     * If the Location Provider we're using to receive location updates is disabled while the
+     * app is running, this Receiver will be notified, allowing us to re-register our Location
+     * Receivers using the best available Location Provider is still available.
+     */
+    protected BroadcastReceiver locProviderDisabledReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            boolean providerDisabled = !intent.getBooleanExtra(LocationManager.KEY_PROVIDER_ENABLED, false);
+            // Re-register the location listeners using the best available Location Provider.
+            if (providerDisabled)
+                requestLocationUpdates();
+        }
+    };
 
 }

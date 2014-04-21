@@ -10,14 +10,13 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
-import edu.utexas.quietplaces.Config;
 import edu.utexas.quietplaces.R;
 
 /**
  * A fragment for the About / Help screen.
  */
 public class AboutFragment extends BaseFragment {
-    private static final String TAG = Config.PACKAGE_NAME + ".AboutFragment";
+    private static final String TAG = FRAG_PACKAGE + ".AboutFragment";
 
     /**
      * Returns a new instance of this fragment for the given section

@@ -26,7 +26,8 @@ import edu.utexas.quietplaces.R;
  */
 public class LocationServiceErrorMessages {
     // Don't allow instantiation
-    private LocationServiceErrorMessages() {}
+    private LocationServiceErrorMessages() {
+    }
 
     public static String getErrorString(Context context, int errorCode) {
 

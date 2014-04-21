@@ -28,7 +28,7 @@ import java.util.*;
  * A fragment containing the MapView plus our custom controls.
  */
 public class QPMapFragment extends BaseFragment {
-    private static final String TAG = Config.PACKAGE_NAME + ".QPMapFragment";
+    private static final String TAG = FRAG_PACKAGE + ".QPMapFragment";
 
     private MapView mMapView;
     private GoogleMap mMap;
@@ -388,6 +388,8 @@ public class QPMapFragment extends BaseFragment {
         // shortToast("Clicked at: " + latLng);
 
         // temporary stuff
+        // TODO: we want to get this from the Places API if at all possible
+        // if not, at least generate a basic address or something?
         DateTime now = new DateTime();
         final String comment = "Created at " + DateUtils.getPrettyDateTime(now);
 
@@ -406,6 +408,12 @@ public class QPMapFragment extends BaseFragment {
         Log.v(TAG, "About to add new quiet place to db: " + quietPlace);
         quietPlace = QuietPlacesContentProvider.saveQuietPlace(getActivity(), quietPlace);
         Log.w(TAG, "Saved place to db: " + quietPlace);
+
+        if (quietPlace == null) {
+            Log.e(TAG, "Unable to save new Quiet Place to the database.");
+            shortToast("Internal error: unable to save.");
+            return;
+        }
 
         // we do this outside of addQuietPlaceMapMarker because
         // we don't want these logged when loaded from the database load method.
@@ -499,6 +507,8 @@ public class QPMapFragment extends BaseFragment {
 
     /**
      * Load the database into markers
+     *
+     * TODO: this should be done asynchronously, right??
      */
     private void loadPlacesFromDatabase() {
 

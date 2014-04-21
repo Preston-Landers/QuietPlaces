@@ -19,7 +19,7 @@ import edu.utexas.quietplaces.R;
 public class SettingsFragment extends PreferenceFragment
         implements SharedPreferences.OnSharedPreferenceChangeListener {
 
-    private static final String TAG = Config.PACKAGE_NAME + ".SettingsFragment";
+    private static final String TAG = Config.PACKAGE_NAME + ".fragments.SettingsFragment";
 
     /**
      * The fragment argument representing the section number for this

@@ -49,6 +49,9 @@ if mock locations is enabled in the device's developer options menu.
 * Ability to resize quiet places with scale gestures
   * Not critical because we have buttons to resize the selected place.
 * Add a general purpose "active" button to the home screen - same as Use Location in settings?
+* Use Async Task to load quiet places from database! Avoid long pauses in startup
+* Only refresh the Places list if we stray far enough from the location of the last check
+  * I thought the LBP code did this..?
 
 ## Known Bugs ##
 
@@ -61,6 +64,14 @@ if mock locations is enabled in the device's developer options menu.
 * Put a confirmation dialog on delete place, and clear history?
 * If the app has not received location updates in a while, we may miss some geofence
   transitions and may need to do a manual check.
+* onResume is called twice during activity startup (with an onPause in between)
+   * Why?
+   * This generates extra Places HTTP requests.
+
+### other things to check ###
+
+https://code.google.com/p/android-protips-location/issues/detail?id=11
+
 
 ## Software Engineering Challenges ##
 
@@ -99,12 +110,19 @@ step of creating a file and inserting a new API key that you got from Google.
 
 ## Add the API Key in res/values/private.xml ##
 
-In order to build from source you must provide an XML file containing the Google Maps API key.
-For security reasons this is not checked into version control. If you wish to build your own
+In order to build from source you must provide an XML file containing the two API keys needed
+to access Google APIs.
+
+For security reasons these keys are not checked into version control. If you wish to build your own
 version of this app you will need to register a new project in the Google API console and obtain
-a new API key following the instructions here:
+two new API keys.
+
+First obtain an Android client key for the Maps API following the instructions here:
 
 [Google Maps Android instructions](https://developers.google.com/maps/documentation/android/start#creating_an_api_project)
+
+Next obtain a "browser" key for the Places API. This can be done in the Google project API console.
+Create a browser key with no referrers.
 
 Create the following file:
 
@@ -116,17 +134,20 @@ Contents should be like:
     <resources>
         <string name="google_project_number">PROJECT_NUMBER</string>
         <string name="google_public_api_key">API_KEY</string>
+        <string name="google_browser_api_key">BROWSER_API_KEY</string>
     </resources>
 
 Replace `PROJECT_NUMBER` with the project number from the Google API console, and the `API_KEY` from the
-key you got from the Public API Access area of the console.
+Android key you got from the Public API Access area of the console.
 
-`API_KEY` will look something like `AIzaSyBdVl-cTICSwYKrZ95SuvNw7dbMuDt1KG0` (this is not a valid key)
+Replace `BROWSER_API_KEY` from the browser key from the same area of the console.
+
+The keys will look something like `AIzaSyBdVl-cTICSwYKrZ95SuvNw7dbMuDt1KG0` (this is not a valid key)
 
 
 ## Debug and Release builds ##
 
-This section is only relevant if you are trying to build a public release version for the stores.
+This section is only relevant if you are trying to build a public release version for the App Store.
 
 Debug builds will be signed with your default debug keystore. To build a debug version with gradle run:
 
@@ -154,12 +175,17 @@ Now you should be able to create a signed release build with:
 
 # License
 
-The code in this project is free software and is licensed by the
+Unless otherwise noted, the code in this project is free software and is licensed by the
 [GNU General Public License (GPL) 2.0](http://www.gnu.org/licenses/gpl-2.0.txt).
 See LICENSE.txt for details.
 
 
 # Open Source Credits
+
+Portions of this app were derived from the "Location Best Practices" project:
+
+https://code.google.com/p/android-protips-location/
+http://android-developers.blogspot.com/2011/06/deep-dive-into-location.html
 
 Some icons from:
 http://www.iconarchive.com/show/sleek-xp-basic-icons-by-hopstarter.html

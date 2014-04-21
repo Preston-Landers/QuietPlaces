@@ -29,22 +29,22 @@ public class QuietPlacesContentProvider extends ContentProvider {
     // Database fields
 
     public static final String TABLE_PLACES = "places";
-    public static final String COLUMN_ID = "_id";
-    public static final String COLUMN_COMMENT = "comment";
-    public static final String COLUMN_LATITUDE = "latitude";
-    public static final String COLUMN_LONGITUDE = "longitude";
-    public static final String COLUMN_RADIUS = "radius";
-    public static final String COLUMN_DATETIME = "datetime";  // date/time added
-    public static final String COLUMN_CATEGORY = "category";  // places API category, comma separated?
+    public static final String KEY_ID = "_id";
+    public static final String KEY_COMMENT = "comment";
+    public static final String KEY_LATITUDE = "latitude";
+    public static final String KEY_LONGITUDE = "longitude";
+    public static final String KEY_RADIUS = "radius";
+    public static final String KEY_DATETIME = "datetime";  // date/time added
+    public static final String KEY_CATEGORY = "category";  // places API category, comma separated?
 
-    private static String[] allColumns = {
-            COLUMN_ID,
-            COLUMN_COMMENT,
-            COLUMN_LATITUDE,
-            COLUMN_LONGITUDE,
-            COLUMN_RADIUS,
-            COLUMN_DATETIME,
-            COLUMN_CATEGORY
+    private static String[] ALL_KEYS = {
+            KEY_ID,
+            KEY_COMMENT,
+            KEY_LATITUDE,
+            KEY_LONGITUDE,
+            KEY_RADIUS,
+            KEY_DATETIME,
+            KEY_CATEGORY
     };
 
     // used for the UriMatcher
@@ -55,8 +55,9 @@ public class QuietPlacesContentProvider extends ContentProvider {
     private static final String BASE_PATH = TABLE_PLACES;
 
     public static final Uri CONTENT_URI = Uri.parse("content://" + AUTHORITY + "/" + BASE_PATH);
-    public static final String CONTENT_TYPE = ContentResolver.CURSOR_DIR_BASE_TYPE + "/quietplaces";
-    public static final String CONTENT_ITEM_TYPE = ContentResolver.CURSOR_ITEM_BASE_TYPE + "/quietplace";
+
+    public static final String CONTENT_TYPE = ContentResolver.CURSOR_DIR_BASE_TYPE + "/vnd.quietplaces.quietplaces";
+    public static final String CONTENT_ITEM_TYPE = ContentResolver.CURSOR_ITEM_BASE_TYPE + "/vnd.quietplaces.quietplace";
 
     private static final UriMatcher sURIMatcher = new UriMatcher(UriMatcher.NO_MATCH);
 
@@ -81,15 +82,15 @@ public class QuietPlacesContentProvider extends ContentProvider {
         ContentValues values = new ContentValues();
         boolean creating = true;
         if (quietPlace.getId() != 0) {
-            values.put(COLUMN_ID, quietPlace.getId());
+            values.put(KEY_ID, quietPlace.getId());
             creating = false;
         }
-        values.put(COLUMN_COMMENT, quietPlace.getComment());
-        values.put(COLUMN_LATITUDE, quietPlace.getLatitude());
-        values.put(COLUMN_LONGITUDE, quietPlace.getLongitude());
-        values.put(COLUMN_RADIUS, quietPlace.getRadius());
-        values.put(COLUMN_DATETIME, quietPlace.getDatetimeString());
-        values.put(COLUMN_CATEGORY, quietPlace.getCategory());
+        values.put(KEY_COMMENT, quietPlace.getComment());
+        values.put(KEY_LATITUDE, quietPlace.getLatitude());
+        values.put(KEY_LONGITUDE, quietPlace.getLongitude());
+        values.put(KEY_RADIUS, quietPlace.getRadius());
+        values.put(KEY_DATETIME, quietPlace.getDatetimeString());
+        values.put(KEY_CATEGORY, quietPlace.getCategory());
 
         ContentResolver resolver = context.getContentResolver();
 
@@ -108,13 +109,13 @@ public class QuietPlacesContentProvider extends ContentProvider {
             resolver.update(
                     CONTENT_URI,
                     values,
-                    COLUMN_ID + " = ?",
+                    KEY_ID + " = ?",
                     params
             );
         }
 
         Cursor cursor = resolver.query(CONTENT_URI,
-                allColumns, COLUMN_ID + " = " + objectId, null,
+                ALL_KEYS, KEY_ID + " = " + objectId, null,
                 null);
         if (cursor == null) {
             Log.e(TAG, "Error: Unable to fetch QuietPlace from database after save!");
@@ -129,31 +130,26 @@ public class QuietPlacesContentProvider extends ContentProvider {
         return newQuietPlace;
     }
 
+    // pretty sure this isn't the best way to do this, right?
     private static Long getObjectIdFromUri(Uri uri) {
         List<String> pathSegments = uri.getPathSegments();
-        if (pathSegments == null) {
+        if (pathSegments == null || pathSegments.size() < 2) {
             return null;
         }
-        switch (sURIMatcher.match(uri)) {
-            case QUIETPLACE_ID:
-                String segment = pathSegments.get(1);
-                return Long.parseLong(segment);
-            default:
-                break;
-        }
-        return null;
+        String segment = pathSegments.get(1);
+        return Long.parseLong(segment);
     }
 
     /**
      * Utility function to delete a QuietPlace object from the database.
-     * @param context
-     * @param place
+     * @param context app context
+     * @param place the QuietPlace to delete
      */
     public static void deleteQuietPlace(Context context, QuietPlace place) {
         long id = place.getId();
         Log.w(TAG, "QuietPlace deleted with id: " + id);
         context.getContentResolver().delete(CONTENT_URI,
-                COLUMN_ID + " = " + id,
+                KEY_ID + " = " + id,
                 null);
     }
 
@@ -161,7 +157,7 @@ public class QuietPlacesContentProvider extends ContentProvider {
         List<QuietPlace> places = new ArrayList<QuietPlace>();
 
         Cursor cursor = context.getContentResolver().query(CONTENT_URI,
-                allColumns, null, null, null);
+                ALL_KEYS, null, null, null);
         if (cursor == null) {
             Log.w(TAG, "null cursor from getAllQuietPlaces query");
             return null;
@@ -178,7 +174,12 @@ public class QuietPlacesContentProvider extends ContentProvider {
         return places;
     }
 
-    private static QuietPlace cursorToQuietPlace(Cursor cursor) {
+    /**
+     * Instantiate a QuietPlace object from a cursor.
+     * @param cursor database cursor
+     * @return new QuietPlace instance from the data
+     */
+    public static QuietPlace cursorToQuietPlace(Cursor cursor) {
         QuietPlace place = new QuietPlace();
         place.setId(cursor.getLong(0));
         place.setComment(cursor.getString(1));
@@ -226,7 +227,7 @@ public class QuietPlacesContentProvider extends ContentProvider {
                 break;
             case QUIETPLACE_ID:
                 // adding the ID to the original query
-                queryBuilder.appendWhere(COLUMN_ID + "="
+                queryBuilder.appendWhere(KEY_ID + "="
                         + uri.getLastPathSegment());
                 break;
             // TODO: add other selections here?
@@ -250,7 +251,7 @@ public class QuietPlacesContentProvider extends ContentProvider {
 
         if (projection != null) {
             HashSet<String> requestedColumns = new HashSet<String>(Arrays.asList(projection));
-            HashSet<String> availableColumns = new HashSet<String>(Arrays.asList(allColumns));
+            HashSet<String> availableColumns = new HashSet<String>(Arrays.asList(ALL_KEYS));
             // check if all columns which are requested are available
             if (!availableColumns.containsAll(requestedColumns)) {
                 throw new IllegalArgumentException("Unknown columns in quiet places table query");
@@ -260,9 +261,14 @@ public class QuietPlacesContentProvider extends ContentProvider {
 
     @Override
     public String getType(Uri uri) {
-        // TODO: investigate what this should really do...
-        // MIME type, which doesn't really apply here I guess
-        return null;
+        switch (sURIMatcher.match(uri)) {
+            case QUIETPLACES:
+                return CONTENT_TYPE;
+            case QUIETPLACE_ID:
+                return CONTENT_ITEM_TYPE;
+            default:
+                throw new IllegalArgumentException("Unsupported URI: " + uri);
+        }
     }
 
     @Override
@@ -293,11 +299,11 @@ public class QuietPlacesContentProvider extends ContentProvider {
                 String id = uri.getLastPathSegment();
                 if (TextUtils.isEmpty(selection)) {
                     rowsDeleted = database.delete(tableName,
-                            COLUMN_ID + "=" + id,
+                            KEY_ID + "=" + id,
                             null);
                 } else {
                     rowsDeleted = database.delete(tableName,
-                            COLUMN_ID + "=" + id
+                            KEY_ID + "=" + id
                                     + " and " + selection,
                             selectionArgs
                     );
@@ -329,12 +335,12 @@ public class QuietPlacesContentProvider extends ContentProvider {
                 if (TextUtils.isEmpty(selection)) {
                     rowsUpdated = database.update(tableName,
                             values,
-                            COLUMN_ID + "=" + id,
+                            KEY_ID + "=" + id,
                             null);
                 } else {
                     rowsUpdated = database.update(tableName,
                             values,
-                            COLUMN_ID + "=" + id
+                            KEY_ID + "=" + id
                                     + " and "
                                     + selection,
                             selectionArgs
@@ -372,13 +378,13 @@ public class QuietPlacesContentProvider extends ContentProvider {
         // Database creation sql statement
         private static final String DATABASE_CREATE = "create table "
                 + TABLE_PLACES + "(" +
-                COLUMN_ID + " integer primary key autoincrement, " +
-                COLUMN_COMMENT + " text not null, " +
-                COLUMN_LATITUDE + " real not null, " +
-                COLUMN_LONGITUDE + " real not null, " +
-                COLUMN_RADIUS + " real not null, " +
-                COLUMN_DATETIME + " text not null, " +
-                COLUMN_CATEGORY + " text not null " +
+                KEY_ID + " integer primary key autoincrement, " +
+                KEY_COMMENT + " text not null, " +
+                KEY_LATITUDE + " real not null, " +
+                KEY_LONGITUDE + " real not null, " +
+                KEY_RADIUS + " real not null, " +
+                KEY_DATETIME + " text not null, " +
+                KEY_CATEGORY + " text not null " +
                 ");";
 
         public QuietPlacesDatabaseHelper(Context context) {

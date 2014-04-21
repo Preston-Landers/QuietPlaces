@@ -4,12 +4,16 @@ import android.app.Activity;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.widget.Toast;
+import edu.utexas.quietplaces.Config;
 import edu.utexas.quietplaces.MainActivity;
 
 /**
  * Base class for all of our fragments (except SettingsFragment and NavigationDrawerFragment)
  */
 public class BaseFragment extends Fragment {
+
+    public static final String FRAG_PACKAGE = Config.PACKAGE_NAME + ".fragments";
+
     public void shortToast(String msg) {
         Toast.makeText(getActivity(), msg, Toast.LENGTH_SHORT).show();
     }
