@@ -3,6 +3,7 @@ package edu.utexas.quietplaces.fragments;
 import android.app.AlertDialog;
 import android.content.DialogInterface;
 import android.location.Location;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v4.app.FragmentActivity;
 import android.text.Editable;
@@ -124,8 +125,11 @@ public class QPMapFragment extends BaseFragment {
 
         getMap().getUiSettings().setCompassEnabled(true);
 
-        loadPlacesFromDatabase();
+        loadPlacesFromDatabaseAsync();
 
+    }
+
+    private void setupMapListeners() {
         // Handler for when we click a marker
         getMap().setOnMarkerClickListener(new GoogleMap.OnMarkerClickListener() {
             @Override
@@ -509,35 +513,45 @@ public class QPMapFragment extends BaseFragment {
     }
 
 
-    /**
-     * Load the database into markers
-     *
-     * TODO: this should be done asynchronously, right??
-     */
-    private void loadPlacesFromDatabase() {
+    protected void loadPlacesFromDatabaseAsync() {
+        AsyncTask<Void, Void, Void> loadDatabaseTask = new AsyncTask<Void, Void, Void>() {
+            private List<QuietPlace> quietPlaceList;
+            @Override
+            protected Void doInBackground(Void... params) {
+                quietPlaceList = QuietPlacesContentProvider.getAllQuietPlaces(getMyActivity());
+                if (quietPlaceList == null) {
+                    Log.e(TAG, "Unable to load quiet place marker database.");
+                    return null;
+                }
 
-        List<QuietPlace> quietPlaceList = QuietPlacesContentProvider.getAllQuietPlaces(getMyActivity());
-        if (quietPlaceList == null) {
-            Log.e(TAG, "Unable to load quiet place marker database.");
-            return;
-        }
+                if (quietPlaceList.size() == 0) {
+                    Log.i(TAG, "QuietPlace database is currently empty.");
+                    return null;
+                }
 
-        if (quietPlaceList.size() == 0) {
-            Log.i(TAG, "QuietPlace database is currently empty.");
-            return;
-        }
+                return null;
+            }
 
-        for (QuietPlace quietPlace : quietPlaceList) {
-            addQuietPlaceMapMarker(quietPlace);
-        }
+            @Override
+            protected void onPostExecute(Void result) {
+                for (QuietPlace quietPlace : quietPlaceList) {
+                    addQuietPlaceMapMarker(quietPlace);
+                }
 
-        Log.w(TAG, "Loaded marker database.");
+                Log.i(TAG, "Loaded marker database.");
 
-        syncGeofences();
+                // Not sure we need to keep this.
+                HistoryEvent.logEvent(getMyActivity(), HistoryEvent.TYPE_DATABASE_LOADED,
+                        String.format("Loaded %s quiet places from the database.", quietPlaceList.size()));
 
-        // Not sure we need to keep this.
-        HistoryEvent.logEvent(getMyActivity(), HistoryEvent.TYPE_DATABASE_LOADED,
-                String.format("Loaded %s quiet places from the database.", quietPlaceList.size()));
+                syncGeofences();
+
+                Log.d(TAG, "Setting up map listeners.");
+                setupMapListeners();
+            }
+        };
+        loadDatabaseTask.execute();
+
     }
 
     private void addQuietPlaceMapMarker(QuietPlace quietPlace) {
