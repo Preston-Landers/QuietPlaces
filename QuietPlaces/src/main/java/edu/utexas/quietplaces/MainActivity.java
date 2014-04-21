@@ -401,7 +401,7 @@ public class MainActivity extends ActionBarActivity
     @Override
     protected void onDestroy() {
         Log.d(TAG, "onDestroy");
-        disableLocationUpdates();
+        // disableLocationUpdates();
         super.onDestroy();
     }
 
@@ -419,7 +419,7 @@ public class MainActivity extends ActionBarActivity
         // impact the battery....
         // We still do it in onDestroy().
 
-        // disableLocationUpdates();
+        disableLocationUpdates();
 
         super.onPause();
     }
@@ -541,7 +541,9 @@ public class MainActivity extends ActionBarActivity
             return false;
         }
         Switch ringerSwitch = (Switch) findViewById(R.id.switch_home_ringer);
-        ringerSwitch.setChecked(false);
+        if (ringerSwitch != null) {
+            ringerSwitch.setChecked(false);
+        }
         setRinger(false);
         weSilencedTheDevice = true;
         return true;
@@ -559,7 +561,9 @@ public class MainActivity extends ActionBarActivity
             return false;
         }
         Switch ringerSwitch = (Switch) findViewById(R.id.switch_home_ringer);
-        ringerSwitch.setChecked(true);
+        if (ringerSwitch != null) {
+            ringerSwitch.setChecked(true);
+        }
         setRinger(true);
         weSilencedTheDevice = false;
         return true;

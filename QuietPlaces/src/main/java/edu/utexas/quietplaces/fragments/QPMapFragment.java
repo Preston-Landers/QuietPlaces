@@ -4,6 +4,7 @@ import android.app.AlertDialog;
 import android.content.DialogInterface;
 import android.location.Location;
 import android.os.Bundle;
+import android.support.v4.app.FragmentActivity;
 import android.text.Editable;
 import android.util.Log;
 import android.view.*;
@@ -50,6 +51,8 @@ public class QPMapFragment extends BaseFragment {
     private List<Geofence> pendingGeofenceAdds;
     private List<String> pendingGeofenceIdRemoves;
 
+    private FragmentActivity mActivity;
+
     /**
      * Returns a new instance of this fragment for the given section
      * number.
@@ -79,6 +82,7 @@ public class QPMapFragment extends BaseFragment {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         mBundle = savedInstanceState;
+        mActivity = getActivity();
     }
 
     @Override
@@ -90,7 +94,7 @@ public class QPMapFragment extends BaseFragment {
             return null;
         }
 
-        MapsInitializer.initialize(getActivity());
+        MapsInitializer.initialize(getMyActivity());
 
         mMapView = (MapView) rootView.findViewById(R.id.map);
         if (mMapView != null) {
@@ -115,7 +119,7 @@ public class QPMapFragment extends BaseFragment {
         // mMap.addMarker(new MarkerOptions().position(new LatLng(30, -90)).title("Marker"));
 
         // Set the map type from the preference.
-        MainActivity activity = (MainActivity) getActivity();
+        MainActivity activity = (MainActivity) getMyActivity();
         setMapType(activity.getSettingsFragment().getMapTypeInt());
 
         getMap().getUiSettings().setCompassEnabled(true);
@@ -323,11 +327,11 @@ public class QPMapFragment extends BaseFragment {
         }
         final QuietPlaceMapMarker selectedMarker = markerList.get(0);
 
-        final EditText input = new EditText(getActivity());
+        final EditText input = new EditText(getMyActivity());
         input.setText(selectedMarker.getQuietPlace().getComment());
         input.setSelectAllOnFocus(true); // select exiting text on focus
 
-        AlertDialog alert = new AlertDialog.Builder(getActivity())
+        AlertDialog alert = new AlertDialog.Builder(getMyActivity())
                 .setTitle(getString(R.string.edit_placename_dialog_title, selectedMarker.getQuietPlace().getId()))
                 .setMessage(getString(R.string.edit_placename_dialog_msg))
                 .setView(input)
@@ -357,10 +361,10 @@ public class QPMapFragment extends BaseFragment {
 
 
     private void changeAddButtonToClose(String newLabel) {
-        ImageButton addButton = ((ImageButton) getActivity().findViewById(R.id.addPlaceButton));
+        ImageButton addButton = ((ImageButton) getMyActivity().findViewById(R.id.addPlaceButton));
         addButton.setBackgroundResource(R.drawable.ic_close_icon);
 
-        TextView addLabel = (TextView) getActivity().findViewById(R.id.tv_addPlaceLabel);
+        TextView addLabel = (TextView) getMyActivity().findViewById(R.id.tv_addPlaceLabel);
         addLabel.setText(newLabel);
     }
 
@@ -372,7 +376,7 @@ public class QPMapFragment extends BaseFragment {
     public void cancelAddButton(View view) {
         ImageButton addButton = ((ImageButton) view.findViewById(R.id.addPlaceButton));
         addButton.setBackgroundResource(R.drawable.ic_add_icon);
-        TextView addLabel = (TextView) getActivity().findViewById(R.id.tv_addPlaceLabel);
+        TextView addLabel = (TextView) getMyActivity().findViewById(R.id.tv_addPlaceLabel);
         addLabel.setText("Add"); // TODO: text
 
         getMap().setOnMapClickListener(null);
@@ -406,7 +410,7 @@ public class QPMapFragment extends BaseFragment {
         quietPlace.setRadius(radius);
 
         Log.v(TAG, "About to add new quiet place to db: " + quietPlace);
-        quietPlace = QuietPlacesContentProvider.saveQuietPlace(getActivity(), quietPlace);
+        quietPlace = QuietPlacesContentProvider.saveQuietPlace(getMyActivity(), quietPlace);
         Log.w(TAG, "Saved place to db: " + quietPlace);
 
         if (quietPlace == null) {
@@ -418,7 +422,7 @@ public class QPMapFragment extends BaseFragment {
         // we do this outside of addQuietPlaceMapMarker because
         // we don't want these logged when loaded from the database load method.
         HistoryEvent.logEvent(
-                getActivity(),
+                getMyActivity(),
                 HistoryEvent.TYPE_PLACE_ADD,
                 quietPlace.getHistoryEventFormatted()
         );
@@ -512,7 +516,7 @@ public class QPMapFragment extends BaseFragment {
      */
     private void loadPlacesFromDatabase() {
 
-        List<QuietPlace> quietPlaceList = QuietPlacesContentProvider.getAllQuietPlaces(getActivity());
+        List<QuietPlace> quietPlaceList = QuietPlacesContentProvider.getAllQuietPlaces(getMyActivity());
         if (quietPlaceList == null) {
             Log.e(TAG, "Unable to load quiet place marker database.");
             return;
@@ -532,7 +536,7 @@ public class QPMapFragment extends BaseFragment {
         syncGeofences();
 
         // Not sure we need to keep this.
-        HistoryEvent.logEvent(getActivity(), HistoryEvent.TYPE_DATABASE_LOADED,
+        HistoryEvent.logEvent(getMyActivity(), HistoryEvent.TYPE_DATABASE_LOADED,
                 String.format("Loaded %s quiet places from the database.", quietPlaceList.size()));
     }
 
@@ -586,9 +590,9 @@ public class QPMapFragment extends BaseFragment {
     }
 
     public void showInfoBox(boolean show, QuietPlaceMapMarker qpMapMarker) {
-        View infoBox = getActivity().findViewById(R.id.selected_info_container);
-        View actionBox = getActivity().findViewById(R.id.selected_action_container);
-        View addBox = getActivity().findViewById(R.id.add_button_container);
+        View infoBox = getMyActivity().findViewById(R.id.selected_info_container);
+        View actionBox = getMyActivity().findViewById(R.id.selected_action_container);
+        View addBox = getMyActivity().findViewById(R.id.add_button_container);
 
         if (infoBox == null || actionBox == null || addBox == null) {
             Log.e(TAG, "Can't find containers...");
@@ -610,7 +614,7 @@ public class QPMapFragment extends BaseFragment {
         if (qpMapMarker != null) {
             QuietPlace quietPlace = qpMapMarker.getQuietPlace();
 
-            TextView infoLabel = (TextView) getActivity().findViewById(R.id.tv_selected_label);
+            TextView infoLabel = (TextView) getMyActivity().findViewById(R.id.tv_selected_label);
             if (infoLabel != null) {
                 // TODO: this is temporary, we may want to revise this format.
                 String infoLabelText = quietPlace.getId() + ": " + quietPlace.getComment();
@@ -621,7 +625,7 @@ public class QPMapFragment extends BaseFragment {
     }
 
     public void updateInfoString(QuietPlace quietPlace) {
-        TextView sizeLabel = (TextView) getActivity().findViewById(R.id.tv_selected_size);
+        TextView sizeLabel = (TextView) getMyActivity().findViewById(R.id.tv_selected_size);
         String sizeStr = getString(R.string.size_label) + " " + quietPlace.getRadiusFormatted()
                 // + " " + getString(R.string.position_label) + " "
                 + " @ "
@@ -676,13 +680,13 @@ public class QPMapFragment extends BaseFragment {
             Log.i(TAG, "Creating new scale detector for QP: " + qpMapMarker.getQuietPlace());
             ScaleListener listener = new ScaleListener();
             listener.setQpMapMarker(qpMapMarker);
-            mScaleDetector = new ScaleGestureDetector(getActivity(), listener);
+            mScaleDetector = new ScaleGestureDetector(getMyActivity(), listener);
         } else {
             Log.i(TAG, "Reusing scale detector for QP: " + qpMapMarker.getQuietPlace());
         }
 
 
-        View mCustomMapControls = getActivity().findViewById(R.id.customControlsContainer);
+        View mCustomMapControls = getMyActivity().findViewById(R.id.customControlsContainer);
         if (mCustomMapControls != null) {
             mCustomMapControls.setOnTouchListener(new View.OnTouchListener() {
                 public boolean onTouch(View v, MotionEvent event) {
@@ -698,7 +702,7 @@ public class QPMapFragment extends BaseFragment {
     public void detachScaleListener() {
         Log.i(TAG, "Removing scale detector.");
         mScaleDetector = null;
-        View mCustomMapControls = getActivity().findViewById(R.id.customControlsContainer);
+        View mCustomMapControls = getMyActivity().findViewById(R.id.customControlsContainer);
         if (mCustomMapControls != null) {
             mCustomMapControls.setOnTouchListener(null);
         }
@@ -714,7 +718,7 @@ public class QPMapFragment extends BaseFragment {
                 pendingGeofenceAdds.size() == 0) {
             return false;
         }
-        MainActivity mainActivity = (MainActivity) getActivity();
+        MainActivity mainActivity = (MainActivity) getMyActivity();
         if (mainActivity == null) {
             return false;
         }
@@ -735,7 +739,7 @@ public class QPMapFragment extends BaseFragment {
                 pendingGeofenceIdRemoves.size() == 0) {
             return false;
         }
-        MainActivity mainActivity = (MainActivity) getActivity();
+        MainActivity mainActivity = (MainActivity) getMyActivity();
         if (mainActivity == null) {
             return false;
         }
@@ -795,5 +799,9 @@ public class QPMapFragment extends BaseFragment {
             }
         }
         return false;
+    }
+
+    public FragmentActivity getMyActivity() {
+        return mActivity;
     }
 }

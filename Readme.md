@@ -65,7 +65,7 @@ if mock locations is enabled in the device's developer options menu.
 * If the app has not received location updates in a while, we may miss some geofence
   transitions and may need to do a manual check.
 * onResume is called twice during activity startup (with an onPause in between)
-   * Why?
+   * Why? This does happen in the LBP project too
    * This generates extra Places HTTP requests.
 
 ### other things to check ###

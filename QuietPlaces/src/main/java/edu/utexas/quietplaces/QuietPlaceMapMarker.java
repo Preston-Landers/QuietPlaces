@@ -110,7 +110,7 @@ public class QuietPlaceMapMarker {
         database_delete();
 
         HistoryEvent.logEvent(
-                getQpMapFragment().getActivity(),
+                getQpMapFragment().getMyActivity(),
                 HistoryEvent.TYPE_PLACE_REMOVE,
                 logMsg
         );
@@ -270,7 +270,7 @@ public class QuietPlaceMapMarker {
             getQpMapFragment().syncGeofences();
 
             HistoryEvent.logEvent(
-                    getQpMapFragment().getActivity(),
+                    getQpMapFragment().getMyActivity(),
                     HistoryEvent.TYPE_PLACE_UPDATE,
                     getQuietPlace().getHistoryEventFormatted()
             );
@@ -290,7 +290,7 @@ public class QuietPlaceMapMarker {
         getQuietPlace().setComment(comment);
         database_save();
         HistoryEvent.logEvent(
-                getQpMapFragment().getActivity(),
+                getQpMapFragment().getMyActivity(),
                 HistoryEvent.TYPE_PLACE_UPDATE,
                 getQuietPlace().getHistoryEventFormatted()
         );
@@ -311,7 +311,7 @@ public class QuietPlaceMapMarker {
         setGeofence();
 
         HistoryEvent.logEvent(
-                getQpMapFragment().getActivity(),
+                getQpMapFragment().getMyActivity(),
                 HistoryEvent.TYPE_PLACE_UPDATE,
                 getQuietPlace().getHistoryEventFormatted()
         );
@@ -336,7 +336,7 @@ public class QuietPlaceMapMarker {
      */
     private void database_save() {
         Log.v(TAG, "Saving to database: " + getQuietPlace());
-        QuietPlace qp = QuietPlacesContentProvider.saveQuietPlace(getQpMapFragment().getActivity(), getQuietPlace());
+        QuietPlace qp = QuietPlacesContentProvider.saveQuietPlace(getQpMapFragment().getMyActivity(), getQuietPlace());
         if (qp == null) {
             Log.e(TAG, "Unable to database_save quietplace: " + getQuietPlace());
             return;
@@ -347,7 +347,7 @@ public class QuietPlaceMapMarker {
 
     private void database_delete() {
         Log.i(TAG, "Deleting from database: " + getQuietPlace());
-        QuietPlacesContentProvider.deleteQuietPlace(getQpMapFragment().getActivity(), getQuietPlace());
+        QuietPlacesContentProvider.deleteQuietPlace(getQpMapFragment().getMyActivity(), getQuietPlace());
         Log.d(TAG, "Deletion complete.");
 
         // should we null out the QP object?!
@@ -448,13 +448,17 @@ public class QuietPlaceMapMarker {
         Log.w(TAG, "Entered Geofence! " + quietPlace);
 
         // SILENCE RINGER HERE....
-        MainActivity mainActivity = (MainActivity) getQpMapFragment().getActivity();
-        if (mainActivity != null && mainActivity.silenceDevice()) {
+        MainActivity mainActivity = (MainActivity) getQpMapFragment().getMyActivity();
+        if (mainActivity == null) {
+            Log.i(TAG, "MainActivity is null in enterGeofence()");
+            return;
+        }
+        if (mainActivity.silenceDevice()) {
             Log.i(TAG, "Entered geofence and silenced the ringer. Entered: " + quietPlace);
 
             // History event
             HistoryEvent.logEvent(
-                    getQpMapFragment().getActivity(),
+                    getQpMapFragment().getMyActivity(),
                     HistoryEvent.TYPE_PLACE_ENTER,
                     quietPlace.getHistoryEventFormatted()
             );
@@ -464,7 +468,7 @@ public class QuietPlaceMapMarker {
             String subtext = "Ringer disabled. " + getQuietPlace().getComment();
             mainActivity.sendGeofenceNotification(
                     transition,
-                    Config.getTransitionString(getQpMapFragment().getActivity(), transition),
+                    Config.getTransitionString(getQpMapFragment().getMyActivity(), transition),
                     Long.toString(getQuietPlace().getId()),
                     subtext);
         } else {
@@ -485,11 +489,11 @@ public class QuietPlaceMapMarker {
             return;
         }
 
-        MainActivity mainActivity = (MainActivity) getQpMapFragment().getActivity();
+        MainActivity mainActivity = (MainActivity) getQpMapFragment().getMyActivity();
         if (mainActivity != null && mainActivity.unsilenceDeviceIfWeSilenced()) {
             Log.i(TAG, "Exited geofence and re-activated the ringer. Exited: " + quietPlace);
             HistoryEvent.logEvent(
-                    getQpMapFragment().getActivity(),
+                    getQpMapFragment().getMyActivity(),
                     HistoryEvent.TYPE_PLACE_EXIT,
                     quietPlace.getHistoryEventFormatted()
             );
@@ -500,7 +504,7 @@ public class QuietPlaceMapMarker {
             String subtext = "Ringer enabled. " + getQuietPlace().getComment();
             mainActivity.sendGeofenceNotification(
                     transition,
-                    Config.getTransitionString(getQpMapFragment().getActivity(), transition),
+                    Config.getTransitionString(getQpMapFragment().getMyActivity(), transition),
                     Long.toString(getQuietPlace().getId()),
                     subtext);
 
