@@ -1,3 +1,5 @@
 .gradle
 QuietPlaces/src/main/res/values/private.xml
 
+.idea/dictionaries/Preston.xml
+local.properties
