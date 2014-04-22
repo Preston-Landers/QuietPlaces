@@ -10,6 +10,7 @@ import android.location.LocationManager;
 import android.media.AudioManager;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.os.Handler;
 import android.preference.PreferenceManager;
 import android.support.v4.app.*;
 import android.support.v4.content.LocalBroadcastManager;
@@ -20,14 +21,13 @@ import android.text.TextUtils;
 import android.util.Log;
 import android.view.Menu;
 import android.view.View;
+import android.widget.CheckBox;
 import android.widget.Switch;
 import android.widget.Toast;
 import com.google.android.gms.common.ConnectionResult;
+import com.google.android.gms.common.GooglePlayServicesClient;
 import com.google.android.gms.common.GooglePlayServicesUtil;
-import com.google.android.gms.location.Geofence;
-import com.google.android.gms.location.LocationClient;
-import com.google.android.gms.location.LocationListener;
-import com.google.android.gms.location.LocationStatusCodes;
+import com.google.android.gms.location.*;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.model.LatLng;
@@ -41,15 +41,18 @@ import edu.utexas.quietplaces.utils.PlatformSpecificImplementationFactory;
 import edu.utexas.quietplaces.utils.base.ILastLocationFinder;
 import edu.utexas.quietplaces.utils.base.SharedPreferenceSaver;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
 public class MainActivity extends ActionBarActivity
         implements NavigationDrawerFragment.NavigationDrawerCallbacks,
-        LocationListener, LocationClient.OnAddGeofencesResultListener {
+        GooglePlayServicesClient.ConnectionCallbacks, GooglePlayServicesClient.OnConnectionFailedListener,
+        LocationClient.OnAddGeofencesResultListener, LocationListener {
 
     private static final String TAG = Config.PACKAGE_NAME + ".MainActivity";
     static final int REQUEST_GOOGLE_PLAY_SERVICES = 0;
+
+    // Time window for determining a "best" location reading
+    private static final int TWO_MINUTES = 1000 * 60 * 2;
 
     /**
      * Fragment managing the behaviors, interactions and presentation of the navigation drawer.
@@ -64,14 +67,14 @@ public class MainActivity extends ActionBarActivity
     private AboutFragment aboutFragment;
 
     // Define an object that holds accuracy and frequency parameters
-//    private LocationRequest mLocationRequest;
-//    private LocationClient mLocationClient;
+    private LocationRequest mLocationRequest;
+    private LocationClient mLocationClient;
 
     protected LocationManager locationManager;
     protected SharedPreferences.Editor prefsEditor;
     protected SharedPreferenceSaver sharedPreferenceSaver;
 
-    protected Criteria criteria;
+    protected Criteria locationCriteria;
     protected ILastLocationFinder lastLocationFinder;
     protected LocationUpdateRequester locationUpdateRequester;
     protected PendingIntent locationListenerPendingIntent;
@@ -83,7 +86,7 @@ public class MainActivity extends ActionBarActivity
     private boolean mUpdatesRequested = false;
     private Location lastKnownLocation = null;
 
-    private boolean haveAlreadyCenteredCamera = false;
+    // private boolean haveAlreadyCenteredCamera = false;
 
     private boolean haveRegisteredBroadcastReceiver = false;
 
@@ -114,19 +117,39 @@ public class MainActivity extends ActionBarActivity
      * An instance of an inner class that receives broadcasts from listeners and from the
      * IntentService that receives geofence transition events
      */
-    private GeofenceReceiver mBroadcastReceiver;
+    private GeofenceReceiver geofenceReceiver;
 
     // An intent filter for the broadcast receiver
-    private IntentFilter mIntentFilter;
+    private IntentFilter geofenceIntentFilter;
+
+    // Broadcast receiver to get the current location from our LocationChangedReceiver
+    // private IntentFilter locationIntentFilter;
+    // private LocationReceiver locationReceiver;
+
 
     // We don't want to un-silence if the device was manually silenced before
     // entering the quiet zone. So keep track of whether we were the ones to engage
     // the silence.
     private boolean weSilencedTheDevice;
 
+
+    private Set<String> tempPlaceTypesOfInterest;
+
+    // Should the camera be following the user?
+    private boolean followingUser;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        followingUser = true;
+
+        // TODO: replace this with our actual preferences...
+        String[] TEMP_MATCHING_TYPES = {"electrician", "political"};
+        tempPlaceTypesOfInterest = new HashSet<String>();
+        for (String tempType : TEMP_MATCHING_TYPES) {
+            tempPlaceTypesOfInterest.add(tempType);
+        }
 
         locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
 
@@ -145,19 +168,19 @@ public class MainActivity extends ActionBarActivity
         sharedPreferenceSaver.savePreferences(prefsEditor, false);
 
         // Specify the Criteria to use when requesting location updates while the application is Active
-        criteria = new Criteria();
+        locationCriteria = new Criteria();
         if (PlacesConstants.USE_GPS_WHEN_ACTIVITY_VISIBLE) {
-            criteria.setAccuracy(Criteria.ACCURACY_FINE);
+            locationCriteria.setAccuracy(Criteria.ACCURACY_FINE);
         } else {
-            criteria.setPowerRequirement(Criteria.POWER_LOW);
+            locationCriteria.setPowerRequirement(Criteria.POWER_LOW);
         }
 
         // Setup the location update Pending Intents
-        Intent activeIntent = new Intent(this, LocationChangedReceiver.class);
-        locationListenerPendingIntent = PendingIntent.getBroadcast(this, 0, activeIntent, PendingIntent.FLAG_UPDATE_CURRENT);
+        Intent activeLocationIntent = new Intent(this, LocationChangedReceiver.class);
+        locationListenerPendingIntent = PendingIntent.getBroadcast(this, 0, activeLocationIntent, PendingIntent.FLAG_UPDATE_CURRENT);
 
-        Intent passiveIntent = new Intent(this, PassiveLocationChangedReceiver.class);
-        locationListenerPassivePendingIntent = PendingIntent.getBroadcast(this, 0, passiveIntent, PendingIntent.FLAG_UPDATE_CURRENT);
+        Intent passiveLocationIntent = new Intent(this, PassiveLocationChangedReceiver.class);
+        locationListenerPassivePendingIntent = PendingIntent.getBroadcast(this, 0, passiveLocationIntent, PendingIntent.FLAG_UPDATE_CURRENT);
         locationManager.removeUpdates(locationListenerPassivePendingIntent);
 
         // Instantiate a LastLocationFinder class.
@@ -180,26 +203,33 @@ public class MainActivity extends ActionBarActivity
         mGeofenceRemover = new GeofenceRemover(this);
 
         // Create a new broadcast receiver to receive updates from the listeners and service
-        mBroadcastReceiver = new GeofenceReceiver();
+        geofenceReceiver = new GeofenceReceiver();
 
         // Create an intent filter for the broadcast receiver
-        mIntentFilter = new IntentFilter();
+        geofenceIntentFilter = new IntentFilter();
 
         // Action for broadcast Intents that report successful addition of geofences
-        mIntentFilter.addAction(GeofenceUtils.ACTION_GEOFENCES_ADDED);
+        geofenceIntentFilter.addAction(GeofenceUtils.ACTION_GEOFENCES_ADDED);
 
         // Action for broadcast Intents that report successful removal of geofences
-        mIntentFilter.addAction(GeofenceUtils.ACTION_GEOFENCES_REMOVED);
+        geofenceIntentFilter.addAction(GeofenceUtils.ACTION_GEOFENCES_REMOVED);
 
         // Action for broadcast Intents containing various types of geofencing errors
-        mIntentFilter.addAction(GeofenceUtils.ACTION_GEOFENCE_ERROR);
+        geofenceIntentFilter.addAction(GeofenceUtils.ACTION_GEOFENCE_ERROR);
 
         // Action for broadcast Intents when we perform a geofence transition.
-        mIntentFilter.addAction(GeofenceUtils.ACTION_GEOFENCE_TRANSITION);
+        geofenceIntentFilter.addAction(GeofenceUtils.ACTION_GEOFENCE_TRANSITION);
 
         // All Location Services sample apps use this category
-        mIntentFilter.addCategory(GeofenceUtils.CATEGORY_LOCATION_SERVICES);
+        geofenceIntentFilter.addCategory(GeofenceUtils.CATEGORY_LOCATION_SERVICES);
 
+        // Location broadcast receiver. The broadcast message is sent from LocationChangedReceiver.
+//        locationIntentFilter = new IntentFilter();
+//        locationIntentFilter.addAction(Config.ACTION_LOCATION_CHANGED);
+//        locationReceiver = new LocationReceiver();
+
+
+        // UI FRAGMENTS
         List<Fragment> currentFragments = getSupportFragmentManager().getFragments();
         if (currentFragments == null || currentFragments.size() == 0) {
             mapFragment = getMapFragment();       // TODO: check for null map here... no Google Play Services?
@@ -254,7 +284,6 @@ public class MainActivity extends ActionBarActivity
 
         // Set up location updates.
         // TODO: make this a setting?
-        /*
         mLocationRequest = LocationRequest.create();
         mLocationRequest.setPriority(
                 // LocationRequest.PRIORITY_BALANCED_POWER_ACCURACY
@@ -266,10 +295,13 @@ public class MainActivity extends ActionBarActivity
         mLocationRequest.setInterval(Config.LOCATION_UPDATE_INTERVAL_MS);
         // Set the fastest accepted update interval
         mLocationRequest.setFastestInterval(Config.LOCATION_FASTEST_INTERVAL_MS);
+        mLocationRequest.setSmallestDisplacement(Config.LOCATION_DISTANCE_FOR_UPDATES);
 
         mLocationClient = new LocationClient(this, this, this);
-        */
+
+        waitThenManagePlaces();
     }
+
 
     @Override
     public void onNavigationDrawerItemSelected(int position) {
@@ -336,11 +368,6 @@ public class MainActivity extends ActionBarActivity
         if (mapFragment != null) {
             return mapFragment;
         }
-//        GoogleMapOptions options = new GoogleMapOptions();
-//        options.mapType(GoogleMap.MAP_TYPE_HYBRID)
-//                .compassEnabled(true);
-//        mapFragment = SupportMapFragment.newInstance(options);
-        // mapFragment.setRetainInstance(true);
 
         if (!servicesConnected()) {
             Log.e(TAG, "Can't get Google Play services to initialize map.");
@@ -356,8 +383,15 @@ public class MainActivity extends ActionBarActivity
     @Override
     protected void onStart() {
         super.onStart();
-        // mLocationClient.connect();
+
         Log.d(TAG, "onStart");
+
+        mLocationClient.connect();
+
+        setPlacesAPITypesOfInterest();
+
+        startFollowUser();
+
     }
 
     @Override
@@ -371,9 +405,12 @@ public class MainActivity extends ActionBarActivity
             // Maybe quit at this point?
         }
 
-        haveAlreadyCenteredCamera = false; /// good idea?
         setupMapIfNeeded();
         mUpdatesRequested = getPrefUsingLocation();
+
+        // TODO: get from pref...
+        setFollowingUser(true);
+
 
         /// FROM LOCATION BEST PRACTICES
 
@@ -391,7 +428,8 @@ public class MainActivity extends ActionBarActivity
 
         // Register the broadcast receiver to receive geofence status updates
         if (!haveRegisteredBroadcastReceiver) {
-            LocalBroadcastManager.getInstance(this).registerReceiver(mBroadcastReceiver, mIntentFilter);
+            LocalBroadcastManager.getInstance(this).registerReceiver(geofenceReceiver, geofenceIntentFilter);
+            // LocalBroadcastManager.getInstance(this).registerReceiver(locationReceiver, locationIntentFilter);
             haveRegisteredBroadcastReceiver = true;
         }
 
@@ -412,6 +450,8 @@ public class MainActivity extends ActionBarActivity
         prefsEditor.putBoolean(PlacesConstants.EXTRA_KEY_IN_BACKGROUND, true);
         sharedPreferenceSaver.savePreferences(prefsEditor, false);
 
+        setFollowingUser(false);
+
         // Stop listening for location updates when the Activity is inactive.
         // NOTE: this was in the Location Best Practices app, but having
         // location and GPlaces updates in the background is crucial to our
@@ -429,20 +469,20 @@ public class MainActivity extends ActionBarActivity
         Log.d(TAG, "onStop");
         super.onStop();
 
-//        // If the client is connected
-//        if (mLocationClient.isConnected()) {
-//            /*
-//             * Remove location updates for a listener.
-//             * The current Activity is the listener, so
-//             * the argument is "this".
-//             */
-//            mLocationClient.removeLocationUpdates(this);
-//        }
-//        /*
-//         * After disconnect() is called, the client is
-//         * considered "dead".
-//         */
-//        mLocationClient.disconnect();
+        // If the client is connected
+        if (mLocationClient.isConnected()) {
+            /*
+             * Remove location updates for a listener.
+             * The current Activity is the listener, so
+             * the argument is "this".
+             */
+            mLocationClient.removeLocationUpdates(this);
+        }
+        /*
+         * After disconnect() is called, the client is
+         * considered "dead".
+         */
+        mLocationClient.disconnect();
 
     }
 
@@ -455,15 +495,12 @@ public class MainActivity extends ActionBarActivity
         }
 
         // other map setup here
-
         googleMap.setMyLocationEnabled(true);
 
-        if (lastKnownLocation != null) {
-            updateUserLocationOnMap(lastKnownLocation);
-        }
+        // updateUserLocationOnMap();
     }
 
-    public void onSectionAttached(int number) {
+    public void onSectionAttached(@SuppressWarnings("UnusedParameters") int number) {
 /*
         switch (number) {
             case 1:
@@ -649,11 +686,20 @@ public class MainActivity extends ActionBarActivity
     }
 
     /*
+     * Called by Location Services if the connection to the
+     * location client drops because of an error.
+     */
+    @Override
+    public void onDisconnected() {
+        // Display the connection status
+        shortToast("Disconnected from Location Services. Please re-connect.");
+    }
+
+    /*
      * Called by Location Services when the request to connect the
      * client finishes successfully. At this point, you can
      * request the current location or start periodic updates
      */
-/*
     @Override
     public void onConnected(Bundle dataBundle) {
         // Display the connection status
@@ -664,71 +710,39 @@ public class MainActivity extends ActionBarActivity
             shortToast("Location Services Disabled");
         }
     }
-*/
-
-    /*
-     * Called by Location Services if the connection to the
-     * location client drops because of an error.
-     */
-/*
-    @Override
-    public void onDisconnected() {
-        // Display the connection status
-        shortToast("Disconnected from Location Services. Please re-connect.");
-    }
-*/
 
     /*
      * Called by Location Services if the attempt to
      * Location Services fails.
      */
-//    @Override
-//    public void onConnectionFailed(ConnectionResult connectionResult) {
-//        /*
-//         * Google Play services can resolve some errors it detects.
-//         * If the error has a resolution, try sending an Intent to
-//         * start a Google Play services activity that can resolve
-//         * error.
-//         */
-//        if (connectionResult.hasResolution()) {
-//            try {
-//                // Start an Activity that tries to resolve the error
-//                connectionResult.startResolutionForResult(
-//                        this,
-//                        REQUEST_GOOGLE_PLAY_SERVICES); // Not sure if this is right...
-//                /*
-//                * Thrown if Google Play services canceled the original
-//                * PendingIntent
-//                */
-//            } catch (IntentSender.SendIntentException e) {
-//                // Log the error
-//                e.printStackTrace();
-//            }
-//        } else {
-//            /*
-//             * If no resolution is available, display a dialog to the
-//             * user with the error.
-//             */
-//            showGooglePlayServicesAvailabilityErrorDialog(connectionResult.getErrorCode());
-//        }
-//    }
-
     @Override
-    public void onLocationChanged(Location location) {
-        // Report to the UI that the location was updated
-        // TODO: handle this w/ new location stuff
-/*
-        String msg = "Updated Location: " +
-                Double.toString(location.getLatitude()) + "," +
-                Double.toString(location.getLongitude());
-        shortToast(msg);
-*/
-
-        lastKnownLocation = location;
-
-        if (!haveAlreadyCenteredCamera) {
-            haveAlreadyCenteredCamera = true;
-            updateUserLocationOnMap(location);
+    public void onConnectionFailed(ConnectionResult connectionResult) {
+        /*
+         * Google Play services can resolve some errors it detects.
+         * If the error has a resolution, try sending an Intent to
+         * start a Google Play services activity that can resolve
+         * error.
+         */
+        if (connectionResult.hasResolution()) {
+            try {
+                // Start an Activity that tries to resolve the error
+                connectionResult.startResolutionForResult(
+                        this,
+                        REQUEST_GOOGLE_PLAY_SERVICES); // Not sure if this is right...
+                /*
+                * Thrown if Google Play services canceled the original
+                * PendingIntent
+                */
+            } catch (IntentSender.SendIntentException e) {
+                // Log the error
+                e.printStackTrace();
+            }
+        } else {
+            /*
+             * If no resolution is available, display a dialog to the
+             * user with the error.
+             */
+            showGooglePlayServicesAvailabilityErrorDialog(connectionResult.getErrorCode());
         }
     }
 
@@ -736,8 +750,24 @@ public class MainActivity extends ActionBarActivity
         return prefs.getBoolean(SettingsFragment.KEY_USE_LOCATION, false);
     }
 
+
     private boolean getPrefUsingVibrate() {
         return prefs.getBoolean(SettingsFragment.KEY_USE_VIBRATE, false);
+    }
+
+    private void updateUserLocationOnMap() {
+        Location myLocation = getLastKnownLocation();
+        if (myLocation == null) {
+            Log.w(TAG, "Can't update user location on map - no location");
+            return;
+        }
+        updateUserLocationOnMap(myLocation);
+    }
+
+    private Location getLastKnownLocation() {
+//        String provider = locationManager.getBestProvider(locationCriteria, true);
+//        return locationManager.getLastKnownLocation(provider);
+        return lastKnownLocation;
     }
 
     private void updateUserLocationOnMap(Location location) {
@@ -746,7 +776,7 @@ public class MainActivity extends ActionBarActivity
             Log.w(TAG, "Map doesn't exist so can't show user location");
             return;
         }
-        float zoom = (float) 16.0; // a fairly tight zoom  (TODO: a setting?)
+        float zoom = (float) 17.0; // a fairly tight zoom  (TODO: a setting?)
         googleMap.animateCamera(
                 CameraUpdateFactory.newLatLngZoom(
                         new LatLng(location.getLatitude(), location.getLongitude()), zoom)
@@ -821,9 +851,6 @@ public class MainActivity extends ActionBarActivity
             Log.e(TAG, "Unable to create geofence. Status code: " + statusCode);
             shortToast("Error: unable to create geofence!");
         }
-        // Turn off the in progress flag and disconnect the client
-//        mInProgress = false;
-//        mLocationClient.disconnect();
     }
 
     public boolean requestGeofences(List<Geofence> geofenceList) {
@@ -887,6 +914,7 @@ public class MainActivity extends ActionBarActivity
          * @param context A Context for this component
          * @param intent  The received broadcast Intent
          */
+        @SuppressWarnings("UnusedParameters")
         private void handleGeofenceStatus(Context context, Intent intent) {
             // TODO: I'm not sure this code will be called.
             Log.i(TAG, "Geofence was added.");
@@ -898,6 +926,7 @@ public class MainActivity extends ActionBarActivity
          * @param context A Context for this component
          * @param intent  The Intent containing the transition
          */
+        @SuppressWarnings("UnusedParameters")
         private void handleGeofenceTransition(Context context, Intent intent) {
             /*
              * If you want to change the UI when a transition occurs, put the code
@@ -917,6 +946,7 @@ public class MainActivity extends ActionBarActivity
          *
          * @param intent A broadcast Intent sent by ReceiveTransitionsIntentService
          */
+        @SuppressWarnings("UnusedParameters")
         private void handleGeofenceError(Context context, Intent intent) {
             String msg = intent.getStringExtra(GeofenceUtils.EXTRA_GEOFENCE_STATUS);
             Log.e(TAG, msg);
@@ -1124,18 +1154,20 @@ public class MainActivity extends ActionBarActivity
      */
     protected void requestLocationUpdates() {
         // Normal updates while activity is visible.
-        locationUpdateRequester.requestLocationUpdates(PlacesConstants.MAX_TIME, PlacesConstants.MAX_DISTANCE, criteria, locationListenerPendingIntent);
+        locationUpdateRequester.requestLocationUpdates(PlacesConstants.MAX_TIME, PlacesConstants.MAX_DISTANCE, locationCriteria, locationListenerPendingIntent);
 
         // Passive location updates from 3rd party apps when the Activity isn't visible.
         locationUpdateRequester.requestPassiveLocationUpdates(PlacesConstants.PASSIVE_MAX_TIME, PlacesConstants.PASSIVE_MAX_DISTANCE, locationListenerPassivePendingIntent);
+
+        // locationUpdateRequester.requestLocationUpdates(Config.LOCATION_UPDATE_INTERVAL_MS, Config.LOCATION_DISTANCE_FOR_UPDATES, locationCriteria, );
 
         // Register a receiver that listens for when the provider I'm using has been disabled.
         IntentFilter intentFilter = new IntentFilter(PlacesConstants.ACTIVE_LOCATION_UPDATE_PROVIDER_DISABLED);
         registerReceiver(locProviderDisabledReceiver, intentFilter);
 
         // Register a receiver that listens for when a better provider than I'm using becomes available.
-        String bestProvider = locationManager.getBestProvider(criteria, false);
-        String bestAvailableProvider = locationManager.getBestProvider(criteria, true);
+        String bestProvider = locationManager.getBestProvider(locationCriteria, false);
+        String bestAvailableProvider = locationManager.getBestProvider(locationCriteria, true);
         if (bestProvider != null && !bestProvider.equals(bestAvailableProvider)) {
             locationManager.requestLocationUpdates(bestProvider, 0, 0, bestInactiveLocationProviderListener, getMainLooper());
         }
@@ -1219,4 +1251,181 @@ public class MainActivity extends ActionBarActivity
         }
     };
 
+    public void waitThenManagePlaces() {
+        Log.w(TAG, "waitThenManagePlaces");
+        final Handler handler = new Handler();
+        Timer timer = new Timer();
+        final MainActivity thisActivity = this;
+        TimerTask task = new TimerTask() {
+            @Override
+            public void run() {
+                handler.post(new Runnable() {
+                    public void run() {
+                        Log.d(TAG, "starting ManagePlacesAsyncTask in waitThenManagePlaces");
+                        new ManagePlacesAsyncTask(thisActivity).execute();
+                    }
+                });
+            }
+        };
+        timer.schedule(task,
+                Config.MANAGE_PLACES_INTERVAL_MS,   // delay before first run   // 0,
+                Config.MANAGE_PLACES_INTERVAL_MS);  // delay to subsequent run
+    }
+
+    public Set<String> getPlacesAPITypesOfInterestSet() {
+        return tempPlaceTypesOfInterest;
+    }
+
+    public void setPlacesAPITypesOfInterest() {
+        String placeTypes = Config.joinString(getPlacesAPITypesOfInterestSet(), "|");
+        prefsEditor.putString(PlacesConstants.SP_KEY_API_PLACE_TYPES, placeTypes);
+        sharedPreferenceSaver.savePreferences(prefsEditor, false);
+    }
+
+    public void startFollowUser() {
+
+        final Handler handler = new Handler();
+        Timer timer = new Timer();
+        // final MainActivity thisActivity = this;
+        TimerTask task = new TimerTask() {
+            @Override
+            public void run() {
+                handler.post(new Runnable() {
+                    public void run() {
+                        if (!isFollowingUser()) {
+                            return;
+                        }
+/*
+                        if (lastKnownLocation != null) {
+                            Log.v(TAG, "following user with camera");
+                            updateUserLocationOnMap(lastKnownLocation);
+                        }
+*/
+                        updateUserLocationOnMap();
+                    }
+                });
+            }
+        };
+        timer.schedule(task,
+                Config.FOLLOW_USER_INTERVAL_MS,   // delay before first run   // 0,
+                Config.FOLLOW_USER_INTERVAL_MS);  // delay to subsequent run
+
+    }
+
+    @Override
+    public void onLocationChanged(Location location) {
+        // Report to the UI that the location was updated
+
+        // Should we actually use this location fix?
+        if (isBetterLocation(location, lastKnownLocation)) {
+            lastKnownLocation = location;
+/*
+        String msg = "Updated Location: " +
+                Double.toString(location.getLatitude()) + "," +
+                Double.toString(location.getLongitude());
+        shortToast(msg);
+*/
+        }
+
+/*
+        if (!haveAlreadyCenteredCamera) {
+            haveAlreadyCenteredCamera = true;
+            updateUserLocationOnMap(location);
+        }
+*/
+    }
+//
+//
+//    private class LocationReceiver extends BroadcastReceiver {
+//        @Override
+//        public void onReceive(Context context, Intent intent) {
+//            String locationKey = LocationManager.KEY_LOCATION_CHANGED;
+//            if (intent.hasExtra(locationKey)) {
+//                Bundle extras = intent.getExtras();
+//                if (extras != null) {
+//                    Location location = (Location) extras.get(locationKey);
+//                    Log.v(TAG, "MainActivity.LocationReceiver received Location change.");
+//                    onLocationChanged(location);
+//                }
+//            }
+//        }
+//    }
+//
+
+    /**
+     * Determines whether one Location reading is better than the current Location fix
+     *
+     * @param location            The new Location that you want to evaluate
+     * @param currentBestLocation The current Location fix, to which you want to compare the new one
+     */
+    protected static boolean isBetterLocation(Location location, Location currentBestLocation) {
+        if (currentBestLocation == null) {
+            // A new location is always better than no location
+            return true;
+        }
+
+        // Check whether the new location fix is newer or older
+        long timeDelta = location.getTime() - currentBestLocation.getTime();
+        boolean isSignificantlyNewer = timeDelta > TWO_MINUTES;
+        boolean isSignificantlyOlder = timeDelta < -TWO_MINUTES;
+        boolean isNewer = timeDelta > 0;
+
+        // If it's been more than two minutes since the current location, use the new location
+        // because the user has likely moved
+        if (isSignificantlyNewer) {
+            return true;
+            // If the new location is more than two minutes older, it must be worse
+        } else if (isSignificantlyOlder) {
+            return false;
+        }
+
+        // Check whether the new location fix is more or less accurate
+        int accuracyDelta = (int) (location.getAccuracy() - currentBestLocation.getAccuracy());
+        boolean isLessAccurate = accuracyDelta > 0;
+        boolean isMoreAccurate = accuracyDelta < 0;
+        boolean isSignificantlyLessAccurate = accuracyDelta > 200;
+
+        // Check if the old and new location are from the same provider
+        boolean isFromSameProvider = isSameProvider(location.getProvider(),
+                currentBestLocation.getProvider());
+
+        // Determine location quality using a combination of timeliness and accuracy
+        if (isMoreAccurate) {
+            return true;
+        } else if (isNewer && !isLessAccurate) {
+            return true;
+        } else if (isNewer && !isSignificantlyLessAccurate && isFromSameProvider) {
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     * Checks whether two (location) providers are the same
+     */
+    private static boolean isSameProvider(String provider1, String provider2) {
+        if (provider1 == null) {
+            return provider2 == null;
+        }
+        return provider1.equals(provider2);
+    }
+
+    public boolean isFollowingUser() {
+        return followingUser;
+    }
+
+    public void setFollowingUser(boolean followingUser) {
+        this.followingUser = followingUser;
+    }
+
+    public void onCheckboxClicked(View view) {
+        boolean checked = ((CheckBox) view).isChecked();
+        // Check which checkbox was clicked
+        switch (view.getId()) {
+            case R.id.follow_user_checkBox:
+                setFollowingUser(checked);
+                break;
+        }
+
+    }
 }

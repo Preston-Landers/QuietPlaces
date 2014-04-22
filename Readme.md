@@ -67,6 +67,8 @@ if mock locations is enabled in the device's developer options menu.
 * onResume is called twice during activity startup (with an onPause in between)
    * Why? This does happen in the LBP project too
    * This generates extra Places HTTP requests.
+* Handle more than 20 Places API results by requesting the next page
+  * http://stackoverflow.com/a/9627664/858289
 
 ### other things to check ###
 

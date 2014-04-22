@@ -146,7 +146,6 @@ public class PlacesUpdateService extends IntentService {
                     PackageManager.COMPONENT_ENABLED_STATE_DISABLED,
                     PackageManager.DONT_KILL_APP);
 
-            // TODO: is this right?! Do we want this passive receiver enabled when we're connected?
             pm.setComponentEnabledSetting(passiveLocationReceiver,
                     PackageManager.COMPONENT_ENABLED_STATE_DISABLED,
                     PackageManager.DONT_KILL_APP);
@@ -210,11 +209,20 @@ public class PlacesUpdateService extends IntentService {
         long currentTime = System.currentTimeMillis();
         URL url;
 
+        String placeTypes = prefs.getString(PlacesConstants.SP_KEY_API_PLACE_TYPES, PlacesConstants.SP_KEY_API_PLACE_TYPES_DEFAULT);
+
+
         try {
             // TODO Replace this with a URI to your own service.
             String locationStr = location.getLatitude() + "," + location.getLongitude();
             String baseURI = PlacesConstants.PLACES_LIST_BASE_URI;
-            String placesFeed = baseURI + "&location=" + locationStr + "&radius=" + radius + PlacesConstants.getPlacesAPIKey(this, true);
+
+            String placesFeed = baseURI +
+                    "&types=" + placeTypes +
+                    "&location=" + locationStr +
+                    "&radius=" + radius +
+                    PlacesConstants.getPlacesAPIKey(this, true);
+
             url = new URL(placesFeed);
 
             // Open the connection
@@ -278,7 +286,7 @@ public class PlacesUpdateService extends IntentService {
                     eventType = xpp.next();
                 }
 
-                // Remove places from the PlacesContentProviderlist that aren't from this updte.
+                // Remove places from the PlacesContentProviderlist that aren't from this update.
                 String where = PlaceDetailsContentProvider.KEY_LAST_UPDATE_TIME + " < " + currentTime;
                 contentResolver.delete(PlacesContentProvider.CONTENT_URI, where, null);
 

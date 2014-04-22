@@ -67,6 +67,40 @@
         <RelativeLayout
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:layout_alignParentTop="false"
+                android:layout_alignParentRight="true"
+                android:layout_alignParentEnd="false"
+                android:layout_marginTop="15dp"
+                android:id="@+id/follow_container"
+                android:padding="2dp"
+                android:background="@drawable/map_controls"
+                android:layout_below="@+id/add_button_container"
+                android:layout_marginRight="12dp"
+                >
+
+            <CheckBox
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:id="@+id/follow_user_checkBox"
+                    android:layout_alignParentRight="false"
+                    android:onClick="onCheckboxClicked"
+                    android:checked="true"
+                    android:layout_centerHorizontal="true"/>
+
+            <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/follow_user_checkbox"
+                    android:id="@+id/textView"
+                    android:layout_alignWithParentIfMissing="false"
+                    android:layout_alignParentRight="false"
+                    android:layout_alignParentLeft="false"
+                    android:layout_below="@+id/follow_user_checkBox"/>
+        </RelativeLayout>
+
+        <RelativeLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
                 android:layout_alignParentTop="true"
                 android:layout_alignParentRight="false"
                 android:layout_alignParentEnd="false"

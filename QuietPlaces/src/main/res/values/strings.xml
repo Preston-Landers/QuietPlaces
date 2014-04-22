@@ -188,4 +188,5 @@
 
     <string name="edit_placename_dialog_title">Quiet Place (%1$d)</string>
     <string name="edit_placename_dialog_msg">What is the name of this Quiet Place?</string>
+    <string name="follow_user_checkbox">Follow</string>
 </resources>

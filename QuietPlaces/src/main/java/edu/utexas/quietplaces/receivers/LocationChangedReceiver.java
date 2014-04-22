@@ -21,6 +21,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.location.Location;
 import android.location.LocationManager;
+import android.os.Bundle;
 import android.util.Log;
 import edu.utexas.quietplaces.PlacesConstants;
 import edu.utexas.quietplaces.services.EclairPlacesUpdateService;
@@ -53,13 +54,23 @@ public class LocationChangedReceiver extends BroadcastReceiver {
             }
         }
         if (intent.hasExtra(locationKey)) {
-            Location location = (Location) intent.getExtras().get(locationKey);
-            Log.d(TAG, "Actively Updating place list");
-            Intent updateServiceIntent = new Intent(context, PlacesConstants.SUPPORTS_ECLAIR ? EclairPlacesUpdateService.class : PlacesUpdateService.class);
-            updateServiceIntent.putExtra(PlacesConstants.EXTRA_KEY_LOCATION, location);
-            updateServiceIntent.putExtra(PlacesConstants.EXTRA_KEY_RADIUS, PlacesConstants.DEFAULT_RADIUS);
-            updateServiceIntent.putExtra(PlacesConstants.EXTRA_KEY_FORCEREFRESH, true);
-            context.startService(updateServiceIntent);
+            Bundle extras = intent.getExtras();
+            if (extras != null) {
+                Location location = (Location) extras.get(locationKey);
+                Log.d(TAG, "Actively Updating place list");
+                Intent updateServiceIntent = new Intent(context,
+                        PlacesConstants.SUPPORTS_ECLAIR ? EclairPlacesUpdateService.class : PlacesUpdateService.class);
+                updateServiceIntent.putExtra(PlacesConstants.EXTRA_KEY_LOCATION, location);
+                updateServiceIntent.putExtra(PlacesConstants.EXTRA_KEY_RADIUS, PlacesConstants.DEFAULT_RADIUS);
+                updateServiceIntent.putExtra(PlacesConstants.EXTRA_KEY_FORCEREFRESH, true);
+                context.startService(updateServiceIntent);
+
+                // Let the main activity directly know about the new location
+//                Intent broadcastIntent = new Intent();
+//                broadcastIntent.setAction(Config.ACTION_LOCATION_CHANGED)
+//                        .putExtra(LocationManager.KEY_LOCATION_CHANGED, location);
+//                LocalBroadcastManager.getInstance(context).sendBroadcast(broadcastIntent);
+            }
         }
     }
 }

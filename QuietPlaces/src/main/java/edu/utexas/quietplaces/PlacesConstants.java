@@ -75,6 +75,10 @@ public class PlacesConstants {
     public static String SP_KEY_LAST_CHECKIN_ID = "SP_KEY_LAST_CHECKIN_ID";
     public static String SP_KEY_LAST_CHECKIN_TIMESTAMP = "SP_KEY_LAST_CHECKIN_TIMESTAMP";
     public static String SP_KEY_RUN_ONCE = "SP_KEY_RUN_ONCE";
+    public static String SP_KEY_API_PLACE_TYPES = "SP_API_PLACE_TYPES";
+
+    // Default Place types to search for...
+    public static String SP_KEY_API_PLACE_TYPES_DEFAULT = Config.joinString(Config.PLACE_TYPE_DEFAULTS, "|");
 
     public static String EXTRA_KEY_REFERENCE = "reference";
     public static String EXTRA_KEY_ID = "id";

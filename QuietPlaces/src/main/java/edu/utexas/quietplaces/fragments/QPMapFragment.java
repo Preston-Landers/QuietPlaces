@@ -8,7 +8,11 @@ import android.os.Bundle;
 import android.support.v4.app.FragmentActivity;
 import android.text.Editable;
 import android.util.Log;
-import android.view.*;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.ViewGroup;
+import android.view.WindowManager;
+import android.widget.CheckBox;
 import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.TextView;
@@ -54,6 +58,7 @@ public class QPMapFragment extends BaseFragment {
 
     private FragmentActivity mActivity;
 
+    private boolean needToReenableFollow = false;
     /**
      * Returns a new instance of this fragment for the given section
      * number.
@@ -102,6 +107,11 @@ public class QPMapFragment extends BaseFragment {
             mMapView.onCreate(mBundle);
             setUpMapIfNeeded(rootView);
         }
+
+        MainActivity mainActivity = (MainActivity) getActivity();
+
+        CheckBox followingUserCB = (CheckBox) rootView.findViewById(R.id.follow_user_checkBox);
+        followingUserCB.setChecked(mainActivity.isFollowingUser());
 
         return rootView;
     }
@@ -516,6 +526,7 @@ public class QPMapFragment extends BaseFragment {
     protected void loadPlacesFromDatabaseAsync() {
         AsyncTask<Void, Void, Void> loadDatabaseTask = new AsyncTask<Void, Void, Void>() {
             private List<QuietPlace> quietPlaceList;
+
             @Override
             protected Void doInBackground(Void... params) {
                 quietPlaceList = QuietPlacesContentProvider.getAllQuietPlaces(getMyActivity());
@@ -607,23 +618,38 @@ public class QPMapFragment extends BaseFragment {
         View infoBox = getMyActivity().findViewById(R.id.selected_info_container);
         View actionBox = getMyActivity().findViewById(R.id.selected_action_container);
         View addBox = getMyActivity().findViewById(R.id.add_button_container);
+        View followBox = getMyActivity().findViewById(R.id.follow_container);
 
-        if (infoBox == null || actionBox == null || addBox == null) {
+        if (infoBox == null || actionBox == null || addBox == null || followBox == null) {
             Log.e(TAG, "Can't find containers...");
             return;
         }
 
+        MainActivity mainActivity = (MainActivity) getActivity();
+
+        boolean currentlyFollowing = mainActivity.isFollowingUser();
 
         if (!show) {
             infoBox.setVisibility(View.INVISIBLE);
             actionBox.setVisibility(View.INVISIBLE);
+            followBox.setVisibility(View.VISIBLE);
             addBox.setVisibility(View.VISIBLE);
+            if (needToReenableFollow) {
+                mainActivity.setFollowingUser(true);
+                needToReenableFollow = false;
+            }
             return;
         }
 
         infoBox.setVisibility(View.VISIBLE);
         actionBox.setVisibility(View.VISIBLE);
+        followBox.setVisibility(View.INVISIBLE);
         addBox.setVisibility(View.INVISIBLE);
+        if (currentlyFollowing) {
+            needToReenableFollow = true;
+            mainActivity.setFollowingUser(false);
+        }
+
 
         if (qpMapMarker != null) {
             QuietPlace quietPlace = qpMapMarker.getQuietPlace();
