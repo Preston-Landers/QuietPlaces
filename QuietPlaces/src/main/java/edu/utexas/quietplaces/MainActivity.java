@@ -86,6 +86,9 @@ public class MainActivity extends ActionBarActivity
     private boolean mUpdatesRequested = false;
     private Location lastKnownLocation = null;
 
+    // Only want to set a suggested zoom once per 'resume'
+    private boolean haveSetZoomLevel = false;
+
     // private boolean haveAlreadyCenteredCamera = false;
 
     private boolean haveRegisteredBroadcastReceiver = false;
@@ -386,7 +389,6 @@ public class MainActivity extends ActionBarActivity
 
         Log.d(TAG, "onStart");
 
-        mLocationClient.connect();
 
         setPlacesAPITypesOfInterest();
 
@@ -410,9 +412,8 @@ public class MainActivity extends ActionBarActivity
 
         // TODO: get from pref...
         setFollowingUser(true);
+        haveSetZoomLevel = false;  // reset suggested zoom in follow mode
 
-
-        /// FROM LOCATION BEST PRACTICES
 
         // Commit shared preference that says we're in the foreground.
         prefsEditor.putBoolean(PlacesConstants.EXTRA_KEY_IN_BACKGROUND, false);
@@ -433,13 +434,14 @@ public class MainActivity extends ActionBarActivity
             haveRegisteredBroadcastReceiver = true;
         }
 
+        mLocationClient.connect();
 
     }
 
     @Override
     protected void onDestroy() {
         Log.d(TAG, "onDestroy");
-        // disableLocationUpdates();
+        // disablePlacesLocationUpdates();
         super.onDestroy();
     }
 
@@ -452,14 +454,15 @@ public class MainActivity extends ActionBarActivity
 
         setFollowingUser(false);
 
-        // Stop listening for location updates when the Activity is inactive.
-        // NOTE: this was in the Location Best Practices app, but having
-        // location and GPlaces updates in the background is crucial to our
-        // apps's functionality with automatic place discovery.  However this could
-        // impact the battery....
-        // We still do it in onDestroy().
+        // this disables the 'active' location updates for Places,
+        // but leaves a passive listener in place.
+        disablePlacesLocationUpdates();
 
-        disableLocationUpdates();
+        // disable the location updates for the MainActivity, which
+        // is currently only used for the "Follow" feature, not needed
+        // when the app is in the background. This doesn't disable
+        // any geofences we've registered.
+        disableMainActivityLocationUpdates();
 
         super.onPause();
     }
@@ -469,6 +472,20 @@ public class MainActivity extends ActionBarActivity
         Log.d(TAG, "onStop");
         super.onStop();
 
+    }
+
+    private void enableMainActivityLocationUpdates() {
+        // Display the connection status
+        if (mUpdatesRequested) {
+            // shortToast("Requesting Location Services");
+            mLocationClient.requestLocationUpdates(mLocationRequest, this);
+
+        } else {
+            shortToast("Location Services Disabled");
+        }
+    }
+
+    private void disableMainActivityLocationUpdates() {
         // If the client is connected
         if (mLocationClient.isConnected()) {
             /*
@@ -483,7 +500,6 @@ public class MainActivity extends ActionBarActivity
          * considered "dead".
          */
         mLocationClient.disconnect();
-
     }
 
     private void setupMapIfNeeded() {
@@ -702,13 +718,7 @@ public class MainActivity extends ActionBarActivity
      */
     @Override
     public void onConnected(Bundle dataBundle) {
-        // Display the connection status
-        if (mUpdatesRequested) {
-            // shortToast("Requesting Location Services");
-            mLocationClient.requestLocationUpdates(mLocationRequest, this);
-        } else {
-            shortToast("Location Services Disabled");
-        }
+        enableMainActivityLocationUpdates();
     }
 
     /*
@@ -776,11 +786,18 @@ public class MainActivity extends ActionBarActivity
             Log.w(TAG, "Map doesn't exist so can't show user location");
             return;
         }
-        float zoom = (float) 17.0; // a fairly tight zoom  (TODO: a setting?)
-        googleMap.animateCamera(
-                CameraUpdateFactory.newLatLngZoom(
-                        new LatLng(location.getLatitude(), location.getLongitude()), zoom)
-        );
+        if (!haveSetZoomLevel) {
+            float zoom = (float) 17.5; // a fairly tight zoom
+            haveSetZoomLevel = true;
+            googleMap.animateCamera(
+                    CameraUpdateFactory.newLatLngZoom(
+                            new LatLng(location.getLatitude(), location.getLongitude()), zoom)
+            );
+        } else {
+            googleMap.animateCamera(
+                    CameraUpdateFactory.newLatLng(new LatLng(location.getLatitude(), location.getLongitude()))
+            );
+        }
     }
 
     // Forward the button clicks from the action panel to the map fragment
@@ -1146,7 +1163,7 @@ public class MainActivity extends ActionBarActivity
         if (updateWhenLocationChanges)
             requestLocationUpdates();
         else
-            disableLocationUpdates();
+            disablePlacesLocationUpdates();
     }
 
     /**
@@ -1174,9 +1191,9 @@ public class MainActivity extends ActionBarActivity
     }
 
     /**
-     * Stop listening for location updates
+     * Stop listening for location updates for the Places API
      */
-    protected void disableLocationUpdates() {
+    protected void disablePlacesLocationUpdates() {
         Log.d(TAG, "disabling location updates.");
         unregisterReceiver(locProviderDisabledReceiver);
         locationManager.removeUpdates(locationListenerPendingIntent);
