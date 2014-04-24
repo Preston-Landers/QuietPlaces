@@ -30,6 +30,7 @@
             android:allowBackup="true"
             android:icon="@drawable/ic_launcher"
             android:label="@string/app_name"
+            android:name=".QuietPlacesApplication"
             android:theme="@style/AppTheme">
         <meta-data
                 android:name="com.google.android.gms.version"
@@ -60,39 +61,7 @@
             </intent-filter>
         </service>
         <service android:name="edu.utexas.quietplaces.services.PlaceDetailsUpdateService"/>
-<!--
-        <service android:name="edu.utexas.quietplaces.services.PlaceCheckinService"/>
-        <service android:name="edu.utexas.quietplaces.services.CheckinNotificationService"/>
--->
 
-        <receiver android:name="edu.utexas.quietplaces.receivers.LocationChangedReceiver"/>
-        <receiver android:name="edu.utexas.quietplaces.receivers.PassiveLocationChangedReceiver"/>
-        <receiver
-                android:name="edu.utexas.quietplaces.receivers.ConnectivityChangedReceiver"
-                android:enabled="false">
-            <intent-filter>
-                <action android:name="android.net.conn.CONNECTIVITY_CHANGE"/>
-                <action android:name="edu.utexas.quietplaces.retry_queued_checkins"/>
-            </intent-filter>
-        </receiver>
-        <receiver android:name="edu.utexas.quietplaces.receivers.PowerStateChangedReceiver">
-            <intent-filter>
-                <action android:name="android.intent.action.BATTERY_LOW"/>
-                <action android:name="android.intent.action.BATTERY_OKAY"/>
-            </intent-filter>
-        </receiver>
-<!--
-        <receiver android:name="edu.utexas.quietplaces.receivers.NewCheckinReceiver">
-            <intent-filter>
-                <action android:name="edu.utexas.quietplaces.NEW_CHECKIN_ACTION"/>
-            </intent-filter>
-        </receiver>
-        <receiver android:name="edu.utexas.quietplaces.receivers.BootReceiver">
-            <intent-filter>
-                <action android:name="android.intent.action.BOOT_COMPLETED"/>
-            </intent-filter>
-        </receiver>
--->
 
 
         <!-- TODO: do we really need to export these? Isn't this a security issue? -->

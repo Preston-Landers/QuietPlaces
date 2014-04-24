@@ -19,7 +19,6 @@ package edu.utexas.quietplaces.services;
 import android.app.IntentService;
 import android.content.*;
 import android.content.SharedPreferences.Editor;
-import android.content.pm.PackageManager;
 import android.location.Location;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
@@ -30,9 +29,6 @@ import edu.utexas.quietplaces.Config;
 import edu.utexas.quietplaces.PlacesConstants;
 import edu.utexas.quietplaces.content_providers.PlaceDetailsContentProvider;
 import edu.utexas.quietplaces.content_providers.PlacesContentProvider;
-import edu.utexas.quietplaces.receivers.ConnectivityChangedReceiver;
-import edu.utexas.quietplaces.receivers.LocationChangedReceiver;
-import edu.utexas.quietplaces.receivers.PassiveLocationChangedReceiver;
 import org.xmlpull.v1.XmlPullParser;
 import org.xmlpull.v1.XmlPullParserException;
 import org.xmlpull.v1.XmlPullParserFactory;
@@ -132,24 +128,7 @@ public class PlacesUpdateService extends IntentService {
         // There's no point trying to poll the server for updates if we're not connected, and the
         // connectivity receiver will turn the location-based updates back on once we have a connection.
         if (!isConnected) {
-            Log.i(TAG, "Not connected!");
-            PackageManager pm = getPackageManager();
-
-            ComponentName connectivityReceiver = new ComponentName(this, ConnectivityChangedReceiver.class);
-            ComponentName locationReceiver = new ComponentName(this, LocationChangedReceiver.class);
-            ComponentName passiveLocationReceiver = new ComponentName(this, PassiveLocationChangedReceiver.class);
-
-            pm.setComponentEnabledSetting(connectivityReceiver,
-                    PackageManager.COMPONENT_ENABLED_STATE_ENABLED,
-                    PackageManager.DONT_KILL_APP);
-
-            pm.setComponentEnabledSetting(locationReceiver,
-                    PackageManager.COMPONENT_ENABLED_STATE_DISABLED,
-                    PackageManager.DONT_KILL_APP);
-
-            pm.setComponentEnabledSetting(passiveLocationReceiver,
-                    PackageManager.COMPONENT_ENABLED_STATE_DISABLED,
-                    PackageManager.DONT_KILL_APP);
+            Log.w(TAG, "Not connected!");
         } else {
             // If we are connected check to see if this is a forced update (typically triggered
             // when the location has changed).

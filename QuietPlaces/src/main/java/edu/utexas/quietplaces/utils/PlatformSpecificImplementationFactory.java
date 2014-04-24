@@ -17,9 +17,7 @@
 package edu.utexas.quietplaces.utils;
 
 import android.content.Context;
-import android.location.LocationManager;
 import edu.utexas.quietplaces.PlacesConstants;
-import edu.utexas.quietplaces.utils.base.ILastLocationFinder;
 import edu.utexas.quietplaces.utils.base.IStrictMode;
 import edu.utexas.quietplaces.utils.base.SharedPreferenceSaver;
 
@@ -29,16 +27,6 @@ import edu.utexas.quietplaces.utils.base.SharedPreferenceSaver;
  * implementations.
  */
 public class PlatformSpecificImplementationFactory {
-
-    /**
-     * Create a new LastLocationFinder instance
-     *
-     * @param context Context
-     * @return LastLocationFinder
-     */
-    public static ILastLocationFinder getLastLocationFinder(Context context) {
-        return PlacesConstants.SUPPORTS_GINGERBREAD ? new GingerbreadLastLocationFinder(context) : new LegacyLastLocationFinder(context);
-    }
 
     /**
      * Create a new StrictMode instance.
@@ -52,16 +40,6 @@ public class PlatformSpecificImplementationFactory {
             return new LegacyStrictMode();
         else
             return null;
-    }
-
-    /**
-     * Create a new LocationUpdateRequester
-     *
-     * @param locationManager Location Manager
-     * @return LocationUpdateRequester
-     */
-    public static LocationUpdateRequester getLocationUpdateRequester(LocationManager locationManager) {
-        return PlacesConstants.SUPPORTS_GINGERBREAD ? new GingerbreadLocationUpdateRequester(locationManager) : new FroyoLocationUpdateRequester(locationManager);
     }
 
     /**

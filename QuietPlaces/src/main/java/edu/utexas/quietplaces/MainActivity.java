@@ -8,7 +8,6 @@ import android.location.Criteria;
 import android.location.Location;
 import android.location.LocationManager;
 import android.media.AudioManager;
-import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Handler;
 import android.preference.PreferenceManager;
@@ -32,13 +31,9 @@ import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.model.LatLng;
 import edu.utexas.quietplaces.fragments.*;
-import edu.utexas.quietplaces.receivers.LocationChangedReceiver;
-import edu.utexas.quietplaces.receivers.PassiveLocationChangedReceiver;
 import edu.utexas.quietplaces.services.EclairPlacesUpdateService;
 import edu.utexas.quietplaces.services.PlacesUpdateService;
-import edu.utexas.quietplaces.utils.LocationUpdateRequester;
 import edu.utexas.quietplaces.utils.PlatformSpecificImplementationFactory;
-import edu.utexas.quietplaces.utils.base.ILastLocationFinder;
 import edu.utexas.quietplaces.utils.base.SharedPreferenceSaver;
 
 import java.util.*;
@@ -75,10 +70,6 @@ public class MainActivity extends ActionBarActivity
     protected SharedPreferenceSaver sharedPreferenceSaver;
 
     protected Criteria locationCriteria;
-    protected ILastLocationFinder lastLocationFinder;
-    protected LocationUpdateRequester locationUpdateRequester;
-    protected PendingIntent locationListenerPendingIntent;
-    protected PendingIntent locationListenerPassivePendingIntent;
 
     private SharedPreferences prefs;
 
@@ -178,22 +169,6 @@ public class MainActivity extends ActionBarActivity
             locationCriteria.setPowerRequirement(Criteria.POWER_LOW);
         }
 
-        // Setup the location update Pending Intents
-        Intent activeLocationIntent = new Intent(this, LocationChangedReceiver.class);
-        locationListenerPendingIntent = PendingIntent.getBroadcast(this, 0, activeLocationIntent, PendingIntent.FLAG_UPDATE_CURRENT);
-
-        Intent passiveLocationIntent = new Intent(this, PassiveLocationChangedReceiver.class);
-        locationListenerPassivePendingIntent = PendingIntent.getBroadcast(this, 0, passiveLocationIntent, PendingIntent.FLAG_UPDATE_CURRENT);
-        locationManager.removeUpdates(locationListenerPassivePendingIntent);
-
-        // Instantiate a LastLocationFinder class.
-        // This will be used to find the last known location when the application starts.
-        lastLocationFinder = PlatformSpecificImplementationFactory.getLastLocationFinder(this);
-        lastLocationFinder.setChangedLocationListener(oneShotLastLocationUpdateListener);
-
-        // Instantiate a Location Update Requester class based on the available platform version.
-        // This will be used to request location updates.
-        locationUpdateRequester = PlatformSpecificImplementationFactory.getLocationUpdateRequester(locationManager);
 
 
         // Instantiate the current List of geofences
@@ -390,6 +365,8 @@ public class MainActivity extends ActionBarActivity
         Log.d(TAG, "onStart");
 
 
+        mLocationClient.connect();
+
         setPlacesAPITypesOfInterest();
 
         startFollowUser();
@@ -415,16 +392,11 @@ public class MainActivity extends ActionBarActivity
         haveSetZoomLevel = false;  // reset suggested zoom in follow mode
 
 
+        // TODO: LEAVE removal FOR LAST
         // Commit shared preference that says we're in the foreground.
         prefsEditor.putBoolean(PlacesConstants.EXTRA_KEY_IN_BACKGROUND, false);
         sharedPreferenceSaver.savePreferences(prefsEditor, false);
 
-        // Get the last known location (and optionally request location updates) and
-        // update the place list.
-        if (mUpdatesRequested) {
-            boolean followLocationChanges = prefs.getBoolean(PlacesConstants.SP_KEY_FOLLOW_LOCATION_CHANGES, true);
-            getLocationAndUpdatePlaces(followLocationChanges);
-        }
 
 
         // Register the broadcast receiver to receive geofence status updates
@@ -434,14 +406,11 @@ public class MainActivity extends ActionBarActivity
             haveRegisteredBroadcastReceiver = true;
         }
 
-        mLocationClient.connect();
-
     }
 
     @Override
     protected void onDestroy() {
         Log.d(TAG, "onDestroy");
-        // disablePlacesLocationUpdates();
         super.onDestroy();
     }
 
@@ -454,15 +423,12 @@ public class MainActivity extends ActionBarActivity
 
         setFollowingUser(false);
 
-        // this disables the 'active' location updates for Places,
-        // but leaves a passive listener in place.
-        disablePlacesLocationUpdates();
 
         // disable the location updates for the MainActivity, which
         // is currently only used for the "Follow" feature, not needed
         // when the app is in the background. This doesn't disable
         // any geofences we've registered.
-        disableMainActivityLocationUpdates();
+        // disableMainActivityLocationUpdates();
 
         super.onPause();
     }
@@ -470,6 +436,7 @@ public class MainActivity extends ActionBarActivity
     @Override
     protected void onStop() {
         Log.d(TAG, "onStop");
+        disableMainActivityLocationUpdates();
         super.onStop();
 
     }
@@ -513,7 +480,6 @@ public class MainActivity extends ActionBarActivity
         // other map setup here
         googleMap.setMyLocationEnabled(true);
 
-        // updateUserLocationOnMap();
     }
 
     public void onSectionAttached(@SuppressWarnings("UnusedParameters") int number) {
@@ -1117,156 +1083,7 @@ public class MainActivity extends ActionBarActivity
             Log.d(TAG, "Updating place list for: No Previous Location Found");
     }
 
-    /**
-     * Find the last known location (using a {@link edu.utexas.quietplaces.utils.GingerbreadLastLocationFinder})
-     * and updates theplace list accordingly.
-     *
-     * @param updateWhenLocationChanges Request location updates
-     */
-    protected void getLocationAndUpdatePlaces(boolean updateWhenLocationChanges) {
-        // This isn't directly affecting the UI, so put it on a worker thread.
-        AsyncTask<Void, Void, Void> findLastLocationTask = new AsyncTask<Void, Void, Void>() {
-            @Override
-            protected Void doInBackground(Void... params) {
-                // Find the last known location, specifying a required accuracy of within the min distance between updates
-                // and a required latency of the minimum time required between updates.
-                Location lastKnownLocation = lastLocationFinder.getLastBestLocation(PlacesConstants.MAX_DISTANCE,
-                        System.currentTimeMillis() - PlacesConstants.MAX_TIME);
 
-                // Update the place list based on the last known location within a defined radius.
-                // Note that this is *not* a forced update. The Place List Service has settings to
-                // determine how frequently the underlying web service should be pinged. This function
-                // is called everytime the Activity becomes active, so we don't want to flood the server
-                // unless the location has changed or a minimum latency or distance has been covered.
-                // TODO Modify the search radius based on user settings?
-                updatePlaces(lastKnownLocation, PlacesConstants.DEFAULT_RADIUS, false);
-                return null;
-            }
-        };
-        findLastLocationTask.execute();
-
-        // If we have requested location updates, turn them on here.
-        toggleUpdatesWhenLocationChanges(updateWhenLocationChanges);
-    }
-
-    /**
-     * Choose if we should receive location updates.
-     *
-     * @param updateWhenLocationChanges Request location updates
-     */
-    protected void toggleUpdatesWhenLocationChanges(boolean updateWhenLocationChanges) {
-        // Save the location update status in shared preferences
-        prefsEditor.putBoolean(PlacesConstants.SP_KEY_FOLLOW_LOCATION_CHANGES, updateWhenLocationChanges);
-        sharedPreferenceSaver.savePreferences(prefsEditor, true);
-
-        // Start or stop listening for location changes
-        if (updateWhenLocationChanges)
-            requestLocationUpdates();
-        else
-            disablePlacesLocationUpdates();
-    }
-
-    /**
-     * Start listening for location updates.
-     */
-    protected void requestLocationUpdates() {
-        // Normal updates while activity is visible.
-        locationUpdateRequester.requestLocationUpdates(PlacesConstants.MAX_TIME, PlacesConstants.MAX_DISTANCE, locationCriteria, locationListenerPendingIntent);
-
-        // Passive location updates from 3rd party apps when the Activity isn't visible.
-        locationUpdateRequester.requestPassiveLocationUpdates(PlacesConstants.PASSIVE_MAX_TIME, PlacesConstants.PASSIVE_MAX_DISTANCE, locationListenerPassivePendingIntent);
-
-        // locationUpdateRequester.requestLocationUpdates(Config.LOCATION_UPDATE_INTERVAL_MS, Config.LOCATION_DISTANCE_FOR_UPDATES, locationCriteria, );
-
-        // Register a receiver that listens for when the provider I'm using has been disabled.
-        IntentFilter intentFilter = new IntentFilter(PlacesConstants.ACTIVE_LOCATION_UPDATE_PROVIDER_DISABLED);
-        registerReceiver(locProviderDisabledReceiver, intentFilter);
-
-        // Register a receiver that listens for when a better provider than I'm using becomes available.
-        String bestProvider = locationManager.getBestProvider(locationCriteria, false);
-        String bestAvailableProvider = locationManager.getBestProvider(locationCriteria, true);
-        if (bestProvider != null && !bestProvider.equals(bestAvailableProvider)) {
-            locationManager.requestLocationUpdates(bestProvider, 0, 0, bestInactiveLocationProviderListener, getMainLooper());
-        }
-    }
-
-    /**
-     * Stop listening for location updates for the Places API
-     */
-    protected void disablePlacesLocationUpdates() {
-        Log.d(TAG, "disabling location updates.");
-        unregisterReceiver(locProviderDisabledReceiver);
-        locationManager.removeUpdates(locationListenerPendingIntent);
-        locationManager.removeUpdates(bestInactiveLocationProviderListener);
-        if (isFinishing()) {
-            lastLocationFinder.cancel();
-        }
-
-        if (PlacesConstants.DISABLE_PASSIVE_LOCATION_WHEN_USER_EXIT && isFinishing()) {
-            locationManager.removeUpdates(locationListenerPassivePendingIntent);
-        } else {
-            // https://code.google.com/p/android-protips-location/issues/detail?id=5
-            locationUpdateRequester.requestPassiveLocationUpdates(PlacesConstants.PASSIVE_MAX_TIME,
-                    PlacesConstants.PASSIVE_MAX_DISTANCE, locationListenerPassivePendingIntent);
-        }
-    }
-
-    /**
-     * One-off location listener that receives updates from the {@link edu.utexas.quietplaces.utils.GingerbreadLastLocationFinder}.
-     * This is triggered where the last known location is outside the bounds of our maximum
-     * distance and latency.
-     */
-    protected android.location.LocationListener oneShotLastLocationUpdateListener = new android.location.LocationListener() {
-        public void onLocationChanged(Location l) {
-            updatePlaces(l, PlacesConstants.DEFAULT_RADIUS, true);
-        }
-
-        public void onProviderDisabled(String provider) {
-        }
-
-        public void onStatusChanged(String provider, int status, Bundle extras) {
-        }
-
-        public void onProviderEnabled(String provider) {
-        }
-    };
-
-    /**
-     * If the best Location Provider (usually GPS) is not available when we request location
-     * updates, this listener will be notified if / when it becomes available. It calls
-     * requestLocationUpdates to re-register the location listeners using the better Location
-     * Provider.
-     */
-    protected android.location.LocationListener bestInactiveLocationProviderListener = new android.location.LocationListener() {
-        public void onLocationChanged(Location l) {
-        }
-
-        public void onProviderDisabled(String provider) {
-        }
-
-        public void onStatusChanged(String provider, int status, Bundle extras) {
-        }
-
-        public void onProviderEnabled(String provider) {
-            // Re-register the location listeners using the better Location Provider.
-            requestLocationUpdates();
-        }
-    };
-
-    /**
-     * If the Location Provider we're using to receive location updates is disabled while the
-     * app is running, this Receiver will be notified, allowing us to re-register our Location
-     * Receivers using the best available Location Provider is still available.
-     */
-    protected BroadcastReceiver locProviderDisabledReceiver = new BroadcastReceiver() {
-        @Override
-        public void onReceive(Context context, Intent intent) {
-            boolean providerDisabled = !intent.getBooleanExtra(LocationManager.KEY_PROVIDER_ENABLED, false);
-            // Re-register the location listeners using the best available Location Provider.
-            if (providerDisabled)
-                requestLocationUpdates();
-        }
-    };
 
     public void waitThenManagePlaces() {
         Log.w(TAG, "waitThenManagePlaces");
