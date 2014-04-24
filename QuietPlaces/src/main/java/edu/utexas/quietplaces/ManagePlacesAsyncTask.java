@@ -26,7 +26,7 @@ public class ManagePlacesAsyncTask extends AsyncTask<Void, Void, Void> {
 
     @Override
     protected java.lang.Void doInBackground(Void... params) {
-        Log.w(TAG, "doInBackground");
+        Log.d(TAG, "doInBackground");
         if (mainActivity == null) {
             Log.e(TAG, "mainActivity is null in doInBackground, can't update places.");
             return null;
@@ -57,8 +57,7 @@ public class ManagePlacesAsyncTask extends AsyncTask<Void, Void, Void> {
 
     @Override
     protected void onPostExecute(Void result) {
-        Log.w(TAG, "onPostExecute");
-        // mainActivity.waitThenManagePlaces();
+        Log.d(TAG, "onPostExecute");
     }
 
     private boolean placeMatchesCriteria(PlacesContentProvider.Place place) {

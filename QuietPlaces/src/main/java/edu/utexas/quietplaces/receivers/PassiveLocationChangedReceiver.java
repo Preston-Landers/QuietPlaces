@@ -84,7 +84,7 @@ public class PassiveLocationChangedReceiver extends BroadcastReceiver {
         // Start the Service used to find nearby points of interest based on the last detected location.
         if (location != null) {
 
-            Log.d(TAG, "Passively updating place list.");
+            Log.i(TAG, "Passively updating place list.");
             Intent updateServiceIntent = new Intent(context, PlacesConstants.SUPPORTS_ECLAIR ? EclairPlacesUpdateService.class : PlacesUpdateService.class);
             updateServiceIntent.putExtra(PlacesConstants.EXTRA_KEY_LOCATION, location);
             updateServiceIntent.putExtra(PlacesConstants.EXTRA_KEY_RADIUS, PlacesConstants.DEFAULT_RADIUS);

@@ -132,6 +132,7 @@ public class PlacesUpdateService extends IntentService {
         // There's no point trying to poll the server for updates if we're not connected, and the
         // connectivity receiver will turn the location-based updates back on once we have a connection.
         if (!isConnected) {
+            Log.i(TAG, "Not connected!");
             PackageManager pm = getPackageManager();
 
             ComponentName connectivityReceiver = new ComponentName(this, ConnectivityChangedReceiver.class);
@@ -168,8 +169,12 @@ public class PlacesUpdateService extends IntentService {
 
                 // If update time and distance bounds have been passed, do an update.
                 if ((lastTime < System.currentTimeMillis() - PlacesConstants.MAX_TIME) ||
-                        (lastLocation.distanceTo(location) > PlacesConstants.MAX_DISTANCE))
+                        (lastLocation.distanceTo(location) > PlacesConstants.MAX_DISTANCE)) {
+                    Log.i(TAG, "Time/distance bounds passed on places update");
                     doUpdate = true;
+                } else {
+                    Log.d(TAG, "Time/distance bounds not passed on places update");
+                }
             }
 
             if (doUpdate) {
@@ -225,6 +230,8 @@ public class PlacesUpdateService extends IntentService {
 
             url = new URL(placesFeed);
 
+            Log.w(TAG, "HTTP request: " + url);
+
             // Open the connection
             URLConnection connection = url.openConnection();
             HttpsURLConnection httpConnection = (HttpsURLConnection) connection;
@@ -279,6 +286,15 @@ public class PlacesUpdateService extends IntentService {
                         Location placeLocation = new Location(PlacesConstants.CONSTRUCTED_LOCATION_PROVIDER);
                         placeLocation.setLatitude(Double.valueOf(locationLat));
                         placeLocation.setLongitude(Double.valueOf(locationLng));
+
+                        Log.i(TAG, "Found place: " +
+                                        " location: " + location +
+                                        " id: " + id +
+                                        " name: " + name +
+                                        " vicinity: " + vicinity +
+                                        " types: " + types +
+                                        " ref: " + reference
+                        );
 
                         // Add each new place to the Places Content Provider
                         addPlace(location, id, name, vicinity, types, placeLocation, viewport, icon, reference, currentTime);
@@ -393,6 +409,7 @@ public class PlacesUpdateService extends IntentService {
         String where = PlaceDetailsContentProvider.KEY_LAST_UPDATE_TIME + " < " + minTime + " AND " +
                 PlaceDetailsContentProvider.KEY_FORCE_CACHE + " = 0";
         contentResolver.delete(PlaceDetailsContentProvider.CONTENT_URI, where, null);
+        Log.d(TAG, "removeOldLocations");
     }
 
 }
