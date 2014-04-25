@@ -32,7 +32,7 @@ public class Config {
     public static final long LOCATION_DISTANCE_FOR_UPDATES = 5;
 
     // How often do we check for new places around us?
-    public static final long MANAGE_PLACES_INTERVAL_MS = 10000;
+    public static final long MANAGE_PLACES_INTERVAL_MS = 20000;
 
     // How often do we move the camera to follow the user?
     public static final long FOLLOW_USER_INTERVAL_MS = 5000;
@@ -56,8 +56,8 @@ public class Config {
     public static final double QP_SIZE_FLOOR = 5.0;
 
 
-    public static final String ACTION_LOCATION_CHANGED =  Config.PACKAGE_NAME +
-            ".ACTION_LOCATION_CHANGED";
+    public static final String ACTION_PLACES_UPDATED =  Config.PACKAGE_NAME +
+            ".ACTION_PLACES_UPDATED";
 
 
     // Default search criteria...

@@ -156,15 +156,18 @@ public class PlacesUpdateService extends IntentService {
                 }
             }
 
-            if (doUpdate) {
+            if (location == null) {
+                Log.e(TAG, "null location in onHandleIntent");
+            } else if (doUpdate) {
                 // Refresh the prefetch count for each new location.
                 prefetchCount = 0;
                 // Remove the old locations
                 removeOldLocations(location, radius);
                 // Hit the server for new venues for the current location.
                 refreshPlaces(location, radius);
-            } else
-                Log.d(TAG, "Place List is fresh: Not refreshing");
+            } else {
+                Log.i(TAG, "Place List is fresh: Not refreshing");
+            }
 
             // Retry any queued checkins.
 /*
@@ -183,6 +186,10 @@ public class PlacesUpdateService extends IntentService {
      * @param radius   Radius
      */
     protected void refreshPlaces(Location location, int radius) {
+        if (location == null) {
+            Log.e(TAG, "Null location in refreshPlaces");
+            return;
+        }
         // Log to see if we'll be prefetching the details page of each new place.
         if (mobileData) {
             Log.d(TAG, "Not prefetching due to being on mobile");

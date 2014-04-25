@@ -117,8 +117,8 @@ public class MainActivity extends ActionBarActivity
     private IntentFilter geofenceIntentFilter;
 
     // Broadcast receiver to get the current location from our LocationChangedReceiver
-    // private IntentFilter locationIntentFilter;
-    // private LocationReceiver locationReceiver;
+    private IntentFilter placesUpdatedIntentFilter;
+    private PlacesUpdatedReceiver placesUpdatedReceiver;
 
 
     // We don't want to un-silence if the device was manually silenced before
@@ -201,10 +201,10 @@ public class MainActivity extends ActionBarActivity
         // All Location Services sample apps use this category
         geofenceIntentFilter.addCategory(GeofenceUtils.CATEGORY_LOCATION_SERVICES);
 
-        // Location broadcast receiver. The broadcast message is sent from LocationChangedReceiver.
-//        locationIntentFilter = new IntentFilter();
-//        locationIntentFilter.addAction(Config.ACTION_LOCATION_CHANGED);
-//        locationReceiver = new LocationReceiver();
+        // broadcast receiver for when the Places database has been updated
+        placesUpdatedIntentFilter = new IntentFilter();
+        placesUpdatedIntentFilter.addAction(Config.ACTION_PLACES_UPDATED);
+        placesUpdatedReceiver = new PlacesUpdatedReceiver(this);
 
 
         // UI FRAGMENTS
@@ -399,10 +399,13 @@ public class MainActivity extends ActionBarActivity
 
 
 
-        // Register the broadcast receiver to receive geofence status updates
         if (!haveRegisteredBroadcastReceiver) {
+            // Register a broadcast receiver to get geofence status updates
             LocalBroadcastManager.getInstance(this).registerReceiver(geofenceReceiver, geofenceIntentFilter);
-            // LocalBroadcastManager.getInstance(this).registerReceiver(locationReceiver, locationIntentFilter);
+
+            // And one to be notified when we've received an updated list of nearby Google Places
+            LocalBroadcastManager.getInstance(this).registerReceiver(placesUpdatedReceiver, placesUpdatedIntentFilter);
+
             haveRegisteredBroadcastReceiver = true;
         }
 
@@ -1095,8 +1098,18 @@ public class MainActivity extends ActionBarActivity
             public void run() {
                 handler.post(new Runnable() {
                     public void run() {
-                        Log.d(TAG, "starting ManagePlacesAsyncTask in waitThenManagePlaces");
-                        new ManagePlacesAsyncTask(thisActivity).execute();
+
+                        // TODO: check if enough time has passed since our last query.
+                        // or that we have moved enough
+                        Log.d(TAG, "starting PlacesUpdateService in waitThenManagePlaces");
+
+                        Intent updateServiceIntent = new Intent(thisActivity,
+                                PlacesConstants.SUPPORTS_ECLAIR ? EclairPlacesUpdateService.class : PlacesUpdateService.class);
+                        updateServiceIntent.putExtra(PlacesConstants.EXTRA_KEY_LOCATION, getLastKnownLocation());
+                        updateServiceIntent.putExtra(PlacesConstants.EXTRA_KEY_RADIUS, PlacesConstants.DEFAULT_RADIUS);
+                        // updateServiceIntent.putExtra(PlacesConstants.EXTRA_KEY_FORCEREFRESH, true);
+                        updateServiceIntent.putExtra(PlacesConstants.EXTRA_KEY_FORCEREFRESH, false);
+                        thisActivity.startService(updateServiceIntent);
                     }
                 });
             }
@@ -1161,30 +1174,21 @@ public class MainActivity extends ActionBarActivity
 */
         }
 
-/*
-        if (!haveAlreadyCenteredCamera) {
-            haveAlreadyCenteredCamera = true;
-            updateUserLocationOnMap(location);
-        }
-*/
     }
-//
-//
-//    private class LocationReceiver extends BroadcastReceiver {
-//        @Override
-//        public void onReceive(Context context, Intent intent) {
-//            String locationKey = LocationManager.KEY_LOCATION_CHANGED;
-//            if (intent.hasExtra(locationKey)) {
-//                Bundle extras = intent.getExtras();
-//                if (extras != null) {
-//                    Location location = (Location) extras.get(locationKey);
-//                    Log.v(TAG, "MainActivity.LocationReceiver received Location change.");
-//                    onLocationChanged(location);
-//                }
-//            }
-//        }
-//    }
-//
+
+
+    private class PlacesUpdatedReceiver extends BroadcastReceiver {
+        private MainActivity mainActivity;
+        PlacesUpdatedReceiver(MainActivity mainActivity) {
+            this.mainActivity = mainActivity;
+        }
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            Log.v(TAG, "MainActivity.PlacesUpdatedReceiver");
+            new ManagePlacesAsyncTask(mainActivity).execute();
+        }
+    }
+
 
     /**
      * Determines whether one Location reading is better than the current Location fix
