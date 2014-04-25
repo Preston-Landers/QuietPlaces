@@ -139,9 +139,8 @@ public class MainActivity extends ActionBarActivity
         followingUser = true;
 
         // TODO: replace this with our actual preferences...
-        String[] TEMP_MATCHING_TYPES = {"electrician", "political"};
         tempPlaceTypesOfInterest = new HashSet<String>();
-        for (String tempType : TEMP_MATCHING_TYPES) {
+        for (String tempType : Config.PLACE_TYPE_DEFAULTS) {
             tempPlaceTypesOfInterest.add(tempType);
         }
 
@@ -1103,13 +1102,19 @@ public class MainActivity extends ActionBarActivity
                         // or that we have moved enough
                         Log.d(TAG, "starting PlacesUpdateService in waitThenManagePlaces");
 
-                        Intent updateServiceIntent = new Intent(thisActivity,
-                                PlacesConstants.SUPPORTS_ECLAIR ? EclairPlacesUpdateService.class : PlacesUpdateService.class);
-                        updateServiceIntent.putExtra(PlacesConstants.EXTRA_KEY_LOCATION, getLastKnownLocation());
-                        updateServiceIntent.putExtra(PlacesConstants.EXTRA_KEY_RADIUS, PlacesConstants.DEFAULT_RADIUS);
-                        // updateServiceIntent.putExtra(PlacesConstants.EXTRA_KEY_FORCEREFRESH, true);
-                        updateServiceIntent.putExtra(PlacesConstants.EXTRA_KEY_FORCEREFRESH, false);
-                        thisActivity.startService(updateServiceIntent);
+                        Location lastLocation = getLastKnownLocation();
+                        if (lastLocation != null) {
+                            Intent updateServiceIntent = new Intent(thisActivity,
+                                    PlacesConstants.SUPPORTS_ECLAIR ? EclairPlacesUpdateService.class : PlacesUpdateService.class);
+                            updateServiceIntent.putExtra(PlacesConstants.EXTRA_KEY_LOCATION, lastLocation);
+                            updateServiceIntent.putExtra(PlacesConstants.EXTRA_KEY_RADIUS, PlacesConstants.DEFAULT_RADIUS);
+                            // all the service to determine if an update is really necessary
+                            updateServiceIntent.putExtra(PlacesConstants.EXTRA_KEY_FORCEREFRESH, false);
+                            thisActivity.startService(updateServiceIntent);
+                        } else {
+                            Log.w(TAG, "null location in waitThenManagePlaces");
+                        }
+
                     }
                 });
             }

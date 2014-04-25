@@ -47,6 +47,7 @@ public class ManagePlacesAsyncTask extends AsyncTask<Void, Void, Void> {
         }
 
         for (PlacesContentProvider.Place place : placeList) {
+            // Log.i(TAG, "Looking at place: " + place);
             if (placeMatchesCriteria(place)) {
                 Log.w(TAG, "Found a place matching our criteria: " + place);
             }

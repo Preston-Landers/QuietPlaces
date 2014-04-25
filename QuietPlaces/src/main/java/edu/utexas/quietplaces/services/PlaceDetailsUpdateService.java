@@ -22,6 +22,7 @@ import android.database.Cursor;
 import android.location.Location;
 import android.net.ConnectivityManager;
 import android.net.Uri;
+import android.preference.PreferenceManager;
 import android.util.Log;
 import edu.utexas.quietplaces.PlacesConstants;
 import edu.utexas.quietplaces.content_providers.PlaceDetailsContentProvider;
@@ -63,7 +64,8 @@ public class PlaceDetailsUpdateService extends IntentService {
         contentResolver = getContentResolver();
         projection = new String[]{PlaceDetailsContentProvider.KEY_LAST_UPDATE_TIME, PlaceDetailsContentProvider.KEY_FORCE_CACHE};
         cm = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
-        prefs = getSharedPreferences(PlacesConstants.SHARED_PREFERENCE_FILE, Context.MODE_PRIVATE);
+        prefs = PreferenceManager.getDefaultSharedPreferences(this);
+
     }
 
     /**

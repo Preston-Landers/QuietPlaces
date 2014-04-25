@@ -24,6 +24,8 @@ import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.BatteryManager;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
+import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
 import edu.utexas.quietplaces.Config;
 import edu.utexas.quietplaces.PlacesConstants;
@@ -85,7 +87,7 @@ public class PlacesUpdateService extends IntentService {
         super.onCreate();
         cm = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
         contentResolver = getContentResolver();
-        prefs = getSharedPreferences(PlacesConstants.SHARED_PREFERENCE_FILE, Context.MODE_PRIVATE);
+        prefs = PreferenceManager.getDefaultSharedPreferences(this);
         prefsEditor = prefs.edit();
     }
 
@@ -146,8 +148,11 @@ public class PlacesUpdateService extends IntentService {
                 lastLocation.setLatitude(lastLat);
                 lastLocation.setLongitude(lastLng);
 
+                if (location == null) {
+                    Log.w(TAG, "Location is null...");
+                }
                 // If update time and distance bounds have been passed, do an update.
-                if ((lastTime < System.currentTimeMillis() - PlacesConstants.MAX_TIME) ||
+                else if ((lastTime < System.currentTimeMillis() - PlacesConstants.MAX_TIME) ||
                         (lastLocation.distanceTo(location) > PlacesConstants.MAX_DISTANCE)) {
                     Log.i(TAG, "Time/distance bounds passed on places update");
                     doUpdate = true;
@@ -161,10 +166,16 @@ public class PlacesUpdateService extends IntentService {
             } else if (doUpdate) {
                 // Refresh the prefetch count for each new location.
                 prefetchCount = 0;
-                // Remove the old locations
+                // Remove the old locations - TODO: we flush old locations, but if the next request
+                // fails we are left high and dry
                 removeOldLocations(location, radius);
                 // Hit the server for new venues for the current location.
                 refreshPlaces(location, radius);
+
+                // Tell the main activity about the new results.
+                Intent placesUpdatedIntent = new Intent(Config.ACTION_PLACES_UPDATED);
+                LocalBroadcastManager.getInstance(this).sendBroadcast(placesUpdatedIntent);
+
             } else {
                 Log.i(TAG, "Place List is fresh: Not refreshing");
             }
@@ -201,6 +212,7 @@ public class PlacesUpdateService extends IntentService {
         URL url;
 
         String placeTypes = prefs.getString(PlacesConstants.SP_KEY_API_PLACE_TYPES, PlacesConstants.SP_KEY_API_PLACE_TYPES_DEFAULT);
+        Log.v(TAG, "Doing places search with types: " + placeTypes);
 
 
         try {
@@ -273,7 +285,7 @@ public class PlacesUpdateService extends IntentService {
                         placeLocation.setLatitude(Double.valueOf(locationLat));
                         placeLocation.setLongitude(Double.valueOf(locationLng));
 
-                        Log.i(TAG, "Found place: " +
+                        Log.v(TAG, "Found place: " +
                                         " location: " + location +
                                         " id: " + id +
                                         " name: " + name +
