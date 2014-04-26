@@ -44,36 +44,39 @@ if mock locations is enabled in the device's developer options menu.
 
 ## Future Features / TODO List  ##
 
+* Use better looking map marker drawables, especially for auto-places
 * Implement place category preferences (currently hardcoded)
 * Generate more interesting names for manually added places
 * Ability to resize quiet places with scale gestures
   * Not critical because we have buttons to resize the selected place.
-* Convert auto-added places to 'manual' place if you change the size or move it
-  (so it gets kept around)
 * Better placement of auto-QPs. E.g. don't center the circle on the street corner
 * Better sizing of auto-QPs
+* We're not doing anything with the 'places details' service, can probably remove.
+* Allow a Quiet Place to be temporarily disabled w/o deleting it.
+* Put a confirmation dialog on delete place, and clear history?
 
 ## Known Bugs ##
 
-* Don't display QP IDs in UI
 * Current selection (of a Quiet Place) is lost when changing device orientation
 * If you are currently inside a geofence, and then move the fence away from you,
   it doesn't register as leaving the fence since it got removed and then
   readded in the other spot.
 * If you create a new QP that you are currently inside, it doesn't trigger the silence.
-  * Should it?
-* Put a confirmation dialog on delete place, and clear history?
 * If the app has not received location updates in a while, we may miss some geofence
   transitions and may need to do a manual check.
-* onResume is called twice during activity startup (with an onPause in between)
-   * Why? This does happen in the LBP project too
-   * This generates extra Places HTTP requests.
 * Handle more than 20 Places API results by requesting the next page
   * http://stackoverflow.com/a/9627664/858289
 
-### other things to check ###
+## Data Model ##
 
-https://code.google.com/p/android-protips-location/issues/detail?id=11
+QuietPlace objects (POJOs) represent our basic database record. Each geofence zone, whether
+manually added, or automatically suggested, gets put in the database as a QuietPlace.
+
+The QuietPlaceMapMarker (QPMM) is an object which ties together the QuietPlace database record
+plus the Google Map marker, the geofence status, and associated data.
+
+QPMapFragment extends the basic Google Map view and adds our custom map behaviors
+such as moving or resizing markers.
 
 
 ## Software Engineering Challenges ##

@@ -248,6 +248,8 @@ public class PlacesUpdateService extends IntentService {
                 factory.setNamespaceAware(true);
                 XmlPullParser xpp = factory.newPullParser();
 
+                int placesAddedThisRequest = 0;
+
                 xpp.setInput(in, null);
                 int eventType = xpp.getEventType();
                 while (eventType != XmlPullParser.END_DOCUMENT) {
@@ -298,13 +300,20 @@ public class PlacesUpdateService extends IntentService {
                         );
 
                         if (!next_page_token.equals("")) {
-                            Log.e(TAG, "WARNING: unhandled next_page_token from Places search " + next_page_token );
+                            Log.e(TAG, "WARNING: unhandled next_page_token from Places search " + next_page_token);
                         }
 
                         // Add each new place to the Places Content Provider
                         addPlace(location, id, name, vicinity, types, placeLocation, viewport, icon, reference, currentTime);
+                        placesAddedThisRequest++;
                     }
                     eventType = xpp.next();
+                }
+
+                if (placesAddedThisRequest > 0) {
+                    Log.i(TAG, "Found " + placesAddedThisRequest + " places this request.");
+                } else {
+                    Log.w(TAG, "Found 0 places this request.");
                 }
 
                 // Remove places from the PlacesContentProviderlist that aren't from this update.

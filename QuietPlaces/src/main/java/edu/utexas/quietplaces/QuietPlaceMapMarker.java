@@ -35,7 +35,8 @@ public class QuietPlaceMapMarker {
 
     /**
      * Main function for creating new map markers
-     * @param quietPlace the place to add
+     *
+     * @param quietPlace    the place to add
      * @param qpMapFragment the containing map fragment
      * @return a QuietPlaceMapMarker instance
      */
@@ -338,16 +339,32 @@ public class QuietPlaceMapMarker {
 
     /**
      * Saves any changes to the QuietPlace object to the database.
+     * <p/>
+     * We automatically convert any auto-add places to permanent places here
+     * on the assumption that if they're changing it, they want to keep it.
      */
     private void database_save() {
-        Log.v(TAG, "Saving to database: " + getQuietPlace());
-        QuietPlace qp = QuietPlacesContentProvider.saveQuietPlace(getQpMapFragment().getMyActivity(), getQuietPlace());
+        QuietPlace qp = getQuietPlace();
         if (qp == null) {
-            Log.e(TAG, "Unable to database_save quietplace: " + getQuietPlace());
+            Log.e(TAG, "Can't save QuietPlaceMapMarker with null QuietPlace");
+            return;
+        }
+
+        // Ensure that if we're saving changes to an auto-add place
+        // it becomes a permanent place.
+        if (qp.isAutoadded()) {
+            Log.w(TAG, "Converting autoadded QuietPlace to permanent mode: " + qp);
+            qp.setAutoadded(false);
+        }
+
+        Log.v(TAG, "Saving to database: " + qp);
+        qp = QuietPlacesContentProvider.saveQuietPlace(getQpMapFragment().getMyActivity(), qp);
+        if (qp == null) {
+            Log.e(TAG, "Unable to database_save quietplace!");
             return;
         }
         setQuietPlace(qp);
-        Log.w(TAG, "Saved to database: " + getQuietPlace());
+        Log.w(TAG, "Saved to database: " + qp);
     }
 
     private void database_delete() {

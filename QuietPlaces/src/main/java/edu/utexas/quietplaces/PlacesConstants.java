@@ -12,9 +12,9 @@ public class PlacesConstants {
     public static String PLACES_DETAIL_BASE_URI = "https://maps.googleapis.com/maps/api/place/details/xml?sensor=true&reference=";
 
     // The default search radius when searching for places nearby.
-    public static int DEFAULT_RADIUS = 200; // 150;
+    public static int DEFAULT_RADIUS = 300; // 150;
 
-    // The maximum distance the user should travel between location updates.
+    // The maximum distance (meters) the user should travel between Places updates.
     public static int MAX_DISTANCE = 50;
 
     // The maximum time that should pass before the user gets a location update.
