@@ -45,31 +45,34 @@ public class SettingsFragment extends PreferenceFragment
 
     private static final String MAP_TYPE_DEFAULT = MAP_TYPE_NORMAL;
 
+    /// IMPORTANT: these values MUST start with pref_cat_
+    public static final String PLACE_CAT = "pref_cat_";
+
     // Dining & Entertainment
-    public static final String KEY_CAT_MOVIE_THEATER = "pref_cat_movie_theater";
-    public static final String KEY_CAT_RESTAURANT = "pref_cat_restaurant";
-    public static final String KEY_CAT_ART = "pref_cat_art";
-    public static final String KEY_CAT_CAFE = "pref_cat_cafe";
-    public static final String KEY_CAT_GYM = "pref_cat_gym";
+    public static final String KEY_CAT_MOVIE_THEATER = PLACE_CAT + "movie_theater";
+    public static final String KEY_CAT_RESTAURANT = PLACE_CAT + "restaurant";
+    public static final String KEY_CAT_ART = PLACE_CAT + "art";
+    public static final String KEY_CAT_CAFE = PLACE_CAT + "cafe";
+    public static final String KEY_CAT_GYM = PLACE_CAT + "gym";
 
     // Religious & Funeral
-    public static final String KEY_CAT_PLACES_OF_WORSHIP = "pref_cat_places_of_worship";
-    public static final String KEY_CAT_FUNERAL = "pref_cat_funeral";
+    public static final String KEY_CAT_PLACES_OF_WORSHIP = PLACE_CAT + "places_of_worship";
+    public static final String KEY_CAT_FUNERAL = PLACE_CAT + "funeral";
 
     // Medical & Health
-    public static final String KEY_CAT_HOSPITALS = "pref_cat_hospital";
-    public static final String KEY_CAT_DOCTOR = "pref_cat_doctor";
-    public static final String KEY_CAT_PHARMACY = "pref_cat_pharmacy";
+    public static final String KEY_CAT_HOSPITALS = PLACE_CAT + "hospital";
+    public static final String KEY_CAT_DOCTOR = PLACE_CAT + "doctor";
+    public static final String KEY_CAT_PHARMACY = PLACE_CAT + "pharmacy";
 
     // Schools & Libraries
-    public static final String KEY_CAT_SCHOOL = "pref_cat_school";
-    public static final String KEY_CAT_UNIVERSITY = "pref_cat_university";
-    public static final String KEY_CAT_LIBRARY = "pref_cat_library";
+    public static final String KEY_CAT_SCHOOL = PLACE_CAT + "school";
+    public static final String KEY_CAT_UNIVERSITY = PLACE_CAT + "university";
+    public static final String KEY_CAT_LIBRARY = PLACE_CAT + "library";
 
     // Government
-    public static final String KEY_CAT_COURTHOUSE = "pref_cat_courthouse";
-    public static final String KEY_CAT_POLICE = "pref_cat_police";
-    public static final String KEY_CAT_GOVT_OFFICE = "pref_cat_govt_office";
+    public static final String KEY_CAT_COURTHOUSE = PLACE_CAT + "courthouse";
+    public static final String KEY_CAT_POLICE = PLACE_CAT + "police";
+    public static final String KEY_CAT_GOVT_OFFICE = PLACE_CAT + "govt_office";
 
 
 
@@ -168,8 +171,14 @@ public class SettingsFragment extends PreferenceFragment
         }
         // TODO: Do we need to check for the location changed pref and turn off updates here?
 
-        // Any time we change any preference, update the master place type pref.
-        updateMasterPlaceTypes();
+        // Any time we change any 'category' preference, update the master place type pref.
+        if (isPlaceCategoryPref(key)) {
+            updateMasterPlaceTypes();
+        }
+    }
+
+    private boolean isPlaceCategoryPref(String prefName) {
+        return prefName.indexOf(PLACE_CAT) == 0;
     }
 
 /*

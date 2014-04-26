@@ -215,4 +215,7 @@
     <string name="pref_cat_police"><![CDATA[Police & Fire]]></string>
     <string name="pref_cat_govt_office">Government Offices</string>
     <string name="pref_cat_govt_office_summary">City hall, post offices, and other government offices.</string>
+
+    <string name="notification_title_enter">Disabled Ringer</string>
+    <string name="notification_title_exit">Enabled Ringer</string>
 </resources>

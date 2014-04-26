@@ -56,9 +56,8 @@ if mock locations is enabled in the device's developer options menu.
 
 ## Known Bugs ##
 
-* Not searching the updated location when app in background?!
 * Current selection (of a Quiet Place) is lost when changing device orientation
-* If you are currently inside a geofence, and then move the fence away from you,
+* If you are currently inside a geofence, and then move the fence away from you with a drag,
   it doesn't register as leaving the fence since it got removed and then
   readded in the other spot.
 * If you create a new QP that you are currently inside, it doesn't trigger the silence.
@@ -66,6 +65,7 @@ if mock locations is enabled in the device's developer options menu.
   transitions and may need to do a manual check.
 * Handle more than 20 Places API results by requesting the next page
   * http://stackoverflow.com/a/9627664/858289
+* Ringer switch on home screen can get out of sync with actual ringer status.
 
 ## Data Model ##
 

@@ -36,7 +36,10 @@ import edu.utexas.quietplaces.services.PlacesUpdateService;
 import edu.utexas.quietplaces.utils.PlatformSpecificImplementationFactory;
 import edu.utexas.quietplaces.utils.base.SharedPreferenceSaver;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Timer;
+import java.util.TimerTask;
 
 public class MainActivity extends ActionBarActivity
         implements NavigationDrawerFragment.NavigationDrawerCallbacks,
@@ -159,7 +162,6 @@ public class MainActivity extends ActionBarActivity
         } else {
             locationCriteria.setPowerRequirement(Criteria.POWER_LOW);
         }
-
 
 
         // Instantiate the current List of geofences
@@ -377,16 +379,12 @@ public class MainActivity extends ActionBarActivity
         setupMapIfNeeded();
         mUpdatesRequested = getPrefUsingLocation();
 
-        // TODO: get from pref...
-        setFollowingUser(true);
         haveSetZoomLevel = false;  // reset suggested zoom in follow mode
 
 
-        // TODO: LEAVE removal FOR LAST
         // Commit shared preference that says we're in the foreground.
         prefsEditor.putBoolean(PlacesConstants.EXTRA_KEY_IN_BACKGROUND, false);
         sharedPreferenceSaver.savePreferences(prefsEditor, false);
-
 
 
         if (!haveRegisteredBroadcastReceiver) {
@@ -404,6 +402,7 @@ public class MainActivity extends ActionBarActivity
     @Override
     protected void onDestroy() {
         Log.d(TAG, "onDestroy");
+        disableMainActivityLocationUpdates();
         super.onDestroy();
     }
 
@@ -429,7 +428,6 @@ public class MainActivity extends ActionBarActivity
     @Override
     protected void onStop() {
         Log.d(TAG, "onStop");
-        disableMainActivityLocationUpdates();
         super.onStop();
 
     }
@@ -1018,6 +1016,7 @@ public class MainActivity extends ActionBarActivity
         TaskStackBuilder stackBuilder = TaskStackBuilder.create(this);
 
         // Adds the main Activity to the task stack as the parent
+        // TODO: this goes back to the home screen - can we return to currently open fragment?
         stackBuilder.addParentStack(MainActivity.class);
 
         // Push the content Intent onto the stack
@@ -1030,16 +1029,17 @@ public class MainActivity extends ActionBarActivity
         // Get a notification builder that's compatible with platform versions >= 4
         NotificationCompat.Builder builder = new NotificationCompat.Builder(this);
 
+        String transitionTitle = getString(R.string.notification_title_enter);
         int icon = HistoryEvent.ICON_PLACE_ENTER;
         if (transition == Geofence.GEOFENCE_TRANSITION_EXIT) {
             icon = HistoryEvent.ICON_PLACE_EXIT;
+            transitionTitle = getString(R.string.notification_title_exit);
         }
 
         // Set the notification contents
         builder.setSmallIcon(icon)
                 .setContentTitle(
-                        getString(R.string.geofence_transition_notification_title,
-                                transitionType, ids)
+                        transitionTitle
                 )
                 .setContentText(subtext)
                 .setContentIntent(notificationPendingIntent);
@@ -1077,7 +1077,6 @@ public class MainActivity extends ActionBarActivity
     }
 
 
-
     public void waitThenManagePlaces() {
         Log.w(TAG, "waitThenManagePlaces");
         final Handler handler = new Handler();
@@ -1088,20 +1087,14 @@ public class MainActivity extends ActionBarActivity
             public void run() {
                 handler.post(new Runnable() {
                     public void run() {
-
-                        // TODO: check if enough time has passed since our last query.
-                        // or that we have moved enough
                         Log.d(TAG, "starting PlacesUpdateService in waitThenManagePlaces");
+
+                        // The places update service will check if enough time has passed since our last query
+                        // or that we have moved enough.
 
                         Location lastLocation = getLastKnownLocation();
                         if (lastLocation != null) {
-                            Intent updateServiceIntent = new Intent(thisActivity,
-                                    PlacesConstants.SUPPORTS_ECLAIR ? EclairPlacesUpdateService.class : PlacesUpdateService.class);
-                            updateServiceIntent.putExtra(PlacesConstants.EXTRA_KEY_LOCATION, lastLocation);
-                            updateServiceIntent.putExtra(PlacesConstants.EXTRA_KEY_RADIUS, PlacesConstants.DEFAULT_RADIUS);
-                            // all the service to determine if an update is really necessary
-                            updateServiceIntent.putExtra(PlacesConstants.EXTRA_KEY_FORCEREFRESH, false);
-                            thisActivity.startService(updateServiceIntent);
+                            updatePlaces(lastLocation, PlacesConstants.DEFAULT_RADIUS, false);
                         } else {
                             Log.w(TAG, "null location in waitThenManagePlaces");
                         }
@@ -1153,7 +1146,7 @@ public class MainActivity extends ActionBarActivity
         // Should we actually use this location fix?
         if (isBetterLocation(location, lastKnownLocation)) {
             lastKnownLocation = location;
-            Log.i(TAG, "Found better location: " + lastKnownLocation);
+            Log.d(TAG, "Found better location: " + lastKnownLocation);
         } else {
             Log.i(TAG, "Keeping existing location: " + lastKnownLocation);
         }
@@ -1163,9 +1156,11 @@ public class MainActivity extends ActionBarActivity
 
     private class PlacesUpdatedReceiver extends BroadcastReceiver {
         private MainActivity mainActivity;
+
         PlacesUpdatedReceiver(MainActivity mainActivity) {
             this.mainActivity = mainActivity;
         }
+
         @Override
         public void onReceive(Context context, Intent intent) {
             Log.v(TAG, "MainActivity.PlacesUpdatedReceiver");

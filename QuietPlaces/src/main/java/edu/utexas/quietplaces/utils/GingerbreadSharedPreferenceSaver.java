@@ -18,6 +18,7 @@ package edu.utexas.quietplaces.utils;
 
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.util.Log;
 
 /**
  * Save {@link android.content.SharedPreferences} using the asynchronous apply method available
@@ -36,6 +37,10 @@ public class GingerbreadSharedPreferenceSaver extends FroyoSharedPreferenceSaver
     @Override
     public void savePreferences(SharedPreferences.Editor editor, boolean backup) {
         editor.apply();
-        backupManager.dataChanged();
+        try {
+            backupManager.dataChanged();
+        } catch (Exception e) {
+            Log.e("GingerbreadSharedPreferenceSaver", "Warning, failed to backup preferences...", e);
+        }
     }
 }

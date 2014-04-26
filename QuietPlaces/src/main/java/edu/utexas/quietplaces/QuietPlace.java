@@ -137,8 +137,8 @@ public class QuietPlace {
     public String getHistoryEventFormatted() {
         // is this good enough?
         return String.format(
-                "%s: %s - %s %s",
-                getId(), getComment(), getLocationFormatted(), getRadiusFormatted()
+                "%s: %s %s",
+                getComment(), getLocationFormatted(), getRadiusFormatted()
         );
     }
 
