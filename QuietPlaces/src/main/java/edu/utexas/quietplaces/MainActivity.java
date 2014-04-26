@@ -731,7 +731,7 @@ public class MainActivity extends ActionBarActivity
         updateUserLocationOnMap(myLocation);
     }
 
-    private Location getLastKnownLocation() {
+    public Location getLastKnownLocation() {
 //        String provider = locationManager.getBestProvider(locationCriteria, true);
 //        return locationManager.getLastKnownLocation(provider);
         return lastKnownLocation;
@@ -1154,6 +1154,10 @@ public class MainActivity extends ActionBarActivity
     }
 
 
+    /**
+     * We execute this receiver when the PlacesUpdateService has
+     * finished querying the Google Places API. It just launches the AsyncTask.
+     */
     private class PlacesUpdatedReceiver extends BroadcastReceiver {
         private MainActivity mainActivity;
 

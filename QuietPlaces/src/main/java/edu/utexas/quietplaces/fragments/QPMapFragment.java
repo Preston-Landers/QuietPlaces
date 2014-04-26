@@ -632,7 +632,7 @@ public class QPMapFragment extends BaseFragment {
 
         // Delete all of the previously auto-added markers. Even if we don't have any new ones.
         // Except don't delete those which are still present in the new results.
-        // Might be a more efficient way to do this.
+        // Might be a more efficient way to do this off the main thread.
 
         List<QuietPlaceMapMarker> deletables = new ArrayList<QuietPlaceMapMarker>();
         List<QuietPlaceMapMarker> allAutoAdded = getAutoAddedMarkers();
@@ -643,7 +643,8 @@ public class QPMapFragment extends BaseFragment {
             }
             QuietPlace qp = qpmm.getQuietPlace();
             if (qp == null) {
-                Log.e(TAG, "Not deleting auto-QPMM because its QP is null: " + qpmm);
+                // This may be some kinda bug...
+                Log.e(TAG, "BUG? Not deleting auto-QPMM because its QP is null: " + qpmm);
                 continue;
             }
             boolean inNewSet = false;
@@ -653,8 +654,10 @@ public class QPMapFragment extends BaseFragment {
                     break;
                 }
             }
-            if (!inNewSet) {
-                Log.i(TAG, "Deleting auto-add QP because it's not in our new results: " + qp);
+            // Only remove an auto-QPMM if it's not in our new results set
+            // AND if it's far away from us.
+            if (!inNewSet && isFarAwayFromCurrentLocation(qp)) {
+                Log.i(TAG, "Deleting auto-add QP because it's not in our new results and is far away: " + qp);
                 deletables.add(qpmm);
             }
 
@@ -671,7 +674,7 @@ public class QPMapFragment extends BaseFragment {
             // Check if we already have a QP with the same Google Place ID.
             QuietPlaceMapMarker existingPlace = getQPMMFromGooglePlaceId(gplace.getId());
             if (existingPlace != null) {
-                Log.i(TAG, "Already have a Quiet Place with this matching Google Place ID: "  + gplace.getId() + " QPMM: " + existingPlace);
+                Log.i(TAG, "Already have a Quiet Place with this matching Google Place ID: " + gplace.getId() + " QPMM: " + existingPlace);
                 continue;
             }
 
@@ -683,12 +686,35 @@ public class QPMapFragment extends BaseFragment {
         }
 
         // Save/sync
-        if (quietPlaces.size() > 0)
-        {
+        if (quietPlaces.size() > 0) {
             activateQuietPlaces(quietPlaces, false);
         } else {
             Log.w(TAG, "No automatic places to load.");
         }
+    }
+
+    /**
+     * Is the given QuietPlace situated 'far' from our current location?
+     * Far is defined according to a preset value.
+     * Note that we return false (i.e, 'near') if we have no known location.
+     *
+     * @param quietPlace place to check
+     * @return
+     */
+    private boolean isFarAwayFromCurrentLocation(QuietPlace quietPlace) {
+        MainActivity mainActivity = (MainActivity) getMyActivity();
+        Location currentLocation = mainActivity.getLastKnownLocation();
+        if (currentLocation == null) {
+            Log.w(TAG, "Warning: no known location to check if place is far away.");
+            return false;
+        }
+        Location qpLocation = new Location("");
+        qpLocation.setLongitude(quietPlace.getLongitude());
+        qpLocation.setLatitude(quietPlace.getLatitude());
+        if (currentLocation.distanceTo(qpLocation) > Config.DISCARD_AUTO_PLACES_DISTANCE) {
+            return true;
+        }
+        return false;
     }
 
     private void activateQuietPlaces(List<QuietPlace> quietPlaceList, boolean logEvent) {
@@ -727,15 +753,20 @@ public class QPMapFragment extends BaseFragment {
 
     /**
      * Retrieve a QuietPlaceMapMarker by it's Google Place ID. Returns null if no QPMMs match that ID.
+     *
      * @param gplaceId Google Place ID
      * @return matching map marker
      */
     public QuietPlaceMapMarker getQPMMFromGooglePlaceId(String gplaceId) {
         for (QuietPlaceMapMarker qpmm : mapMarkerSet) {
             QuietPlace qp = qpmm.getQuietPlace();
-            if (qp == null) { continue; }
+            if (qp == null) {
+                continue;
+            }
             String thisPlaceId = qp.getGplace_id();
-            if (thisPlaceId == null) { continue; }
+            if (thisPlaceId == null) {
+                continue;
+            }
             if (thisPlaceId.equals(gplaceId)) {
                 return qpmm;
             }

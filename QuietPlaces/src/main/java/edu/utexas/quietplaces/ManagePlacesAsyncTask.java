@@ -52,6 +52,8 @@ public class ManagePlacesAsyncTask extends AsyncTask<Void, Void, Void> {
         if (placeList.size() == 0) {
             Log.w(TAG, "GPlaces table appears to be empty.");
             return null;
+        } else {
+            Log.i(TAG, "GPlaces table has " + placeList.size() + " records.");
         }
 
         for (PlacesContentProvider.Place place : placeList) {

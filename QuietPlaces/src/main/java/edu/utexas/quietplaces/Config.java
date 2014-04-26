@@ -34,6 +34,10 @@ public class Config {
     // How often do we move the camera to follow the user?
     public static final long FOLLOW_USER_INTERVAL_MS = LOCATION_FASTEST_INTERVAL_MS;
 
+    // Distance (in meters) for an auto-added place to be considered for automatic cleanup
+    public static final double DISCARD_AUTO_PLACES_DISTANCE = 1000;
+
+
     // Probably belongs in an XML file somewhere
     public static final int QP_CIRCLE_STROKE_COLOR = Color.argb(150, 0, 0, 255);
     public static final int QP_AUTO_CIRCLE_STROKE_COLOR = Color.argb(150, 110, 122, 61);
