@@ -1,6 +1,7 @@
 package edu.utexas.quietplaces.fragments;
 
 import android.app.Activity;
+import android.content.Context;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.preference.Preference;
@@ -15,8 +16,7 @@ import edu.utexas.quietplaces.R;
 import edu.utexas.quietplaces.utils.PlatformSpecificImplementationFactory;
 import edu.utexas.quietplaces.utils.base.SharedPreferenceSaver;
 
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 
 
 /**
@@ -181,7 +181,6 @@ public class SettingsFragment extends PreferenceFragment
         return prefName.indexOf(PLACE_CAT) == 0;
     }
 
-/*
     public static String getSelectedPlaceTypes(Context context) {
         SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(context);
         return sharedPreferences.getString(PlacesConstants.SP_KEY_API_PLACE_TYPES, getDefaultSelectedPlaceTypes());
@@ -190,14 +189,15 @@ public class SettingsFragment extends PreferenceFragment
     private static String getDefaultSelectedPlaceTypes() {
         return Config.joinString(Config.PLACE_TYPE_DEFAULTS, "|");
     }
-*/
 
     public void updateMasterPlaceTypes() {
         updateSelectedPlacesPref(getCurrentlySelectedPlaceTypes());
     }
 
     private void updateSelectedPlacesPref(Set<String> selectedPlaceTypes) {
-        String placeTypes = Config.joinString(selectedPlaceTypes, "|");
+        List<String> placeList = new ArrayList<String>(selectedPlaceTypes);
+        Collections.sort(placeList); // want this in stable order just in case it matters...
+        String placeTypes = Config.joinString(placeList, "|");
         SharedPreferences.Editor prefsEditor = sharedPreferences.edit();
         prefsEditor.putString(PlacesConstants.SP_KEY_API_PLACE_TYPES, placeTypes);
         SharedPreferenceSaver sharedPreferenceSaver = PlatformSpecificImplementationFactory.getSharedPreferenceSaver(getActivity());

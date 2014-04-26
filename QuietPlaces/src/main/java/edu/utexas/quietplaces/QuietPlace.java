@@ -3,6 +3,10 @@ package edu.utexas.quietplaces;
 
 import org.joda.time.DateTime;
 
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Set;
+
 /**
  * Data model object for a single QuietPlace as stored in the database.
  * The QuietPlaceMapMarker class is also important because it combines
@@ -164,5 +168,25 @@ public class QuietPlace {
 
     public void setAutoadded(boolean autoadded) {
         this.autoadded = autoadded;
+    }
+
+    public boolean categoryMatchesSelectedPlaceTypes(String[] selectedPlaceTypes) {
+        String cat = getCategory();
+        if (cat == null || cat.length() == 0) {
+            return false;
+        }
+        String[] myCategories = cat.split("\\s+");
+        return intersect(myCategories, selectedPlaceTypes).size() > 0;
+    }
+
+    private static Set<String> intersect(String[] a, String[] b) {
+        Set<String> a_set = new HashSet<String>(Arrays.asList(a));
+        Set<String> intersection = new HashSet<String>();
+        for (String bstr : b) {
+            if (a_set.contains(bstr)) {
+                intersection.add(bstr);
+            }
+        }
+        return intersection;
     }
 }

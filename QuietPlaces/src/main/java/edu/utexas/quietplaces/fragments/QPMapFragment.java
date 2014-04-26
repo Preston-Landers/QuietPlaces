@@ -621,22 +621,15 @@ public class QPMapFragment extends BaseFragment {
         deleteMarkers(deletables);
     }
 
-
-    public void loadAutomaticQuietPlaces(List<PlacesContentProvider.Place> matchedPlaces) {
-        if (matchedPlaces == null) {
-            Log.e(TAG, "null place list in loadAutomaticQuietPlaces");
-            return;
-        }
-
-        Log.v(TAG, "loading " + matchedPlaces.size() + " matched automatic places.");
+    public List<QuietPlaceMapMarker> findAutomaticPlacesToDelete(List<PlacesContentProvider.Place> matchedPlaces) {
+        String[] selectedPlaceTypes = SettingsFragment.getSelectedPlaceTypes(getMyActivity()).split("\\|");
 
         // Delete all of the previously auto-added markers. Even if we don't have any new ones.
         // Except don't delete those which are still present in the new results.
         // Might be a more efficient way to do this off the main thread.
 
         List<QuietPlaceMapMarker> deletables = new ArrayList<QuietPlaceMapMarker>();
-        List<QuietPlaceMapMarker> allAutoAdded = getAutoAddedMarkers();
-        for (QuietPlaceMapMarker qpmm : allAutoAdded) {
+        for (QuietPlaceMapMarker qpmm : getAutoAddedMarkers()) {
             if (qpmm.isSelected()) {
                 Log.w(TAG, "Not deleting auto-QPMM because it's selected: " + qpmm);
                 continue;
@@ -648,25 +641,47 @@ public class QPMapFragment extends BaseFragment {
                 continue;
             }
             boolean inNewSet = false;
-            for (PlacesContentProvider.Place gplace : matchedPlaces) {
-                if (gplace.getId().equals(qp.getGplace_id())) {
-                    inNewSet = true;
-                    break;
+            if (matchedPlaces != null) {
+                for (PlacesContentProvider.Place gplace : matchedPlaces) {
+                    if (gplace.getId().equals(qp.getGplace_id())) {
+                        inNewSet = true;
+                        break;
+                    }
                 }
             }
-            // Only remove an auto-QPMM if it's not in our new results set
-            // AND if it's far away from us.
-            if (!inNewSet && isFarAwayFromCurrentLocation(qp)) {
+
+            // If this doesn't match our current criteria, throw it out.
+            if (!qp.categoryMatchesSelectedPlaceTypes(selectedPlaceTypes)) {
+                Log.d(TAG, "Deleting auto-add QP because it doesn't match current critiera. " + qp);
+                deletables.add(qpmm);
+            }
+            else if (!inNewSet && isFarAwayFromCurrentLocation(qp)) {
+                // Only remove an auto-QPMM if it's not in our new results set
+                // AND if it's far away from us.
                 Log.i(TAG, "Deleting auto-add QP because it's not in our new results and is far away: " + qp);
                 deletables.add(qpmm);
             }
+            else {
+                Log.v(TAG, "Keeping QP because still matches and is nearby. " + qp);
+            }
 
         }
-        if (deletables.size() > 0) {
+        return deletables;
+    }
+
+    public void loadAutomaticQuietPlaces(List<PlacesContentProvider.Place> matchedPlaces, List<QuietPlaceMapMarker> deletables) {
+
+        if (deletables != null && deletables.size() > 0) {
             Log.i(TAG, "Deleting " + deletables.size() + " auto-add QPs they are not in our new results");
             deleteMarkers(deletables);
         }
 
+        if (matchedPlaces == null) {
+            Log.e(TAG, "null place list in loadAutomaticQuietPlaces");
+            return;
+        }
+
+        Log.v(TAG, "loading " + matchedPlaces.size() + " matched automatic places.");
 
         // Add all of our matched places
         List<QuietPlace> quietPlaces = new ArrayList<QuietPlace>();
@@ -711,10 +726,7 @@ public class QPMapFragment extends BaseFragment {
         Location qpLocation = new Location("");
         qpLocation.setLongitude(quietPlace.getLongitude());
         qpLocation.setLatitude(quietPlace.getLatitude());
-        if (currentLocation.distanceTo(qpLocation) > Config.DISCARD_AUTO_PLACES_DISTANCE) {
-            return true;
-        }
-        return false;
+        return currentLocation.distanceTo(qpLocation) > Config.DISCARD_AUTO_PLACES_DISTANCE;
     }
 
     private void activateQuietPlaces(List<QuietPlace> quietPlaceList, boolean logEvent) {

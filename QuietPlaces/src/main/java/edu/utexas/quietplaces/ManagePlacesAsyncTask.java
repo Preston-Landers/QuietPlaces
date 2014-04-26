@@ -26,9 +26,13 @@ public class ManagePlacesAsyncTask extends AsyncTask<Void, Void, Void> {
 
     private List<PlacesContentProvider.Place> matchedPlaces;
 
+    private QPMapFragment qpMapFragment;
+    private List<QuietPlaceMapMarker> deletables;
+
     ManagePlacesAsyncTask(MainActivity activity) {
         mainActivity = activity;
         placeTypesToMatch = mainActivity.getSettingsFragment().getCurrentlySelectedPlaceTypes();
+        qpMapFragment = mainActivity.getMapFragment();
     }
 
     @Override
@@ -49,9 +53,9 @@ public class ManagePlacesAsyncTask extends AsyncTask<Void, Void, Void> {
             Log.e(TAG, "GPlaces table query return null.");
             return null;
         }
+
         if (placeList.size() == 0) {
             Log.w(TAG, "GPlaces table appears to be empty.");
-            return null;
         } else {
             Log.i(TAG, "GPlaces table has " + placeList.size() + " records.");
         }
@@ -64,6 +68,9 @@ public class ManagePlacesAsyncTask extends AsyncTask<Void, Void, Void> {
             }
         }
 
+        // Need to gather deletables even if there's no matching results.
+        // This cleans up old/unwanted zones
+        deletables = qpMapFragment.findAutomaticPlacesToDelete(matchedPlaces);
         return null;
     }
 
@@ -71,24 +78,13 @@ public class ManagePlacesAsyncTask extends AsyncTask<Void, Void, Void> {
     protected void onPostExecute(Void result) {
         Log.d(TAG, "onPostExecute");
 
-        // NOTE: I'm not sure whether want to call loadAutomaticQuietPlaces even
-        // if our list has 0 entries, because the user might have
-        // moved to a new location and we need to get rid of the
-        // the old entries. Yet maybe there's no harm in letting them stick
-        // around until we actually do get something substantial to update.
-        if (matchedPlaces.size() == 0) {
-            Log.w(TAG, "No nearby places matched our search criteria.");
-            return;
-        }
-
         // Delete all of the automatically added places
-        QPMapFragment qpMapFragment = mainActivity.getMapFragment();
         if (qpMapFragment == null) {
             Log.e(TAG, "MainActivity.getMapFragment returned null.");
             return;
         }
 
-        qpMapFragment.loadAutomaticQuietPlaces(matchedPlaces);
+        qpMapFragment.loadAutomaticQuietPlaces(matchedPlaces, deletables);
     }
 
     private boolean placeMatchesCriteria(PlacesContentProvider.Place place) {
