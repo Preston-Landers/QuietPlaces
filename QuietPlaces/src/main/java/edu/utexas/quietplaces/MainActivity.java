@@ -127,8 +127,6 @@ public class MainActivity extends ActionBarActivity
     private boolean weSilencedTheDevice;
 
 
-    private Set<String> tempPlaceTypesOfInterest;
-
     // Should the camera be following the user?
     private boolean followingUser;
 
@@ -137,12 +135,6 @@ public class MainActivity extends ActionBarActivity
         super.onCreate(savedInstanceState);
 
         followingUser = true;
-
-        // TODO: replace this with our actual preferences...
-        tempPlaceTypesOfInterest = new HashSet<String>();
-        for (String tempType : Config.PLACE_TYPE_DEFAULTS) {
-            tempPlaceTypesOfInterest.add(tempType);
-        }
 
         locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
 
@@ -363,10 +355,9 @@ public class MainActivity extends ActionBarActivity
 
         Log.d(TAG, "onStart");
 
+        getSettingsFragment().updateMasterPlaceTypes();
 
         mLocationClient.connect();
-
-        setPlacesAPITypesOfInterest();
 
         startFollowUser();
 
@@ -1124,15 +1115,6 @@ public class MainActivity extends ActionBarActivity
                 Config.MANAGE_PLACES_INTERVAL_MS);  // delay to subsequent run
     }
 
-    public Set<String> getPlacesAPITypesOfInterestSet() {
-        return tempPlaceTypesOfInterest;
-    }
-
-    public void setPlacesAPITypesOfInterest() {
-        String placeTypes = Config.joinString(getPlacesAPITypesOfInterestSet(), "|");
-        prefsEditor.putString(PlacesConstants.SP_KEY_API_PLACE_TYPES, placeTypes);
-        sharedPreferenceSaver.savePreferences(prefsEditor, false);
-    }
 
     public void startFollowUser() {
 
@@ -1171,12 +1153,9 @@ public class MainActivity extends ActionBarActivity
         // Should we actually use this location fix?
         if (isBetterLocation(location, lastKnownLocation)) {
             lastKnownLocation = location;
-/*
-        String msg = "Updated Location: " +
-                Double.toString(location.getLatitude()) + "," +
-                Double.toString(location.getLongitude());
-        shortToast(msg);
-*/
+            Log.i(TAG, "Found better location: " + lastKnownLocation);
+        } else {
+            Log.i(TAG, "Keeping existing location: " + lastKnownLocation);
         }
 
     }

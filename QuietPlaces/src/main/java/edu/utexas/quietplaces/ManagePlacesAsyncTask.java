@@ -22,13 +22,13 @@ public class ManagePlacesAsyncTask extends AsyncTask<Void, Void, Void> {
 
     private MainActivity mainActivity;
 
-    private Set<String> tempPlacesSet;
+    private Set<String> placeTypesToMatch;
 
     private List<PlacesContentProvider.Place> matchedPlaces;
 
     ManagePlacesAsyncTask(MainActivity activity) {
         mainActivity = activity;
-        tempPlacesSet = mainActivity.getPlacesAPITypesOfInterestSet();
+        placeTypesToMatch = mainActivity.getSettingsFragment().getCurrentlySelectedPlaceTypes();
     }
 
     @Override
@@ -101,7 +101,7 @@ public class ManagePlacesAsyncTask extends AsyncTask<Void, Void, Void> {
     }
 
     private boolean placeTypeMatchesCriteria(String placeType) {
-        return tempPlacesSet.contains(placeType.trim());
+        return placeTypesToMatch.contains(placeType.trim());
     }
 
 }

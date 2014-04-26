@@ -474,11 +474,13 @@ public class QPMapFragment extends BaseFragment {
 
         // we do this outside of addQuietPlaceMapMarker because
         // we don't want these logged when loaded from the database load method.
-        HistoryEvent.logEvent(
-                getMyActivity(),
-                HistoryEvent.TYPE_PLACE_ADD,
-                quietPlace.getHistoryEventFormatted()
-        );
+        if (!quietPlace.isAutoadded()) {
+            HistoryEvent.logEvent(
+                    getMyActivity(),
+                    HistoryEvent.TYPE_PLACE_ADD,
+                    quietPlace.getHistoryEventFormatted()
+            );
+        }
 
         addQuietPlaceMapMarker(quietPlace);
     }

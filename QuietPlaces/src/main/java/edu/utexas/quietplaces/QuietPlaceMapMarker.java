@@ -100,6 +100,7 @@ public class QuietPlaceMapMarker {
     public void delete() {
         String logMsg = getQuietPlace().getHistoryEventFormatted();
         // getQpMapFragment().shortToast("Marker deleted: " + logMsg);
+        boolean wasAutoAdded = getQuietPlace().isAutoadded();
 
         // delete the geofence here
         removeGeofence();
@@ -110,11 +111,13 @@ public class QuietPlaceMapMarker {
 
         database_delete();
 
-        HistoryEvent.logEvent(
-                getQpMapFragment().getMyActivity(),
-                HistoryEvent.TYPE_PLACE_REMOVE,
-                logMsg
-        );
+        if (!wasAutoAdded) {
+            HistoryEvent.logEvent(
+                    getQpMapFragment().getMyActivity(),
+                    HistoryEvent.TYPE_PLACE_REMOVE,
+                    logMsg
+            );
+        }
 
     }
 

@@ -45,18 +45,18 @@ if mock locations is enabled in the device's developer options menu.
 ## Future Features / TODO List  ##
 
 * Use better looking map marker drawables, especially for auto-places
-* Implement place category preferences (currently hardcoded)
 * Generate more interesting names for manually added places
 * Ability to resize quiet places with scale gestures
   * Not critical because we have buttons to resize the selected place.
 * Better placement of auto-QPs. E.g. don't center the circle on the street corner
-* Better sizing of auto-QPs
+* Better sizing of auto-QPs, at least some basic heuristics
 * We're not doing anything with the 'places details' service, can probably remove.
 * Allow a Quiet Place to be temporarily disabled w/o deleting it.
 * Put a confirmation dialog on delete place, and clear history?
 
 ## Known Bugs ##
 
+* Not searching the updated location when app in background?!
 * Current selection (of a Quiet Place) is lost when changing device orientation
 * If you are currently inside a geofence, and then move the fence away from you,
   it doesn't register as leaving the fence since it got removed and then

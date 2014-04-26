@@ -64,7 +64,11 @@ public class Config {
             ".ACTION_PLACES_UPDATED";
 
 
-    // Default search criteria...
+    // see also: https://developers.google.com/places/documentation/supported_types
+
+    // Default search criteria.
+    // This is only used if we somehow access the pref SP_KEY_API_PLACE_TYPES
+    // before we set it.
     public static final Set<String> PLACE_TYPE_DEFAULTS = new HashSet<String>(Arrays.asList(
             "church",
             "art_gallery",
@@ -77,8 +81,8 @@ public class Config {
             "movie_theater",
             "museum",
             "place_of_worship"
-            // "school"
             ));
+
 
     /**
      * Maps geofence transition types to their human-readable equivalents.

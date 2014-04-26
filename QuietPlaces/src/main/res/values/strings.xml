@@ -65,17 +65,6 @@
         GNU General Public License (GPL) 2.0&lt;/A>
     </string>
 
-    <string name="pref_category_device_title">Device Settings</string>
-    <string name="pref_category_map_title">Map Settings</string>
-    <string name="pref_use_location">Allow Location Updates</string>
-    <string name="pref_use_location_summary">If this is checked the app will periodically refresh your location to check for nearby quiet places.</string>
-
-    <string name="pref_use_vibrate">Vibrate</string>
-    <string name="pref_use_vibrate_summary">When checked the device will be set to vibrate instead of silent.</string>
-
-    <string name="pref_map_type">Map Type</string>
-    <string name="pref_map_type_summary">Select the type of map to be displayed.</string>
-    <string name="pref_map_type_default">MAP_TYPE_NORMAL</string>
 
     <string name="settings_activity_name">Settings</string>
     <string name="add_quiet_place_button">Add</string>
@@ -189,4 +178,41 @@
     <string name="edit_placename_dialog_title">Quiet Place (%1$d)</string>
     <string name="edit_placename_dialog_msg">What is the name of this Quiet Place?</string>
     <string name="follow_user_checkbox">Follow</string>
+
+    <!-- PREFERENCES / SETTINGS -->
+    <string name="pref_category_device_title">Device Settings</string>
+    <string name="pref_category_map_title">Map Settings</string>
+    <string name="pref_use_location">Allow Location Updates</string>
+    <string name="pref_use_location_summary">If this is checked the app will periodically refresh your location to check for nearby quiet places.</string>
+
+    <string name="pref_use_vibrate">Vibrate</string>
+    <string name="pref_use_vibrate_summary">When checked the device will be set to vibrate instead of silent.</string>
+
+    <string name="pref_map_type">Map Type</string>
+    <string name="pref_map_type_summary">Select the type of map to be displayed.</string>
+    <string name="pref_map_type_default">MAP_TYPE_NORMAL</string>
+
+    <string name="pref_category_dining_entertainment"><![CDATA[Dining & Entertainment]]></string>
+    <string name="pref_cat_movie_theater">Movie Theaters</string>
+    <string name="pref_cat_restaurant">Restaurants</string>
+    <string name="pref_cat_art"><![CDATA[Museums & Art Galleries]]></string>
+    <string name="pref_cat_cafe">Cafés</string>
+    <string name="pref_cat_gym">Gyms</string>
+    <string name="pref_cat_funeral"><![CDATA[Funeral Homes & Cemeteries]]></string>
+    <string name="pref_cat_places_of_worship">Places of Worship</string>
+    <string name="pref_cat_places_of_worship_summary">Churches, Mosques, Synagogues, and Hindu Temples.</string>
+    <string name="pref_category_religious"><![CDATA[Religious & Funeral]]></string>
+    <string name="pref_cat_hospital">Hospitals</string>
+    <string name="pref_category_health"><![CDATA[Medical & Health]]></string>
+    <string name="pref_cat_doctor"><![CDATA[Doctor & Dentist Offices]]></string>
+    <string name="pref_cat_pharmacy"><![CDATA[Pharmacy, Veterinary & Wellness]]></string>
+    <string name="pref_category_school"><![CDATA[Schools & Libraries]]></string>
+    <string name="pref_cat_school">Schools</string>
+    <string name="pref_cat_university">Universities</string>
+    <string name="pref_cat_library">Libraries</string>
+    <string name="pref_category_government">Government</string>
+    <string name="pref_cat_courthouse">Courthouses</string>
+    <string name="pref_cat_police"><![CDATA[Police & Fire]]></string>
+    <string name="pref_cat_govt_office">Government Offices</string>
+    <string name="pref_cat_govt_office_summary">City hall, post offices, and other government offices.</string>
 </resources>
