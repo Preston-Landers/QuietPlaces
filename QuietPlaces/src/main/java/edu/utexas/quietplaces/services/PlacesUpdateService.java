@@ -24,6 +24,7 @@ import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.BatteryManager;
 import android.os.Bundle;
+import android.os.SystemClock;
 import android.preference.PreferenceManager;
 import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
@@ -170,7 +171,7 @@ public class PlacesUpdateService extends IntentService {
                 // fails we are left high and dry
                 removeOldLocations(location, radius);
                 // Hit the server for new venues for the current location.
-                refreshPlaces(location, radius);
+                refreshPlaces(location, radius, null);
 
                 // Tell the main activity about the new results.
                 Intent placesUpdatedIntent = new Intent(Config.ACTION_PLACES_UPDATED);
@@ -196,7 +197,7 @@ public class PlacesUpdateService extends IntentService {
      * @param location Location
      * @param radius   Radius
      */
-    protected void refreshPlaces(Location location, int radius) {
+    protected void refreshPlaces(Location location, int radius, String page_token) {
         if (location == null) {
             Log.e(TAG, "Null location in refreshPlaces");
             return;
@@ -220,12 +221,20 @@ public class PlacesUpdateService extends IntentService {
             String locationStr = location.getLatitude() + "," + location.getLongitude();
             String baseURI = PlacesConstants.PLACES_LIST_BASE_URI;
 
-            String placesFeed = baseURI +
-                    "&types=" + placeTypes +
-                    "&location=" + locationStr +
-                    "&radius=" + radius +
-                    PlacesConstants.getPlacesAPIKey(this, true);
-
+            String placesFeed;
+            if (page_token != null && page_token.length() > 0) {
+                // Other params are actually ignored here.
+                placesFeed = baseURI +
+                        PlacesConstants.getPlacesAPIKey(this, true) +
+                        "&pagetoken=" + page_token;
+                        ;
+            } else {
+                placesFeed = baseURI +
+                        "&types=" + placeTypes +
+                        "&location=" + locationStr +
+                        "&radius=" + radius +
+                        PlacesConstants.getPlacesAPIKey(this, true);
+            }
             url = new URL(placesFeed);
 
             Log.w(TAG, "HTTP request: " + url);
@@ -240,20 +249,21 @@ public class PlacesUpdateService extends IntentService {
                 // TODO Replace the XML parsing to extract your own place list.
                 InputStream in = httpConnection.getInputStream();
 
-//                in.mark(Integer.MAX_VALUE);
-//                Log.w("HTTP", PlacesConstants.readFully(in, "UTF-8"));
-//                in.reset();
-
                 XmlPullParserFactory factory = XmlPullParserFactory.newInstance();
                 factory.setNamespaceAware(true);
                 XmlPullParser xpp = factory.newPullParser();
 
                 int placesAddedThisRequest = 0;
 
+                String next_page_token = "";
+
                 xpp.setInput(in, null);
                 int eventType = xpp.getEventType();
                 while (eventType != XmlPullParser.END_DOCUMENT) {
-                    if (eventType == XmlPullParser.START_TAG && xpp.getName().equals("result")) {
+                    if (eventType == XmlPullParser.START_TAG && xpp.getName().equals("next_page_token")) {
+                        next_page_token = xpp.nextText();
+                    }
+                    else if (eventType == XmlPullParser.START_TAG && xpp.getName().equals("result")) {
                         eventType = xpp.next();
                         String id = "";
                         String name = "";
@@ -264,7 +274,6 @@ public class PlacesUpdateService extends IntentService {
                         String viewport = "";
                         String icon = "";
                         String reference = "";
-                        String next_page_token = "";
                         while (!(eventType == XmlPullParser.END_TAG && xpp.getName().equals("result"))) {
                             if (eventType == XmlPullParser.START_TAG && xpp.getName().equals("name"))
                                 name = xpp.nextText();
@@ -286,6 +295,8 @@ public class PlacesUpdateService extends IntentService {
                                 next_page_token = xpp.nextText();
                             eventType = xpp.next();
                         }
+
+
                         Location placeLocation = new Location(PlacesConstants.CONSTRUCTED_LOCATION_PROVIDER);
                         placeLocation.setLatitude(Double.valueOf(locationLat));
                         placeLocation.setLongitude(Double.valueOf(locationLng));
@@ -312,6 +323,15 @@ public class PlacesUpdateService extends IntentService {
 
                 if (placesAddedThisRequest > 0) {
                     Log.i(TAG, "Found " + placesAddedThisRequest + " places this request.");
+
+                    if (!next_page_token.equals("")) {
+                        // TODO: we should check for INVALID_RESULT and retry after a shorter wait
+                        // Currently, if this wait is too long, we waste time, but if it's too short, we don't get the next page.
+                        Log.d(TAG, "Sleeping before fetching next page. Sleep interval (ms): " + PlacesConstants.PLACES_NEXT_PAGE_INTERVAL_MS);
+                        SystemClock.sleep(PlacesConstants.PLACES_NEXT_PAGE_INTERVAL_MS);
+                        Log.i(TAG, "Fetching next page of places results.");
+                        refreshPlaces(location, radius, next_page_token);
+                    }
                 } else {
                     Log.w(TAG, "Found 0 places this request.");
                 }

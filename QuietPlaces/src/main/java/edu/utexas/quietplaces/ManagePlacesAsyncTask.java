@@ -34,11 +34,12 @@ public class ManagePlacesAsyncTask extends AsyncTask<Void, Void, Void> {
     @Override
     protected java.lang.Void doInBackground(Void... params) {
         Log.d(TAG, "doInBackground");
+        matchedPlaces = new ArrayList<PlacesContentProvider.Place>();
+
         if (mainActivity == null) {
             Log.e(TAG, "mainActivity is null in doInBackground, can't update places.");
             return null;
         }
-
 
         String sortOrder = null;
 
@@ -53,7 +54,6 @@ public class ManagePlacesAsyncTask extends AsyncTask<Void, Void, Void> {
             return null;
         }
 
-        matchedPlaces = new ArrayList<PlacesContentProvider.Place>();
         for (PlacesContentProvider.Place place : placeList) {
             // Log.i(TAG, "Looking at place: " + place);
             if (placeMatchesCriteria(place)) {

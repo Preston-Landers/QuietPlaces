@@ -15,7 +15,7 @@ public class PlacesConstants {
     public static int DEFAULT_RADIUS = 300; // 150;
 
     // The maximum distance (meters) the user should travel between Places updates.
-    public static int MAX_DISTANCE = 50;
+    public static int MAX_DISTANCE = 75;
 
     // The maximum time that should pass before the user gets a location update.
     public static long MAX_TIME = AlarmManager.INTERVAL_FIFTEEN_MINUTES;
@@ -37,6 +37,11 @@ public class PlacesConstants {
     // The maximum number of locations to prefetch for each update.
     public static int PREFETCH_LIMIT = 5;
 
+    // Places API returns up to 60 results per query, but split across 3 requests
+    // The next page doesn't become available immediately, so we wait this amount of
+    // time before trying.
+    // TODO: make the code wait a shorter time, but handle the INVALID_REQUEST by retrying it
+    public static final long PLACES_NEXT_PAGE_INTERVAL_MS = 1500;
 
     /**
      * These values are constants used for intents, extras, and shared preferences.

@@ -190,7 +190,7 @@ public class QuietPlaceMapMarker {
 
     public void setScaleFactor(double scaleFactor) {
         this.scaleFactor = scaleFactor;
-        Log.w(TAG, "setting scale factor to: " + scaleFactor + " qp: " + getQuietPlace());
+        Log.v(TAG, "setting scale factor to: " + scaleFactor + " qp: " + getQuietPlace());
     }
 
     public boolean isSelected() {

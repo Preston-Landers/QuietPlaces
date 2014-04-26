@@ -33,14 +33,15 @@ Dr. Christine Julien
 
 See the section below for building the app from source code.
 
-The app has basic functionality with user-defined quiet places (geofences). Automatic
-suggestions of places based on the Places API is not implemented yet.
+The app is largely functional. It handles manual placement and adjustment of Quiet Places,
+as well as automatic place suggestion from the Google Places API.  The automatic placement
+and sizing could use some refinement.
+
+The app has a built-in help screen in the navigation drawer. Please see that for basic usage information.
 
 We also have a mock location testing companion app, which is available here:
-[QuietPlacesMockLocations]
+[QuietPlacesMockLocations]. See below for more information about testing.
 
-The Mock Location app will feed a series of fake location events to the location service,
-if mock locations is enabled in the device's developer options menu.
 
 ## Future Features / TODO List  ##
 
@@ -56,7 +57,6 @@ if mock locations is enabled in the device's developer options menu.
 
 ## Known Bugs ##
 
-* Current selection (of a Quiet Place) is lost when changing device orientation
 * If you are currently inside a geofence, and then move the fence away from you with a drag,
   it doesn't register as leaving the fence since it got removed and then
   readded in the other spot.
@@ -66,6 +66,7 @@ if mock locations is enabled in the device's developer options menu.
 * Handle more than 20 Places API results by requesting the next page
   * http://stackoverflow.com/a/9627664/858289
 * Ringer switch on home screen can get out of sync with actual ringer status.
+* Current selection (of a Quiet Place) is lost when changing device orientation
 
 ## Data Model ##
 
