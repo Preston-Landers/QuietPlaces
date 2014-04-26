@@ -98,7 +98,7 @@ public class QuietPlaceMapMarker {
 
     public void delete() {
         String logMsg = getQuietPlace().getHistoryEventFormatted();
-        getQpMapFragment().shortToast("Marker deleted: " + logMsg);
+        // getQpMapFragment().shortToast("Marker deleted: " + logMsg);
 
         // delete the geofence here
         removeGeofence();
@@ -126,10 +126,15 @@ public class QuietPlaceMapMarker {
         circleOptions.strokeColor(Config.QP_CIRCLE_STROKE_COLOR);
         circleOptions.strokeWidth(Config.QP_CIRCLE_STROKE_WIDTH);
         if (!isSelected()) {
-            circleOptions.fillColor(Config.QP_CIRCLE_FILL_COLOR);
+            if (quietPlace.isAutoadded()) {
+                circleOptions.strokeColor(Config.QP_AUTO_CIRCLE_STROKE_COLOR);
+                circleOptions.fillColor(Config.QP_AUTO_CIRCLE_FILL_COLOR);
+            } else {
+                circleOptions.fillColor(Config.QP_CIRCLE_FILL_COLOR);
+            }
         } else {
             circleOptions.fillColor(Config.QP_CIRCLE_SELECTED_FILL_COLOR);
-
+            circleOptions.strokeColor(Config.QP_CIRCLE_SELECTED_STROKE_COLOR);
         }
 
         return getQpMapFragment().getMap().addCircle(circleOptions);

@@ -262,6 +262,7 @@ public class PlacesUpdateService extends IntentService {
                         String viewport = "";
                         String icon = "";
                         String reference = "";
+                        String next_page_token = "";
                         while (!(eventType == XmlPullParser.END_TAG && xpp.getName().equals("result"))) {
                             if (eventType == XmlPullParser.START_TAG && xpp.getName().equals("name"))
                                 name = xpp.nextText();
@@ -279,6 +280,8 @@ public class PlacesUpdateService extends IntentService {
                                 reference = xpp.nextText();
                             else if (eventType == XmlPullParser.START_TAG && xpp.getName().equals("id"))
                                 id = xpp.nextText();
+                            else if (eventType == XmlPullParser.START_TAG && xpp.getName().equals("next_page_token"))
+                                next_page_token = xpp.nextText();
                             eventType = xpp.next();
                         }
                         Location placeLocation = new Location(PlacesConstants.CONSTRUCTED_LOCATION_PROVIDER);
@@ -293,6 +296,10 @@ public class PlacesUpdateService extends IntentService {
                                         " types: " + types +
                                         " ref: " + reference
                         );
+
+                        if (!next_page_token.equals("")) {
+                            Log.e(TAG, "WARNING: unhandled next_page_token from Places search " + next_page_token );
+                        }
 
                         // Add each new place to the Places Content Provider
                         addPlace(location, id, name, vicinity, types, placeLocation, viewport, icon, reference, currentTime);

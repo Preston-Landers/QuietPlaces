@@ -77,7 +77,7 @@ public class PlaceDetailsUpdateService extends IntentService {
     protected void onHandleIntent(Intent intent) {
         // Check if we're running in the foreground, if not, check if
         // we have permission to do background updates.
-        boolean backgroundAllowed = cm.getBackgroundDataSetting();
+        @SuppressWarnings("deprecation") boolean backgroundAllowed = cm.getBackgroundDataSetting();
         boolean inBackground = prefs.getBoolean(PlacesConstants.EXTRA_KEY_IN_BACKGROUND, true);
 
         if (!backgroundAllowed && inBackground) return;
@@ -95,15 +95,18 @@ public class PlaceDetailsUpdateService extends IntentService {
         if (!doUpdate) {
             Uri uri = Uri.withAppendedPath(PlaceDetailsContentProvider.CONTENT_URI, id);
             Cursor cursor = contentResolver.query(uri, projection, null, null, null);
-
-            try {
-                doUpdate = true;
-                if (cursor.moveToFirst()) {
-                    if (cursor.getLong(cursor.getColumnIndex(PlaceDetailsContentProvider.KEY_LAST_UPDATE_TIME)) > System.currentTimeMillis() - PlacesConstants.MAX_DETAILS_UPDATE_LATENCY)
-                        doUpdate = false;
+            if (cursor != null) {
+                try {
+                    doUpdate = true;
+                    if (cursor.moveToFirst()) {
+                        if (cursor.getLong(cursor.getColumnIndex(PlaceDetailsContentProvider.KEY_LAST_UPDATE_TIME)) > System.currentTimeMillis() - PlacesConstants.MAX_DETAILS_UPDATE_LATENCY)
+                            doUpdate = false;
+                    }
+                } finally {
+                    cursor.close();
                 }
-            } finally {
-                cursor.close();
+            } else {
+                Log.e(TAG, "Null cursor in PlacesDetailsUpdateService onHandleIntent");
             }
         }
 
@@ -115,7 +118,6 @@ public class PlaceDetailsUpdateService extends IntentService {
 
     /**
      * Request details for this place from the underlying web Service.
-     * TODO Replace the URL and XML parsing with whatever is necessary for your service.
      *
      * @param reference  Reference
      * @param forceCache Force Cache
@@ -123,7 +125,6 @@ public class PlaceDetailsUpdateService extends IntentService {
     protected void refreshPlaceDetails(String reference, boolean forceCache) {
         URL url;
         try {
-            // TODO Replace with your web service URL schema.
             String placesFeed = PlacesConstants.PLACES_DETAIL_BASE_URI + reference + PlacesConstants.getPlacesAPIKey(this, true);
 
             // Make the web query.

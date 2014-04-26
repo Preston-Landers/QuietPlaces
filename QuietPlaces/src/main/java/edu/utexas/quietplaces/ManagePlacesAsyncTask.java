@@ -3,13 +3,18 @@ package edu.utexas.quietplaces;
 import android.os.AsyncTask;
 import android.util.Log;
 import edu.utexas.quietplaces.content_providers.PlacesContentProvider;
+import edu.utexas.quietplaces.fragments.QPMapFragment;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
 /**
- * A periodically executing task that scans the current nearby Google Places
- * and converts them into QuietPlaces as necessary
+ * This task is launched from MainActivity when it gets the broadcast message
+ * that our Google Places database has updated.
+ *
+ * This is where we convert these discovered places into QuietPlaces and update
+ * geofences.
  */
 public class ManagePlacesAsyncTask extends AsyncTask<Void, Void, Void> {
 
@@ -18,6 +23,8 @@ public class ManagePlacesAsyncTask extends AsyncTask<Void, Void, Void> {
     private MainActivity mainActivity;
 
     private Set<String> tempPlacesSet;
+
+    private List<PlacesContentProvider.Place> matchedPlaces;
 
     ManagePlacesAsyncTask(MainActivity activity) {
         mainActivity = activity;
@@ -46,10 +53,12 @@ public class ManagePlacesAsyncTask extends AsyncTask<Void, Void, Void> {
             return null;
         }
 
+        matchedPlaces = new ArrayList<PlacesContentProvider.Place>();
         for (PlacesContentProvider.Place place : placeList) {
             // Log.i(TAG, "Looking at place: " + place);
             if (placeMatchesCriteria(place)) {
                 Log.w(TAG, "Found a place matching our criteria: " + place);
+                matchedPlaces.add(place);
             }
         }
 
@@ -59,6 +68,25 @@ public class ManagePlacesAsyncTask extends AsyncTask<Void, Void, Void> {
     @Override
     protected void onPostExecute(Void result) {
         Log.d(TAG, "onPostExecute");
+
+        // NOTE: I'm not sure whether want to call loadAutomaticQuietPlaces even
+        // if our list has 0 entries, because the user might have
+        // moved to a new location and we need to get rid of the
+        // the old entries. Yet maybe there's no harm in letting them stick
+        // around until we actually do get something substantial to update.
+        if (matchedPlaces.size() == 0) {
+            Log.w(TAG, "No nearby places matched our search criteria.");
+            return;
+        }
+
+        // Delete all of the automatically added places
+        QPMapFragment qpMapFragment = mainActivity.getMapFragment();
+        if (qpMapFragment == null) {
+            Log.e(TAG, "MainActivity.getMapFragment returned null.");
+            return;
+        }
+
+        qpMapFragment.loadAutomaticQuietPlaces(matchedPlaces);
     }
 
     private boolean placeMatchesCriteria(PlacesContentProvider.Place place) {

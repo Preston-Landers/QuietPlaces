@@ -36,6 +36,9 @@ public class QuietPlacesContentProvider extends ContentProvider {
     public static final String KEY_RADIUS = "radius";
     public static final String KEY_DATETIME = "datetime";  // date/time added
     public static final String KEY_CATEGORY = "category";  // places API category, comma separated?
+    public static final String KEY_AUTOADDED = "autoadded";  // was this an automatically added place? (may be auto-removed.)
+    public static final String KEY_GPLACE_ID = "gplace_id";  // Google Places API ID
+    public static final String KEY_GPLACE_REF = "gplace_ref";  // Google Places API 'reference' (details key)
 
     private static String[] ALL_KEYS = {
             KEY_ID,
@@ -44,7 +47,10 @@ public class QuietPlacesContentProvider extends ContentProvider {
             KEY_LONGITUDE,
             KEY_RADIUS,
             KEY_DATETIME,
-            KEY_CATEGORY
+            KEY_CATEGORY,
+            KEY_AUTOADDED,
+            KEY_GPLACE_ID,
+            KEY_GPLACE_REF
     };
 
     // used for the UriMatcher
@@ -91,6 +97,9 @@ public class QuietPlacesContentProvider extends ContentProvider {
         values.put(KEY_RADIUS, quietPlace.getRadius());
         values.put(KEY_DATETIME, quietPlace.getDatetimeString());
         values.put(KEY_CATEGORY, quietPlace.getCategory());
+        values.put(KEY_AUTOADDED, quietPlace.isAutoadded());
+        values.put(KEY_GPLACE_ID, quietPlace.getGplace_id());
+        values.put(KEY_GPLACE_REF, quietPlace.getGplace_ref());
 
         ContentResolver resolver = context.getContentResolver();
 
@@ -176,6 +185,7 @@ public class QuietPlacesContentProvider extends ContentProvider {
 
     /**
      * Instantiate a QuietPlace object from a cursor.
+     * TODO: probably need some exception handling here
      * @param cursor database cursor
      * @return new QuietPlace instance from the data
      */
@@ -186,9 +196,11 @@ public class QuietPlacesContentProvider extends ContentProvider {
         place.setLatitude(cursor.getDouble(2));
         place.setLongitude(cursor.getDouble(3));
         place.setRadius(cursor.getDouble(4));
-        // TODO: probably need some exception handling here
         place.setDatetimeString(cursor.getString(5));
         place.setCategory(cursor.getString(6));
+        place.setAutoadded(cursor.getInt(7) > 0);
+        place.setGplace_id(cursor.getString(8));
+        place.setGplace_ref(cursor.getString(9));
         return place;
     }
 
@@ -201,7 +213,7 @@ public class QuietPlacesContentProvider extends ContentProvider {
             database = dbHelper.getWritableDatabase();
         } catch (SQLiteException e) {
             database = null;
-            Log.d(TAG, "Database Opening exception");
+            Log.e(TAG, "Database Opening exception", e);
         }
 
         return (database != null);
@@ -373,19 +385,27 @@ public class QuietPlacesContentProvider extends ContentProvider {
     private class QuietPlacesDatabaseHelper extends SQLiteOpenHelper {
 
         private static final String DATABASE_NAME = "places.db";
-        private static final int DATABASE_VERSION = 1;
+        private static final int DATABASE_VERSION = 3;
 
         // Database creation sql statement
         private static final String DATABASE_CREATE = "create table "
                 + TABLE_PLACES + "(" +
-                KEY_ID + " integer primary key autoincrement, " +
+                KEY_ID + " integer primary key, " +
                 KEY_COMMENT + " text not null, " +
                 KEY_LATITUDE + " real not null, " +
                 KEY_LONGITUDE + " real not null, " +
                 KEY_RADIUS + " real not null, " +
                 KEY_DATETIME + " text not null, " +
-                KEY_CATEGORY + " text not null " +
+                KEY_CATEGORY + " text not null, " +
+                KEY_AUTOADDED + " integer not null default 0, " +
+                KEY_GPLACE_ID + " text, " +
+                KEY_GPLACE_REF + " text " +
                 ");";
+
+        private static final String UPGRADE_V2_SQL_1 = "ALTER TABLE " + TABLE_PLACES + " ADD COLUMN " + KEY_AUTOADDED + " integer not null default 0 ";
+        private static final String UPGRADE_V2_SQL_2 = "ALTER TABLE " + TABLE_PLACES + " ADD COLUMN " + KEY_GPLACE_ID + " text ";
+        private static final String UPGRADE_V2_SQL_3 = "ALTER TABLE " + TABLE_PLACES + " ADD COLUMN " + KEY_GPLACE_REF + " text ";
+
 
         public QuietPlacesDatabaseHelper(Context context) {
             super(context, DATABASE_NAME, null, DATABASE_VERSION);
@@ -398,11 +418,32 @@ public class QuietPlacesContentProvider extends ContentProvider {
 
         @Override
         public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
-            Log.w(TAG,
-                    "Upgrading database from version " + oldVersion + " to "
-                            + newVersion + ", which will destroy all old data");
-            db.execSQL("DROP TABLE IF EXISTS " + TABLE_PLACES);
-            onCreate(db);
+
+            int upgradeTo = oldVersion + 1;
+            while (upgradeTo <= newVersion)
+            {
+                switch (upgradeTo)
+                {
+                    case 2:
+                        Log.w(TAG, "Upgrading " + TABLE_PLACES + " database to version " + upgradeTo);
+                        db.execSQL(UPGRADE_V2_SQL_1);
+                        db.execSQL(UPGRADE_V2_SQL_2);
+                        db.execSQL(UPGRADE_V2_SQL_3);
+                        break;
+                    case 3:
+                        Log.w(TAG, "Upgrading " + TABLE_PLACES + " database to version " + upgradeTo);
+
+                        // Rebuild the table w/o the autoincrement specification, which is unnecessary overhead
+                        // http://sqlite.org/autoinc.html
+                        db.execSQL("ALTER TABLE " + TABLE_PLACES + " RENAME TO TEMP_PLACES ");
+                        db.execSQL(DATABASE_CREATE);
+                        db.execSQL("INSERT INTO " + TABLE_PLACES + " SELECT * FROM TEMP_PLACES");
+                        db.execSQL("DROP TABLE TEMP_PLACES");
+                        break;
+                    // insert new versions here...
+                }
+                upgradeTo++;
+            }
         }
 
     }

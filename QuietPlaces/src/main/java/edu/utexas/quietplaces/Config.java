@@ -15,32 +15,36 @@ public class Config {
     public static final String APP_NAME = "QuietPlaces";
     public static final String PACKAGE_NAME = "edu.utexas.quietplaces";
 
-    // These location updates are basically just for tracking the camera
-    //
+    // These location updates constants are used for:
+    //   a) following the user with the map camera
+    //   b) querying the Google Places API for nearby places
 
     // http://developer.android.com/training/location/receive-location-updates.html
-    //
-    // Basically, we normally only ask for location updates every 90 seconds,
-    // but we'll accept updates as often as every 10 seconds, if other apps
-    // are requesting more frequent updates.
-    // TODO: Clean this up - this is handled by the LocationChangedReceiver
 
-    public static final long LOCATION_UPDATE_INTERVAL_MS = 90000;
-    public static final long LOCATION_FASTEST_INTERVAL_MS = 10000;
+    public static final long LOCATION_UPDATE_INTERVAL_MS = 10000;
+    public static final long LOCATION_FASTEST_INTERVAL_MS = 5000;
 
     // Only send a location update if we've moved at least this far (meters)
     public static final long LOCATION_DISTANCE_FOR_UPDATES = 5;
 
-    // How often do we check for new places around us?
-    public static final long MANAGE_PLACES_INTERVAL_MS = 20000;
+    // Minimum time between Places API queries.  The actual times
+    // may exceed this if the user hasn't moved much. See PlacesUpdateService for details
+    public static final long MANAGE_PLACES_INTERVAL_MS = 30000;
 
     // How often do we move the camera to follow the user?
-    public static final long FOLLOW_USER_INTERVAL_MS = 5000;
+    public static final long FOLLOW_USER_INTERVAL_MS = LOCATION_FASTEST_INTERVAL_MS;
 
     // Probably belongs in an XML file somewhere
     public static final int QP_CIRCLE_STROKE_COLOR = Color.argb(150, 0, 0, 255);
+    public static final int QP_AUTO_CIRCLE_STROKE_COLOR = Color.argb(150, 110, 122, 61);
+    public static final int QP_CIRCLE_SELECTED_STROKE_COLOR = Color.argb(150, 255, 0, 0);
+
     public static final int QP_CIRCLE_FILL_COLOR = Color.argb(100, 138, 241, 255);
     public static final int QP_CIRCLE_SELECTED_FILL_COLOR = Color.argb(100, 250, 35, 35);
+
+    // Color the automatically generated places a little different
+    public static final int QP_AUTO_CIRCLE_FILL_COLOR = Color.argb(100, 179, 222, 252);
+
     public static final float QP_CIRCLE_STROKE_WIDTH = 5;  // default is 10
 
     // The suggested radius of a manually added quiet place is a multiplier of the current

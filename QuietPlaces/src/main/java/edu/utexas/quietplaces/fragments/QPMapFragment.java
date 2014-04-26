@@ -25,6 +25,7 @@ import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.VisibleRegion;
 import edu.utexas.quietplaces.*;
+import edu.utexas.quietplaces.content_providers.PlacesContentProvider;
 import edu.utexas.quietplaces.content_providers.QuietPlacesContentProvider;
 import org.joda.time.DateTime;
 
@@ -59,6 +60,7 @@ public class QPMapFragment extends BaseFragment {
     private FragmentActivity mActivity;
 
     private boolean needToReenableFollow = false;
+
     /**
      * Returns a new instance of this fragment for the given section
      * number.
@@ -271,7 +273,7 @@ public class QPMapFragment extends BaseFragment {
         getMap().setOnMapClickListener(new GoogleMap.OnMapClickListener() {
             @Override
             public void onMapClick(LatLng latLng) {
-                addNewQuietPlace(latLng);
+                addNewQuietPlace(generateManualQuietPlace(latLng));
                 cancelAddButton(view);
             }
         });
@@ -309,6 +311,7 @@ public class QPMapFragment extends BaseFragment {
     public void clickDeleteButton(@SuppressWarnings("UnusedParameters") final View view) {
         Log.d(TAG, "Clicked delete button");
         deleteMarkers(getSelectedMarkers());
+        shortToast("Marker deleted");
 
         // update to non-selected mode, since we deleted selection
         setSelectionMode();
@@ -398,30 +401,66 @@ public class QPMapFragment extends BaseFragment {
     }
 
     /**
-     * Adds a new QuietPlace to the map and save it to the database.
+     * Generate a new QuietPlace object based on a manual click at a lat/lng.
      *
-     * @param latLng the lat/long coordinates of the place
+     * @param latLng position clicked
+     * @return a new QuietPlace instance
      */
-    private void addNewQuietPlace(LatLng latLng) {
-        // shortToast("Clicked at: " + latLng);
-
-        // temporary stuff
-        // TODO: we want to get this from the Places API if at all possible
-        // if not, at least generate a basic address or something?
+    private QuietPlace generateManualQuietPlace(LatLng latLng) {
         DateTime now = new DateTime();
+
+        // TODO: we want to replace this with something nicer
         final String comment = "Created at " + DateUtils.getPrettyDateTime(now);
+
+        // TODO: should be looked up from Places API
+        String category = "";
 
         // initial radius suggestion
         double radius = getSuggestedRadius();
 
-        // Create a new object and save it to the database
         QuietPlace quietPlace = new QuietPlace();
         quietPlace.setLatitude(latLng.latitude);
         quietPlace.setLongitude(latLng.longitude);
-        quietPlace.setCategory(""); // TODO
+        quietPlace.setCategory(category);
         quietPlace.setDatetime(now);
         quietPlace.setComment(comment);
         quietPlace.setRadius(radius);
+        quietPlace.setAutoadded(false);
+        quietPlace.setGplace_id(null);
+        quietPlace.setGplace_ref(null);
+        return quietPlace;
+    }
+
+    private QuietPlace generateAutomaticQuietPlace(PlacesContentProvider.Place gplace) {
+        DateTime now = new DateTime();
+
+        // TODO: correct the position, which is sometimes at the corner of the property!!
+
+        final String comment = gplace.getName();
+        String category = gplace.getTypes();
+
+        double radius = getSuggestedRadiusForPlace(gplace);
+
+        QuietPlace quietPlace = new QuietPlace();
+        quietPlace.setLatitude(gplace.getLatitude());
+        quietPlace.setLongitude(gplace.getLongitude());
+        quietPlace.setCategory(category);
+        quietPlace.setDatetime(now);
+        quietPlace.setComment(comment);
+        quietPlace.setRadius(radius);
+        quietPlace.setAutoadded(true);
+        quietPlace.setGplace_id(gplace.getId());
+        quietPlace.setGplace_ref(gplace.getReference());
+        return quietPlace;
+    }
+
+    /**
+     * Adds a new QuietPlace object to the map and save it to the database.
+     *
+     * @param quietPlace the populated QuietPlace object
+     */
+    private void addNewQuietPlace(QuietPlace quietPlace) {
+        // shortToast("Clicked at: " + latLng);
 
         Log.v(TAG, "About to add new quiet place to db: " + quietPlace);
         quietPlace = QuietPlacesContentProvider.saveQuietPlace(getMyActivity(), quietPlace);
@@ -473,6 +512,12 @@ public class QPMapFragment extends BaseFragment {
         return radius;
     }
 
+    private double getSuggestedRadiusForPlace(PlacesContentProvider.Place gplace) {
+        // initial radius suggestion for auto-suggested places
+        // TODO: do something cooler here
+        return 35;
+    }
+
     /**
      * Get the distance in meters between two gms LatLng points.
      *
@@ -491,6 +536,14 @@ public class QPMapFragment extends BaseFragment {
     }
 
     public void deleteMarkers(List<QuietPlaceMapMarker> selectedMarkers) {
+        if (selectedMarkers == null) {
+            Log.i(TAG, "null marker list in deleteMarkers");
+            return;
+        }
+        if (selectedMarkers.size() == 0) {
+            Log.i(TAG, "empty marker list in deleteMarkers");
+            return;
+        }
         for (QuietPlaceMapMarker qpmm : selectedMarkers) {
             qpmm.delete();
         }
@@ -545,24 +598,113 @@ public class QPMapFragment extends BaseFragment {
 
             @Override
             protected void onPostExecute(Void result) {
-                for (QuietPlace quietPlace : quietPlaceList) {
-                    addQuietPlaceMapMarker(quietPlace);
-                }
-
-                Log.i(TAG, "Loaded marker database.");
-
-                // Not sure we need to keep this.
-                HistoryEvent.logEvent(getMyActivity(), HistoryEvent.TYPE_DATABASE_LOADED,
-                        String.format("Loaded %s quiet places from the database.", quietPlaceList.size()));
-
-                syncGeofences();
-
-                Log.d(TAG, "Setting up map listeners.");
-                setupMapListeners();
+                deleteAutoAddedMarkers();
+                activateQuietPlaces(quietPlaceList, true);
             }
         };
         loadDatabaseTask.execute();
 
+    }
+
+    private void deleteAutoAddedMarkers() {
+        // Delete all of the auto-added markers except any that are currently selected.
+        List<QuietPlaceMapMarker> deletables = new ArrayList<QuietPlaceMapMarker>();
+        for (QuietPlaceMapMarker qpmm : getAutoAddedMarkers()) {
+            if (qpmm.isSelected()) {
+                Log.w(TAG, "Not deleting auto-QPMM because it's selected: " + qpmm);
+                continue;
+            }
+            deletables.add(qpmm);
+        }
+        deleteMarkers(deletables);
+    }
+
+
+    public void loadAutomaticQuietPlaces(List<PlacesContentProvider.Place> matchedPlaces) {
+        if (matchedPlaces == null) {
+            Log.e(TAG, "null place list in loadAutomaticQuietPlaces");
+            return;
+        }
+
+        Log.v(TAG, "loading " + matchedPlaces.size() + " matched automatic places.");
+
+        // Delete all of the previously auto-added markers. Even if we don't have any new ones.
+        // Except don't delete those which are still present in the new results.
+        // Might be a more efficient way to do this.
+
+        List<QuietPlaceMapMarker> deletables = new ArrayList<QuietPlaceMapMarker>();
+        List<QuietPlaceMapMarker> allAutoAdded = getAutoAddedMarkers();
+        for (QuietPlaceMapMarker qpmm : allAutoAdded) {
+            if (qpmm.isSelected()) {
+                Log.w(TAG, "Not deleting auto-QPMM because it's selected: " + qpmm);
+                continue;
+            }
+            QuietPlace qp = qpmm.getQuietPlace();
+            if (qp == null) {
+                Log.e(TAG, "Not deleting auto-QPMM because its QP is null: " + qpmm);
+                continue;
+            }
+            boolean inNewSet = false;
+            for (PlacesContentProvider.Place gplace : matchedPlaces) {
+                if (gplace.getId().equals(qp.getGplace_id())) {
+                    inNewSet = true;
+                    break;
+                }
+            }
+            if (!inNewSet) {
+                Log.i(TAG, "Deleting auto-add QP because it's not in our new results: " + qp);
+                deletables.add(qpmm);
+            }
+
+        }
+        if (deletables.size() > 0) {
+            Log.i(TAG, "Deleting " + deletables.size() + " auto-add QPs they are not in our new results");
+            deleteMarkers(deletables);
+        }
+
+
+        // Add all of our matched places
+        List<QuietPlace> quietPlaces = new ArrayList<QuietPlace>();
+        for (PlacesContentProvider.Place gplace : matchedPlaces) {
+            // Check if we already have a QP with the same Google Place ID.
+            QuietPlaceMapMarker existingPlace = getQPMMFromGooglePlaceId(gplace.getId());
+            if (existingPlace != null) {
+                Log.i(TAG, "Already have a Quiet Place with this matching Google Place ID: "  + gplace.getId() + " QPMM: " + existingPlace);
+                continue;
+            }
+
+            QuietPlace quietPlace = generateAutomaticQuietPlace(gplace);
+
+            Log.d(TAG, "Saving automatic QP to database: " + quietPlace);
+            quietPlace = QuietPlacesContentProvider.saveQuietPlace(getMyActivity(), quietPlace);
+            quietPlaces.add(quietPlace);
+        }
+
+        // Save/sync
+        if (quietPlaces.size() > 0)
+        {
+            activateQuietPlaces(quietPlaces, false);
+        } else {
+            Log.w(TAG, "No automatic places to load.");
+        }
+    }
+
+    private void activateQuietPlaces(List<QuietPlace> quietPlaceList, boolean logEvent) {
+        for (QuietPlace quietPlace : quietPlaceList) {
+            addQuietPlaceMapMarker(quietPlace);
+        }
+
+        Log.i(TAG, "Loaded marker database.");
+
+        if (logEvent) {
+            // Not sure we need to keep this.
+            HistoryEvent.logEvent(getMyActivity(), HistoryEvent.TYPE_DATABASE_LOADED,
+                    String.format("Loaded %s quiet places from the database.", quietPlaceList.size()));
+        }
+        syncGeofences();
+
+        Log.d(TAG, "Setting up map listeners.");
+        setupMapListeners();
     }
 
     private void addQuietPlaceMapMarker(QuietPlace quietPlace) {
@@ -580,6 +722,35 @@ public class QPMapFragment extends BaseFragment {
     public QuietPlaceMapMarker getQPMMFromGeofenceId(String geofenceId) {
         return markerByGeofenceId.get(geofenceId);
     }
+
+    /**
+     * Retrieve a QuietPlaceMapMarker by it's Google Place ID. Returns null if no QPMMs match that ID.
+     * @param gplaceId Google Place ID
+     * @return matching map marker
+     */
+    public QuietPlaceMapMarker getQPMMFromGooglePlaceId(String gplaceId) {
+        for (QuietPlaceMapMarker qpmm : mapMarkerSet) {
+            QuietPlace qp = qpmm.getQuietPlace();
+            if (qp == null) { continue; }
+            String thisPlaceId = qp.getGplace_id();
+            if (thisPlaceId == null) { continue; }
+            if (thisPlaceId.equals(gplaceId)) {
+                return qpmm;
+            }
+        }
+        return null;
+    }
+
+    public List<QuietPlaceMapMarker> getAutoAddedMarkers() {
+        List<QuietPlaceMapMarker> autoAddedMarkers = new ArrayList<QuietPlaceMapMarker>();
+        for (QuietPlaceMapMarker qpmm : mapMarkerSet) {
+            if (qpmm.getQuietPlace().isAutoadded()) {
+                autoAddedMarkers.add(qpmm);
+            }
+        }
+        return autoAddedMarkers;
+    }
+
 
     public List<QuietPlaceMapMarker> getSelectedMarkers() {
         List<QuietPlaceMapMarker> selectedMapMarkers = new ArrayList<QuietPlaceMapMarker>();
@@ -656,8 +827,13 @@ public class QPMapFragment extends BaseFragment {
 
             TextView infoLabel = (TextView) getMyActivity().findViewById(R.id.tv_selected_label);
             if (infoLabel != null) {
-                // TODO: this is temporary, we may want to revise this format.
-                String infoLabelText = quietPlace.getId() + ": " + quietPlace.getComment();
+                String infoLabelText;
+                if (quietPlace.isAutoadded()) {
+                    // TODO: indicate matching category?
+                    infoLabelText = "Auto: " + quietPlace.getComment();
+                } else {
+                    infoLabelText = quietPlace.getComment();
+                }
                 infoLabel.setText(infoLabelText);
             }
             updateInfoString(quietPlace);

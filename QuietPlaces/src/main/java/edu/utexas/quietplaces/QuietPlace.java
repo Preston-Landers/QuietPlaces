@@ -16,6 +16,9 @@ public class QuietPlace {
     private double radius;
     private DateTime datetime;
     private String category;
+    private boolean autoadded;
+    private String gplace_id;
+    private String gplace_ref;
 
     @Override
     public String toString() {
@@ -139,4 +142,27 @@ public class QuietPlace {
         );
     }
 
+    public String getGplace_id() {
+        return gplace_id;
+    }
+
+    public void setGplace_id(String gplace_id) {
+        this.gplace_id = gplace_id;
+    }
+
+    public String getGplace_ref() {
+        return gplace_ref;
+    }
+
+    public void setGplace_ref(String gplace_ref) {
+        this.gplace_ref = gplace_ref;
+    }
+
+    public boolean isAutoadded() {
+        return autoadded;
+    }
+
+    public void setAutoadded(boolean autoadded) {
+        this.autoadded = autoadded;
+    }
 }

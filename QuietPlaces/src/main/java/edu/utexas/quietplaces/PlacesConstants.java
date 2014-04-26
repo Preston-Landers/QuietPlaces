@@ -12,7 +12,7 @@ public class PlacesConstants {
     public static String PLACES_DETAIL_BASE_URI = "https://maps.googleapis.com/maps/api/place/details/xml?sensor=true&reference=";
 
     // The default search radius when searching for places nearby.
-    public static int DEFAULT_RADIUS = 300; // 150;
+    public static int DEFAULT_RADIUS = 200; // 150;
 
     // The maximum distance the user should travel between location updates.
     public static int MAX_DISTANCE = 50;
@@ -39,10 +39,8 @@ public class PlacesConstants {
 
 
     /**
-     * These values are constants used for intents, exteas, and shared preferences.
-     * You shouldn't need to modify them.
+     * These values are constants used for intents, extras, and shared preferences.
      */
-    public static String SHARED_PREFERENCE_FILE = "SHARED_PREFERENCE_FILE";
     public static String SP_KEY_LAST_LIST_UPDATE_TIME = "SP_KEY_LAST_LIST_UPDATE_TIME";
     public static String SP_KEY_LAST_LIST_UPDATE_LAT = "SP_KEY_LAST_LIST_UPDATE_LAT";
     public static String SP_KEY_LAST_LIST_UPDATE_LNG = "SP_KEY_LAST_LIST_UPDATE_LNG";
