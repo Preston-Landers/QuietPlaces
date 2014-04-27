@@ -403,6 +403,10 @@ public class MainActivity extends ActionBarActivity
     protected void onDestroy() {
         Log.d(TAG, "onDestroy");
         disableMainActivityLocationUpdates();
+        if (haveRegisteredBroadcastReceiver) {
+            LocalBroadcastManager.getInstance(this).unregisterReceiver(geofenceReceiver);
+            LocalBroadcastManager.getInstance(this).unregisterReceiver(placesUpdatedReceiver);
+        }
         super.onDestroy();
     }
 

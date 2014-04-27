@@ -1027,6 +1027,7 @@ public class QPMapFragment extends BaseFragment {
      * @param entered     true if we're entering this geofence, otherwise we're exiting
      */
     public void handleGeofenceTransitions(String[] geofenceIds, boolean entered) {
+        boolean removingGeofence = false;
         for (String geofenceId : geofenceIds) {
             if (geofenceId == null) {
                 continue;
@@ -1035,6 +1036,9 @@ public class QPMapFragment extends BaseFragment {
             if (qpmm == null) {
                 // marker was probably deleted out from under us
                 Log.e(TAG, "Can't find QuietPlaceMapMarker from geofence ID: " + geofenceId);
+                // We need to remove this geofence!\
+                queueGeofenceIdRemove(geofenceId);
+                removingGeofence = true;
                 continue;
             }
             if (entered) {
@@ -1042,6 +1046,9 @@ public class QPMapFragment extends BaseFragment {
             } else {
                 qpmm.exitGeofence();
             }
+        }
+        if (removingGeofence) {
+            syncGeofences();
         }
     }
 
