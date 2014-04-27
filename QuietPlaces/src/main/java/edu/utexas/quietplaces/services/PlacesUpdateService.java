@@ -242,8 +242,9 @@ public class PlacesUpdateService extends IntentService {
 
 
         try {
-            // TODO Replace this with a URI to your own service.
-            String locationStr = location.getLatitude() + "," + location.getLongitude();
+            // Should at most 5 decimal places for max cache usage
+            String locationStr = String.format("%.5f,%.5f", location.getLatitude(), location.getLongitude());
+
             String baseURI = PlacesConstants.PLACES_LIST_BASE_URI;
 
             String placesFeed;
@@ -268,6 +269,15 @@ public class PlacesUpdateService extends IntentService {
             URLConnection connection = url.openConnection();
             HttpsURLConnection httpConnection = (HttpsURLConnection) connection;
             int responseCode = httpConnection.getResponseCode();
+
+/*
+            if (connection.getUseCaches()) {
+                Log.v(TAG, "Using HTTPS cache");
+            }
+            else {
+                Log.v(TAG, "HTTPS cache is disabled");
+            }
+*/
 
             if (responseCode == HttpURLConnection.HTTP_OK) {
                 // Use the XML Pull Parser to extract each nearby location.

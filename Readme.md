@@ -108,6 +108,9 @@ please see the [project page for QuietPlacesMockLocations][QuietPlacesMockLocati
 
 TODO...
 
+https://developers.google.com/maps/documentation/business/articles/usage_limits
+
+
 # Building from Source #
 
 This is a Gradle based Android project which is buildable from the command line, or from
