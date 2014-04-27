@@ -1033,6 +1033,7 @@ public class QPMapFragment extends BaseFragment {
             }
             QuietPlaceMapMarker qpmm = getQPMMFromGeofenceId(geofenceId);
             if (qpmm == null) {
+                // marker was probably deleted out from under us
                 Log.e(TAG, "Can't find QuietPlaceMapMarker from geofence ID: " + geofenceId);
                 continue;
             }

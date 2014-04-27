@@ -67,6 +67,8 @@ We also have a mock location testing companion app, which is available here:
   * http://stackoverflow.com/a/9627664/858289
 * Ringer switch on home screen can get out of sync with actual ringer status.
 * Current selection (of a Quiet Place) is lost when changing device orientation
+* When you change the selected categories, the auto places don't update until
+  you move a minimum distance (100 m), or 1 hour has passed. This may not be a big deal?
 
 ## Data Model ##
 

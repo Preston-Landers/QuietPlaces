@@ -35,7 +35,7 @@ public class Config {
     public static final long FOLLOW_USER_INTERVAL_MS = LOCATION_FASTEST_INTERVAL_MS;
 
     // Distance (in meters) for an auto-added place to be considered for automatic cleanup
-    public static final double DISCARD_AUTO_PLACES_DISTANCE = 1000;
+    public static final double DISCARD_AUTO_PLACES_DISTANCE = 750;
 
 
     // Probably belongs in an XML file somewhere

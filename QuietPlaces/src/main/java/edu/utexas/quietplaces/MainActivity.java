@@ -137,7 +137,7 @@ public class MainActivity extends ActionBarActivity
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        followingUser = true;
+        setFollowingUser(true);
 
         locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
 
@@ -357,19 +357,6 @@ public class MainActivity extends ActionBarActivity
 
         Log.d(TAG, "onStart");
 
-        getSettingsFragment().updateMasterPlaceTypes();
-
-        mLocationClient.connect();
-
-        startFollowUser();
-
-    }
-
-    @Override
-    protected void onResume() {
-        super.onResume();
-        Log.d(TAG, "onResume");
-
         if (!checkGooglePlayServicesAvailable()) {
             Log.e(TAG, "Can't find Google Play Services needed for maps and location.");
             longToast("Can't get Google Play Services. :-(");
@@ -377,15 +364,6 @@ public class MainActivity extends ActionBarActivity
         }
 
         setupMapIfNeeded();
-        mUpdatesRequested = getPrefUsingLocation();
-
-        haveSetZoomLevel = false;  // reset suggested zoom in follow mode
-
-
-        // Commit shared preference that says we're in the foreground.
-        prefsEditor.putBoolean(PlacesConstants.EXTRA_KEY_IN_BACKGROUND, false);
-        sharedPreferenceSaver.savePreferences(prefsEditor, false);
-
 
         if (!haveRegisteredBroadcastReceiver) {
             // Register a broadcast receiver to get geofence status updates
@@ -396,6 +374,28 @@ public class MainActivity extends ActionBarActivity
 
             haveRegisteredBroadcastReceiver = true;
         }
+
+
+        getSettingsFragment().updateMasterPlaceTypes();
+        mLocationClient.connect();
+        startFollowUser();
+
+
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        Log.d(TAG, "onResume");
+
+        mUpdatesRequested = getPrefUsingLocation();
+
+        haveSetZoomLevel = false;  // reset suggested zoom in follow mode
+
+        // Commit shared preference that says we're in the foreground.
+        prefsEditor.putBoolean(PlacesConstants.EXTRA_KEY_IN_BACKGROUND, false);
+        sharedPreferenceSaver.savePreferences(prefsEditor, false);
+
 
     }
 
@@ -413,7 +413,7 @@ public class MainActivity extends ActionBarActivity
         prefsEditor.putBoolean(PlacesConstants.EXTRA_KEY_IN_BACKGROUND, true);
         sharedPreferenceSaver.savePreferences(prefsEditor, false);
 
-        setFollowingUser(false);
+        // setFollowingUser(false);
 
 
         // disable the location updates for the MainActivity, which
@@ -1094,7 +1094,7 @@ public class MainActivity extends ActionBarActivity
 
                         Location lastLocation = getLastKnownLocation();
                         if (lastLocation != null) {
-                            updatePlaces(lastLocation, PlacesConstants.DEFAULT_RADIUS, false);
+                            updatePlaces(lastLocation, PlacesConstants.PLACES_SEARCH_RADIUS, false);
                         } else {
                             Log.w(TAG, "null location in waitThenManagePlaces");
                         }
@@ -1104,7 +1104,7 @@ public class MainActivity extends ActionBarActivity
             }
         };
         timer.schedule(task,
-                Config.MANAGE_PLACES_INTERVAL_MS,   // delay before first run   // 0,
+                Config.MANAGE_PLACES_INTERVAL_MS / 2,   // delay before first run
                 Config.MANAGE_PLACES_INTERVAL_MS);  // delay to subsequent run
     }
 
@@ -1245,6 +1245,7 @@ public class MainActivity extends ActionBarActivity
         switch (view.getId()) {
             case R.id.follow_user_checkBox:
                 setFollowingUser(checked);
+                haveSetZoomLevel = false;
                 break;
         }
 

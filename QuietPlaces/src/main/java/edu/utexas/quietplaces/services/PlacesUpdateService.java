@@ -32,6 +32,8 @@ import edu.utexas.quietplaces.Config;
 import edu.utexas.quietplaces.PlacesConstants;
 import edu.utexas.quietplaces.content_providers.PlaceDetailsContentProvider;
 import edu.utexas.quietplaces.content_providers.PlacesContentProvider;
+import edu.utexas.quietplaces.utils.PlatformSpecificImplementationFactory;
+import edu.utexas.quietplaces.utils.base.SharedPreferenceSaver;
 import org.xmlpull.v1.XmlPullParser;
 import org.xmlpull.v1.XmlPullParserException;
 import org.xmlpull.v1.XmlPullParserFactory;
@@ -53,6 +55,7 @@ public class PlacesUpdateService extends IntentService {
 
     protected ContentResolver contentResolver;
     protected SharedPreferences prefs;
+    private SharedPreferenceSaver sharedPreferenceSaver;
     protected Editor prefsEditor;
     protected ConnectivityManager cm;
     protected boolean lowBattery = false;
@@ -90,6 +93,8 @@ public class PlacesUpdateService extends IntentService {
         contentResolver = getContentResolver();
         prefs = PreferenceManager.getDefaultSharedPreferences(this);
         prefsEditor = prefs.edit();
+        sharedPreferenceSaver = PlatformSpecificImplementationFactory.getSharedPreferenceSaver(this);
+
     }
 
     /**
@@ -102,6 +107,7 @@ public class PlacesUpdateService extends IntentService {
     protected void onHandleIntent(Intent intent) {
         // Check if we're running in the foreground, if not, check if
         // we have permission to do background updates.
+        //noinspection deprecation
         boolean backgroundAllowed = cm.getBackgroundDataSetting();
         boolean inBackground = prefs.getBoolean(PlacesConstants.EXTRA_KEY_IN_BACKGROUND, true);
 
@@ -109,12 +115,12 @@ public class PlacesUpdateService extends IntentService {
 
         // Extract the location and radius around which to conduct our search.
         Location location = new Location(PlacesConstants.CONSTRUCTED_LOCATION_PROVIDER);
-        int radius = PlacesConstants.DEFAULT_RADIUS;
+        int radius = PlacesConstants.PLACES_SEARCH_RADIUS;
 
         Bundle extras = intent.getExtras();
         if (intent.hasExtra(PlacesConstants.EXTRA_KEY_LOCATION)) {
             location = (Location) (extras.get(PlacesConstants.EXTRA_KEY_LOCATION));
-            radius = extras.getInt(PlacesConstants.EXTRA_KEY_RADIUS, PlacesConstants.DEFAULT_RADIUS);
+            radius = extras.getInt(PlacesConstants.EXTRA_KEY_RADIUS, PlacesConstants.PLACES_SEARCH_RADIUS);
         }
 
         // Check if we're in a low battery situation.
@@ -143,22 +149,41 @@ public class PlacesUpdateService extends IntentService {
             if (!doUpdate) {
                 // Retrieve the last update time and place.
                 long lastTime = prefs.getLong(PlacesConstants.SP_KEY_LAST_LIST_UPDATE_TIME, Long.MIN_VALUE);
-                long lastLat = prefs.getLong(PlacesConstants.SP_KEY_LAST_LIST_UPDATE_LAT, Long.MIN_VALUE);
-                long lastLng = prefs.getLong(PlacesConstants.SP_KEY_LAST_LIST_UPDATE_LNG, Long.MIN_VALUE);
+                float lastLat;
+                try {
+                    lastLat = prefs.getFloat(PlacesConstants.SP_KEY_LAST_LIST_UPDATE_LAT, Float.MIN_VALUE);
+                } catch (ClassCastException e) {
+                    // handle legacy version
+                    lastLat = Float.MIN_VALUE;
+                }
+                float lastLng;
+                try {
+                    lastLng = prefs.getFloat(PlacesConstants.SP_KEY_LAST_LIST_UPDATE_LNG, Float.MIN_VALUE);
+                } catch (ClassCastException e) {
+                    lastLng = Float.MIN_VALUE;
+                }
                 Location lastLocation = new Location(PlacesConstants.CONSTRUCTED_LOCATION_PROVIDER);
                 lastLocation.setLatitude(lastLat);
                 lastLocation.setLongitude(lastLng);
+
+                long currentTime = System.currentTimeMillis();
+                float distanceMovedSinceLast = lastLocation.distanceTo(location);
+                long elapsedTime = currentTime - lastTime;
+
+                Log.i(TAG, "Last Location in places update service: " + lastLocation + " distance to current: " + distanceMovedSinceLast + " - current: " + location);
 
                 if (location == null) {
                     Log.w(TAG, "Location is null...");
                 }
                 // If update time and distance bounds have been passed, do an update.
-                else if ((lastTime < System.currentTimeMillis() - PlacesConstants.MAX_TIME) ||
-                        (lastLocation.distanceTo(location) > PlacesConstants.MAX_DISTANCE)) {
-                    Log.i(TAG, "Time/distance bounds passed on places update");
+                else if (lastTime < currentTime - PlacesConstants.MAX_TIME_BETWEEN_PLACES_UPDATE) {
+                    Log.i(TAG, "Time bounds passed on places update, " + elapsedTime/1000 + "s elapsed");
+                    doUpdate = true;
+                } else if (distanceMovedSinceLast > PlacesConstants.MIN_DISTANCE_TRIGGER_PLACES_UPDATE) {
+                    Log.i(TAG, "Distance bounds passed on places update, moved: " + distanceMovedSinceLast + " meters, time elapsed:  " + elapsedTime/1000 + "s");
                     doUpdate = true;
                 } else {
-                    Log.d(TAG, "Time/distance bounds not passed on places update");
+                    Log.d(TAG, "Time/distance bounds not passed on places update. Moved: " + distanceMovedSinceLast + " meters, time elapsed: " + elapsedTime/1000 + "s");
                 }
             }
 
@@ -336,15 +361,17 @@ public class PlacesUpdateService extends IntentService {
                     Log.w(TAG, "Found 0 places this request.");
                 }
 
-                // Remove places from the PlacesContentProviderlist that aren't from this update.
+                // Remove places from the PlacesDetailsContentProvider that aren't from this update.
                 String where = PlaceDetailsContentProvider.KEY_LAST_UPDATE_TIME + " < " + currentTime;
                 contentResolver.delete(PlacesContentProvider.CONTENT_URI, where, null);
 
                 // Save the last update time and place to the Shared Preferences.
-                prefsEditor.putLong(PlacesConstants.SP_KEY_LAST_LIST_UPDATE_LAT, (long) location.getLatitude());
-                prefsEditor.putLong(PlacesConstants.SP_KEY_LAST_LIST_UPDATE_LNG, (long) location.getLongitude());
+                prefsEditor.putFloat(PlacesConstants.SP_KEY_LAST_LIST_UPDATE_LAT, (float) location.getLatitude());
+                prefsEditor.putFloat(PlacesConstants.SP_KEY_LAST_LIST_UPDATE_LNG, (float) location.getLongitude());
                 prefsEditor.putLong(PlacesConstants.SP_KEY_LAST_LIST_UPDATE_TIME, System.currentTimeMillis());
-                prefsEditor.commit();
+                sharedPreferenceSaver.savePreferences(prefsEditor, false);
+                //prefsEditor.apply();
+                //prefsEditor.commit();
             } else
                 Log.e(TAG, responseCode + ": " + httpConnection.getResponseMessage());
 
@@ -413,6 +440,7 @@ public class PlacesUpdateService extends IntentService {
         // on WiFi or don't have a WiFi-only prefetching restriction, and we
         // either don't have low batter or don't have a low battery prefetching
         // restriction, then prefetch the details for this newly added place.
+/*
         if ((prefetchCount < PlacesConstants.PREFETCH_LIMIT) &&
                 (!PlacesConstants.PREFETCH_ON_WIFI_ONLY || !mobileData) &&
                 (!PlacesConstants.DISABLE_PREFETCH_ON_LOW_BATTERY || !lowBattery)) {
@@ -426,6 +454,7 @@ public class PlacesUpdateService extends IntentService {
             updateServiceIntent.putExtra(PlacesConstants.EXTRA_KEY_FORCEREFRESH, false);
             startService(updateServiceIntent);
         }
+*/
 
         return result;
     }

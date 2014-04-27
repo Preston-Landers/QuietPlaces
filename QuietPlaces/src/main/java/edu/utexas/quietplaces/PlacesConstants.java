@@ -12,13 +12,14 @@ public class PlacesConstants {
     public static String PLACES_DETAIL_BASE_URI = "https://maps.googleapis.com/maps/api/place/details/xml?sensor=true&reference=";
 
     // The default search radius when searching for places nearby.
-    public static int DEFAULT_RADIUS = 300; // 150;
+    public static int PLACES_SEARCH_RADIUS = 400; // 150;
 
-    // The maximum distance (meters) the user should travel between Places updates.
-    public static int MAX_DISTANCE = 75;
+    // The minimum distance (meters) a user must move to trigger a Places update.
+    // (moved since the last Places update)
+    public static int MIN_DISTANCE_TRIGGER_PLACES_UPDATE = 100;
 
-    // The maximum time that should pass before the user gets a location update.
-    public static long MAX_TIME = AlarmManager.INTERVAL_FIFTEEN_MINUTES;
+    // The maximum time that should pass before the user gets a Places update.
+    public static long MAX_TIME_BETWEEN_PLACES_UPDATE = AlarmManager.INTERVAL_HOUR;
 
     // Use the GPS (fine location provider) when the Activity is visible?
     public static boolean USE_GPS_WHEN_ACTIVITY_VISIBLE = true;
