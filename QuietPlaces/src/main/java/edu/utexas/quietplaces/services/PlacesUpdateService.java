@@ -242,7 +242,9 @@ public class PlacesUpdateService extends IntentService {
 
 
         try {
-            // Should at most 5 decimal places for max cache usage
+            // Should be at most 6 decimal places for max cache usage, but 5 is fine too
+            // https://developers.google.com/maps/documentation/business/articles/usage_limits
+
             String locationStr = String.format("%.5f,%.5f", location.getLatitude(), location.getLongitude());
 
             String baseURI = PlacesConstants.PLACES_LIST_BASE_URI;
