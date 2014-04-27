@@ -255,7 +255,6 @@ public class PlacesUpdateService extends IntentService {
                 placesFeed = baseURI +
                         PlacesConstants.getPlacesAPIKey(this, true) +
                         "&pagetoken=" + page_token;
-                        ;
             } else {
                 placesFeed = baseURI +
                         "&types=" + placeTypes +
