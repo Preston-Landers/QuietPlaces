@@ -123,11 +123,12 @@ public class MainActivity extends ActionBarActivity
     private IntentFilter placesUpdatedIntentFilter;
     private PlacesUpdatedReceiver placesUpdatedReceiver;
 
+    private BroadcastReceiver ringerStateChangedReceiver;
 
     // We don't want to un-silence if the device was manually silenced before
     // entering the quiet zone. So keep track of whether we were the ones to engage
     // the silence.
-    private boolean weSilencedTheDevice;
+    private boolean wasSilencedFromGeofence;
 
 
     // Should the camera be following the user?
@@ -372,6 +373,8 @@ public class MainActivity extends ActionBarActivity
             // And one to be notified when we've received an updated list of nearby Google Places
             LocalBroadcastManager.getInstance(this).registerReceiver(placesUpdatedReceiver, placesUpdatedIntentFilter);
 
+            registerRingerStateChangeReceiver();
+
             haveRegisteredBroadcastReceiver = true;
         }
 
@@ -406,6 +409,7 @@ public class MainActivity extends ActionBarActivity
         if (haveRegisteredBroadcastReceiver) {
             LocalBroadcastManager.getInstance(this).unregisterReceiver(geofenceReceiver);
             LocalBroadcastManager.getInstance(this).unregisterReceiver(placesUpdatedReceiver);
+            unregisterRingerStateChangeReceiver();
         }
         super.onDestroy();
     }
@@ -536,10 +540,11 @@ public class MainActivity extends ActionBarActivity
 
     public void onClickRinger(View view) {
         Switch ringerSwitch = (Switch) findViewById(R.id.switch_home_ringer);
+        wasSilencedFromGeofence = false;
         if (ringerSwitch.isChecked()) {
-            unsilenceDevice();
+            setRinger(true);
         } else {
-            silenceDevice();
+            setRinger(false);
         }
     }
 
@@ -548,10 +553,10 @@ public class MainActivity extends ActionBarActivity
      *
      * @return false if the device was already silent, true if we engaged silent mode.
      */
-    public boolean silenceDevice() {
+    public boolean silenceDeviceFromGeofence() {
         boolean wasSilent = isRingerSilentOrVibrate();
         if (wasSilent) {
-            Log.d(TAG, "device was already silent when silenceDevice() was called.");
+            Log.d(TAG, "device was already silent when silenceDeviceFromGeofence() was called.");
             return false;
         }
         Switch ringerSwitch = (Switch) findViewById(R.id.switch_home_ringer);
@@ -559,40 +564,31 @@ public class MainActivity extends ActionBarActivity
             ringerSwitch.setChecked(false);
         }
         setRinger(false);
-        weSilencedTheDevice = true;
+        wasSilencedFromGeofence = true;
         return true;
     }
 
     /**
-     * Restore normal ringer mode.
-     *
-     * @return false if the ringer was already in normal mode, otherwise true
-     */
-    public boolean unsilenceDevice() {
-        boolean wasSilent = isRingerSilentOrVibrate();
-        if (!wasSilent) {
-            Log.d(TAG, "device was already in normal ringer mode when unsilenceDevice() was called.");
-            return false;
-        }
-        Switch ringerSwitch = (Switch) findViewById(R.id.switch_home_ringer);
-        if (ringerSwitch != null) {
-            ringerSwitch.setChecked(true);
-        }
-        setRinger(true);
-        weSilencedTheDevice = false;
-        return true;
-    }
-
-    /**
-     * Restore normal ringer mode, but only if this app had put it in silent mode.
+     * Restore normal ringer mode, but only if this app had put it in silent mode from a geofence.
      *
      * @return false if the ringer was already in normal mode, or we didn't silence it before.
      */
-    public boolean unsilenceDeviceIfWeSilenced() {
-        if (weSilencedTheDevice) {
-            return unsilenceDevice();
+    public boolean unsilenceDeviceFromGeofence() {
+        if (wasSilencedFromGeofence) {
+            boolean wasSilent = isRingerSilentOrVibrate();
+            if (!wasSilent) {
+                Log.d(TAG, "device was already in normal ringer mode when unsilenceDeviceFromGeofence() was called.");
+                return false;
+            }
+            Switch ringerSwitch = (Switch) findViewById(R.id.switch_home_ringer);
+            if (ringerSwitch != null) {
+                ringerSwitch.setChecked(true);
+            }
+            setRinger(true);
+            wasSilencedFromGeofence = false;
+            return true;
         }
-        Log.i(TAG, "Unsilence request skipped because we did not silence the device.");
+        Log.i(TAG, "Unsilence request skipped because we did not silence the device from a geofence.");
         return false;
     }
 
@@ -1253,5 +1249,36 @@ public class MainActivity extends ActionBarActivity
                 break;
         }
 
+    }
+
+    private void registerRingerStateChangeReceiver() {
+        final Switch ringerSwitch = (Switch) findViewById(R.id.switch_home_ringer);
+        ringerStateChangedReceiver = new BroadcastReceiver() {
+            @Override
+            public void onReceive(Context context, Intent intent) {
+                AudioManager audioManager = (AudioManager) getSystemService(AUDIO_SERVICE);
+                int ringerMode = audioManager.getRingerMode();
+                if (ringerMode ==AudioManager.RINGER_MODE_SILENT ) {
+                    Log.w(TAG, "Ringer was silenced.");
+                    ringerSwitch.setChecked(false);
+                } else if (ringerMode == AudioManager.RINGER_MODE_VIBRATE) {
+                    Log.w(TAG, "Ringer was put on vibrate.");
+                    ringerSwitch.setChecked(false);
+                }
+                else {
+                    Log.w(TAG, "Ringer was un-silenced!");
+                    ringerSwitch.setChecked(true);
+                }
+
+            }
+        };
+        IntentFilter intentFilter = new IntentFilter();
+        intentFilter.addAction(AudioManager.RINGER_MODE_CHANGED_ACTION);
+        intentFilter.addAction(Intent.ACTION_AIRPLANE_MODE_CHANGED);
+        registerReceiver(ringerStateChangedReceiver, intentFilter);
+    }
+
+    private void unregisterRingerStateChangeReceiver() {
+        unregisterReceiver(ringerStateChangedReceiver);
     }
 }
