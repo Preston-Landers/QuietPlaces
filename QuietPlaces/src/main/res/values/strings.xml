@@ -3,9 +3,6 @@
 
     <string name="app_name">QuietPlaces</string>
 
-    <string name="app_version_code">1</string>
-    <string name="app_version_name">0.1</string>
-
     <string name="title_section1">Home</string>
     <string name="title_section2">Map</string>
     <string name="title_section3">History</string>
@@ -16,7 +13,7 @@
     <string name="action_settings">Settings</string>
     <string name="title_home">Welcome to QuietPlaces</string>
     <string name="current_ringer_status">Current Ringer Status</string>
-    <string name="authors">Preston Landers and Abe Arredondo</string>
+    <string name="authors">By: Preston Landers and Abe Arredondo</string>
     <string name="authors2">Mobile Computing 2014 @ UT Austin</string>
     <string name="about_version">"Version: "</string>
     <string name="about_authors_1">Design: Abe Arredondo and Preston Landers</string>
@@ -24,29 +21,36 @@
     <string name="about_thanks">Thanks to: Dr. Christine Julien</string>
 
     <string name="about_code_link">&lt;A HREF="https://bitbucket.org/planders/quietplaces">Project Home Page&lt;/A></string>
+    <string name="about_online_help_link">&lt;A HREF="https://sites.google.com/a/utexas.edu/auto-ringer1/cover-page/k-user-interface">Help on the Web&lt;/A></string>
     <string name="about_store_link">&lt;A HREF="https://bitbucket.org/planders/quietplaces">Google Play Store Page&lt;/A></string>
 
     <string name="about_blurb">
         This is a term project for the 2014 Mobile Computing software engineering
         graduate course at the University of Texas at Austin.
+        \n\n
+        Warning: this is EXPERIMENTAL BETA QUALITY software. Use at your own risk.
     </string>
 
     <string name="help_overview_title">Overview</string>
     <string name="help_overview">
         This app controls your phone\'s ringer automatically based on "quiet places" you define
         either manually or through automatic discovery of certain place categories such as movie theaters or
-        hospitals. It is currently in development and not yet finished. Please watch this space.
+        hospitals. It is currently in development and not yet finished (beta quality). Please do not use
+        this app if having your ringer inadvertently silenced would be a problem for you.
     </string>
 
     <string name="help_usage_title">Using the App</string>
     <string name="help_usage">
-        Currently you must manually add each Quiet Place to the map. A Quiet Place is a geographic point combined with a radius.
+        Quiet Places can be placed on the map manually or automatically. A Quiet Place is a geographic point combined with a radius.
         If you enter this area the ringer will be silenced automatically, and if you leave it will be
         re-enabled - unless you are still within another Quiet Place.\n\n
         To create a Quiet Place go to the Map tab then press the green Add button. Now touch a spot on the map
         and the place will appear.  To move the place hold down the marker and then drag it. To resize the quiet
         place tap the marker to select it then press the Grow or Shrink buttons in the action bar. To remove
-        the quiet place select it and then tap the trash can icon.
+        the quiet place select it and then tap the trash can icon.\n\n
+        To have the app create quiet places automatically, go to Settings and select the place categories you wish
+        to silence automatically. If you edit an automatic Quiet Place, such as move it or change its size,
+        it will be saved as a permanent place until you delete it.
     </string>
 
     <string name="help_tools_title">Development</string>
@@ -61,8 +65,8 @@
         &lt;A HREF="https://bitbucket.org/planders/quietplaces">
         project source code home page&lt;/A>, or the Google Play store page (coming soon).
         \n\n
-        This application is free software and is covered by the &lt;A HREF="http://www.gnu.org/licenses/gpl-2.0.txt">
-        GNU General Public License (GPL) 2.0&lt;/A>
+        This application is free software and is covered by the &lt;A HREF="http://www.apache.org/licenses/LICENSE-2.0.txt">
+        Apache Software License 2.0&lt;/A>
     </string>
 
 

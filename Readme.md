@@ -27,9 +27,7 @@ Thanks to:
 
 Dr. Christine Julien
 
-# Development Notes #
-
-## Current Status ##
+# Current Status #
 
 See the section below for building the app from source code.
 
@@ -42,16 +40,15 @@ The app has a built-in help screen in the navigation drawer. Please see that for
 We also have a mock location testing companion app, which is available here:
 [QuietPlacesMockLocations]. See below for more information about testing.
 
-
 ## Future Features / TODO List  ##
 
+* Make a way to disable the geofencing ringer control from the home screen
 * Use better looking map marker drawables, especially for auto-places
-* Generate more interesting names for manually added places
+* Generate more interesting names for manually added places (e.g. find an address or name)
 * Ability to resize quiet places with scale gestures
   * Not critical because we have buttons to resize the selected place.
 * Better placement of auto-QPs. E.g. don't center the circle on the street corner
 * Better sizing of auto-QPs, at least some basic heuristics
-* We're not doing anything with the 'places details' service, can probably remove.
 * Allow a Quiet Place to be temporarily disabled w/o deleting it.
 * Put a confirmation dialog on delete place, and clear history?
 
@@ -63,23 +60,64 @@ We also have a mock location testing companion app, which is available here:
 * If you create a new QP that you are currently inside, it doesn't trigger the silence.
 * If the app has not received location updates in a while, we may miss some geofence
   transitions and may need to do a manual check.
-* Handle more than 20 Places API results by requesting the next page
-  * http://stackoverflow.com/a/9627664/858289
-* Ringer switch on home screen can get out of sync with actual ringer status.
-* Current selection (of a Quiet Place) is lost when changing device orientation
 * When you change the selected categories, the auto places don't update until
-  you move a minimum distance (100 m), or 1 hour has passed. This may not be a big deal?
+  you move a minimum distance (100 m), or 1 hour has passed.
+* Ringer switch on home screen can get out of sync with actual ringer status.
+  * Need to register a listener for when the ringer changes, and update our switch from that
+* Current selection (of a Quiet Place) is lost when changing device orientation
+
+
+# Development Notes #
+
+## Application Overview ##
+
+The app maintains a database with two types of map markers: manually placed and automatically
+placed. When we place a map marker we set up an associated [Geofence with Google Play Location Services]
+(https://developer.android.com/training/location/geofencing.html).
+
+The geofence sends the app a notification when the user enters or exits a circularly defined
+geographic region (a point plus a radius.)  The MainActivity registers a broadcast receiver for this
+geofence event and passes the event to the QuietPlaceMapMarker (QPMM, see below). The QPMM determines
+if the ringer should be silenced or unsilenced. For instance, we should not unsilence if we're still
+inside another overlapping Quiet Place. These geofence events are processed even if the app is
+in the background.
+
+The MainActivity also maintains another listener for general purpose location updates. These are currently
+used for two purposes:
+
+* Following the user's currently location on the map (if the option is checked)
+* Periodically querying the Google Places API with the current location, to look for nearby
+  places that match our preferences.
+
+The Places API query happens anywhere from every 60 seconds to up to an hour, depending how far the user has moved
+since the last query. The response may also be cached locally by the app. The query happens in a background
+Service outside the main UI thread. Further processing of the results is done inside an AsyncTask from
+the main activity.
+
+It scans the API results for new Quiet Places to add to the map, and prunes out QPs that no longer match
+our criteria or are too far away.
+
+## Tools and APIs used ##
+
+Note that if you wish to build this app from source you need to obtain your own Google API keys as described below.
+
+* [Google Maps for Android V2](https://developers.google.com/maps/documentation/android/)
+* [Google Places API](https://developers.google.com/places/)
+* [JodaTime library](http://www.joda.org/joda-time/)
 
 ## Data Model ##
 
-QuietPlace objects (POJOs) represent our basic database record. Each geofence zone, whether
-manually added, or automatically suggested, gets put in the database as a QuietPlace.
+QuietPlace objects ([POJOs](http://en.wikipedia.org/wiki/Plain_Old_Java_Object)) represent
+our basic database record. Each geofence zone, whether manually added or automatically
+suggested, gets put in the database as a QuietPlace.
 
 The QuietPlaceMapMarker (QPMM) is an object which ties together the QuietPlace database record
-plus the Google Map marker, the geofence status, and associated data.
+plus the Google Map marker, the geofence status, and associated data and methods, such as to move
+or resize it.
 
 QPMapFragment extends the basic Google Map view and adds our custom map behaviors
-such as moving or resizing markers.
+and manages the collection of QPMMs. Custom map controls are implemented as an overlay
+on top of the Google MapView.
 
 
 ## Software Engineering Challenges ##

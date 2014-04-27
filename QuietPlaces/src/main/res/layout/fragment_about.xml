@@ -102,10 +102,21 @@
                         android:id="@+id/about_code_link"
                         android:layout_below="@+id/about_thanks"
                         android:layout_marginTop="15dp"
-                        android:layout_marginBottom="15dp"
+                        android:layout_marginBottom="10dp"
                         android:layout_centerHorizontal="true"
                         android:linksClickable="false"
                         />
+
+                <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:textAppearance="?android:attr/textAppearanceMedium"
+                        android:text="@string/about_online_help_link"
+                        android:id="@+id/help_link"
+                        android:layout_below="@+id/about_code_link"
+                        android:layout_marginBottom="15dp"
+                        android:layout_centerHorizontal="true"
+                        android:linksClickable="false"/>
 
                 <TextView
                         android:id="@+id/about_blurb"
@@ -115,7 +126,7 @@
                         android:layout_alignParentTop="false"
                         android:layout_alignParentLeft="false"
                         android:layout_alignParentStart="true"
-                        android:layout_below="@+id/about_code_link"
+                        android:layout_below="@+id/help_link"
                         android:singleLine="false"
                         android:autoText="false"/>
 

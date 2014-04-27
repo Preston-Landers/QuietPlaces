@@ -32,7 +32,7 @@
         <CheckBoxPreference
                 android:key="pref_cat_movie_theater"
                 android:title="@string/pref_cat_movie_theater"
-                android:defaultValue="true"/>
+                android:defaultValue="false"/>
         <CheckBoxPreference
                 android:key="pref_cat_restaurant"
                 android:title="@string/pref_cat_restaurant"
@@ -40,7 +40,7 @@
         <CheckBoxPreference
                 android:key="pref_cat_art"
                 android:title="@string/pref_cat_art"
-                android:defaultValue="true"/>
+                android:defaultValue="false"/>
         <CheckBoxPreference
                 android:key="pref_cat_cafe"
                 android:title="@string/pref_cat_cafe"
@@ -58,7 +58,7 @@
                 android:key="pref_cat_places_of_worship"
                 android:title="@string/pref_cat_places_of_worship"
                 android:summary="@string/pref_cat_places_of_worship_summary"
-                android:defaultValue="true"/>
+                android:defaultValue="false"/>
         <CheckBoxPreference
                 android:key="pref_cat_funeral"
                 android:title="@string/pref_cat_funeral"
@@ -71,7 +71,7 @@
         <CheckBoxPreference
                 android:key="pref_cat_hospital"
                 android:title="@string/pref_cat_hospital"
-                android:defaultValue="true"/>
+                android:defaultValue="false"/>
         <CheckBoxPreference
                 android:key="pref_cat_doctor"
                 android:title="@string/pref_cat_doctor"
@@ -96,7 +96,7 @@
         <CheckBoxPreference
                 android:key="pref_cat_library"
                 android:title="@string/pref_cat_library"
-                android:defaultValue="true"/>
+                android:defaultValue="false"/>
     </PreferenceCategory>
     <PreferenceCategory
             android:title="@string/pref_category_government"

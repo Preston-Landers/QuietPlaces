@@ -62,6 +62,11 @@ public class AboutFragment extends BaseFragment {
             aboutCodeLink.setText(Html.fromHtml(getString(R.string.about_code_link)));
             aboutCodeLink.setMovementMethod(LinkMovementMethod.getInstance());
         }
+        TextView aboutHelpLink = (TextView) rootView.findViewById(R.id.help_link);
+        if (aboutHelpLink != null) {
+            aboutHelpLink.setText(Html.fromHtml(getString(R.string.about_online_help_link)));
+            aboutHelpLink.setMovementMethod(LinkMovementMethod.getInstance());
+        }
         TextView toolsTV = (TextView) rootView.findViewById(R.id.help_tools_tv);
         if (toolsTV != null) {
             toolsTV.setText(Html.fromHtml(getString(R.string.help_tools)));
