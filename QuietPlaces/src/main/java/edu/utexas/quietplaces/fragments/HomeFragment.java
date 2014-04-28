@@ -7,7 +7,7 @@ import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.Switch;
+import android.widget.CheckBox;
 import edu.utexas.quietplaces.R;
 
 /**
@@ -42,15 +42,18 @@ public class HomeFragment extends BaseFragment {
         updateSwitchWithRingerState();
     }
 
+    /**
+     * Update the ringer switch on the home screen to the current ringer state on app startup.
+     */
     private void updateSwitchWithRingerState() {
         Activity activity = getActivity();
-        Switch ringerSwitch = (Switch) activity.findViewById(R.id.switch_home_ringer);
+        CheckBox ringerCheckBox = (CheckBox) activity.findViewById(R.id.checkbox_home_ringer);
         AudioManager audioManager = (AudioManager) activity.getSystemService(Context.AUDIO_SERVICE);
         int ringerMode = audioManager.getRingerMode();
         if (ringerMode == AudioManager.RINGER_MODE_NORMAL) {
-            ringerSwitch.setChecked(true);
+            ringerCheckBox.setChecked(true);
         } else {
-            ringerSwitch.setChecked(false);
+            ringerCheckBox.setChecked(false);
         }
 
     }

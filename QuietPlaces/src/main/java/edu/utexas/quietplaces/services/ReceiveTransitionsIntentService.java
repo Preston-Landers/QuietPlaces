@@ -53,7 +53,7 @@ public class ReceiveTransitionsIntentService extends IntentService {
 
             // Log the error
             Log.e(GeofenceUtils.APPTAG,
-                    getString(R.string.geofence_transition_error_detail, errorMessage)
+                    getString(R.string.geofence_transition_error_detail, errorCode, errorMessage)
             );
 
             // Set the action and error message for the broadcast intent

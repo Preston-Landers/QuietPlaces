@@ -33,6 +33,7 @@ public class SettingsFragment extends PreferenceFragment
      */
     private static final int SECTION_NUMBER = 4;
 
+    public static final String KEY_CONTROL_RINGER = "pref_control_ringer";
     public static final String KEY_USE_LOCATION = "pref_use_location";
     public static final String KEY_MAP_TYPE = "pref_map_type";
     public static final String KEY_USE_VIBRATE = "pref_use_vibrate";
@@ -154,6 +155,7 @@ public class SettingsFragment extends PreferenceFragment
     @Override
     public void onSharedPreferenceChanged(SharedPreferences sharedPreferences,
                                           String key) {
+        MainActivity mainActivity = (MainActivity) getActivity();
         if (key.equals(KEY_MAP_TYPE)) {
             String mapType = sharedPreferences.getString(KEY_MAP_TYPE, MAP_TYPE_DEFAULT);
             String mapTypeLabel = getMapTypeLabel(mapType);
@@ -161,7 +163,6 @@ public class SettingsFragment extends PreferenceFragment
             Log.i(TAG, "Map type changed to " + mapTypeLabel);
             mapTypeList.setSummary(mapTypeLabel);
 
-            MainActivity mainActivity = (MainActivity) getActivity();
             if (mainActivity != null) {
                 QPMapFragment mapFragment = mainActivity.getMapFragment();
                 if (mapFragment != null) {
@@ -169,13 +170,32 @@ public class SettingsFragment extends PreferenceFragment
                 }
             }
         }
-        // TODO: Do we need to check for the location changed pref and turn off updates here?
+        else if (key.equals(KEY_USE_LOCATION)) {
+            boolean usingLocation = sharedPreferences.getBoolean(SettingsFragment.KEY_USE_LOCATION, false);
+            if (usingLocation) {
+                if (mainActivity != null) {
+                    Log.w(TAG, "'Use Location' setting changed to ON. Enabling location updates.");
+                    mainActivity.enableMainActivityLocationUpdates();
+                } else {
+                    Log.e(TAG, "'Use Location' setting changed to ON, but unable to find main activity to enable location updates.");
+                }
+            } else {
+                if (mainActivity != null) {
+                    Log.w(TAG, "'Use Location' setting changed to OFF. Disabling location updates.");
+                    mainActivity.disableMainActivityLocationUpdates();
+                } else {
+                    Log.e(TAG, "'Use Location' setting changed to OFF, but unable to find main activity to disable location updates.");
+                }
+            }
+
+        }
 
         // Any time we change any 'category' preference, update the master place type pref.
         if (isPlaceCategoryPref(key)) {
             updateMasterPlaceTypes();
         }
     }
+
 
     private boolean isPlaceCategoryPref(String prefName) {
         return prefName.indexOf(PLACE_CAT) == 0;

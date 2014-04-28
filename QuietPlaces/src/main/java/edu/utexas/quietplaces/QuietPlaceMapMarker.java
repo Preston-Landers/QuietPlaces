@@ -18,8 +18,9 @@ public class QuietPlaceMapMarker {
     private QPMapFragment qpMapFragment;
     private Circle circle;
     private Geofence geofence;
+    private String geofenceId;
     private boolean selected;
-    private double scaleFactor;
+    // private double scaleFactor;
     private boolean currentlyInside;
     // TODO: add a "use geofence" setting?
 
@@ -59,6 +60,14 @@ public class QuietPlaceMapMarker {
         final String comment = quietPlace.getComment();
         GoogleMap googleMap = getQpMapFragment().getMap();
 
+        String geofenceId = quietPlace.getGplace_id();
+        if (geofenceId == null || geofenceId.length() == 0) {
+            // no Place ID available, so use the basic database ID.
+            geofenceId =Long.toString(quietPlace.getId());
+        }
+        setGeofenceId(geofenceId);
+
+
         MarkerOptions markerOptions = new MarkerOptions();
         LatLng latLng = new LatLng(quietPlace.getLatitude(), quietPlace.getLongitude());
         markerOptions.position(latLng);
@@ -71,7 +80,7 @@ public class QuietPlaceMapMarker {
         setCircle(addQuietPlaceCircle(quietPlace));
 
         // TODO: This is a vestige of attempted gesture scaling support and can probably be removed
-        setScaleFactor(quietPlace.getRadius());
+        // setScaleFactor(quietPlace.getRadius());
 
         setGeofence();
 
@@ -97,17 +106,23 @@ public class QuietPlaceMapMarker {
         return true;
     }
 
+    /**
+     * Delete this Quiet Place from the database and remove its geofence.
+     */
     public void delete() {
         String logMsg = getQuietPlace().getHistoryEventFormatted();
-        // getQpMapFragment().shortToast("Marker deleted: " + logMsg);
+        Log.d(TAG, "Marker deleted: " + logMsg);
+
         boolean wasAutoAdded = getQuietPlace().isAutoadded();
 
-        // delete the geofence here
+        // needs to be before we delete the geofence
+        getQpMapFragment().removeQuietPlaceMapMarker(this);
+
+        // queues geofence for removal; call syncGeofences to activate changes
         removeGeofence();
 
         getMapMarker().remove();
         getCircle().remove();
-        getQpMapFragment().removeQuietPlaceMapMarker(this);
 
         database_delete();
 
@@ -184,14 +199,16 @@ public class QuietPlaceMapMarker {
         this.circle = circle;
     }
 
+/*
     public double getScaleFactor() {
         return scaleFactor;
     }
 
     public void setScaleFactor(double scaleFactor) {
         this.scaleFactor = scaleFactor;
-        Log.v(TAG, "setting scale factor to: " + scaleFactor + " qp: " + getQuietPlace());
+        // Log.v(TAG, "setting scale factor to: " + scaleFactor + " qp: " + getQuietPlace());
     }
+*/
 
     public boolean isSelected() {
         return selected;
@@ -256,7 +273,9 @@ public class QuietPlaceMapMarker {
      *               can speed things up by not saving intermediate changes during a drag move
      */
     public void moveMarker(boolean doSave) {
-        removeGeofence();
+        if (doSave) {
+            removeGeofence();
+        }
         Marker marker = getMapMarker();
 
         // Update the circle around it.
@@ -272,9 +291,9 @@ public class QuietPlaceMapMarker {
             getQpMapFragment().updateInfoString(getQuietPlace());
         }
 
-        setGeofence();
 
         if (doSave) {
+            setGeofence();
             database_save();
             getQpMapFragment().syncGeofences();
 
@@ -318,6 +337,7 @@ public class QuietPlaceMapMarker {
         getQpMapFragment().updateInfoString(getQuietPlace());
         database_save();
         setGeofence();
+        getQpMapFragment().syncGeofences();
 
         HistoryEvent.logEvent(
                 getQpMapFragment().getMyActivity(),
@@ -325,7 +345,6 @@ public class QuietPlaceMapMarker {
                 getQuietPlace().getHistoryEventFormatted()
         );
 
-        getQpMapFragment().syncGeofences();
     }
 
     public double getRadius() {
@@ -373,7 +392,7 @@ public class QuietPlaceMapMarker {
     private void database_delete() {
         Log.i(TAG, "Deleting from database: " + getQuietPlace());
         QuietPlacesContentProvider.deleteQuietPlace(getQpMapFragment().getMyActivity(), getQuietPlace());
-        Log.d(TAG, "Deletion complete.");
+        // Log.v(TAG, "Deletion complete.");
 
         // should we null out the QP object?!
     }
@@ -409,6 +428,13 @@ public class QuietPlaceMapMarker {
         return getQpMapFragment().getSuggestedRadius() * Config.QP_RESIZE_INCREMENT_FACTOR;
     }
 
+    public Geofence getGeofence() {
+        return geofence;
+    }
+
+    public void setGeofence(Geofence geofence) {
+        this.geofence = geofence;
+    }
 
     /**
      * Activate the geofence for this quiet place based on current settings.
@@ -418,11 +444,13 @@ public class QuietPlaceMapMarker {
     private void setGeofence() {
         // Create and add the geofence.
         geofence = buildGeofence();
+        setGeofence(geofence);
         if (geofence == null) {
             Log.e(TAG, "Can't obtain geofence object to set.");
             return;
         }
 
+        Log.i(TAG, "Queing Geofence ID: " + getGeofenceId());
         getQpMapFragment().queueGeofenceAdd(geofence);
     }
 
@@ -432,9 +460,8 @@ public class QuietPlaceMapMarker {
      */
     private void removeGeofence() {
         if (geofence != null) {
-
             getQpMapFragment().queueGeofenceIdRemove(geofence.getRequestId());
-            geofence = null; // we're nulling this before it's actually removed from Loc Svcs
+            setGeofence(null); // we're nulling this before it's actually removed from Loc Svcs
         } else {
             Log.w(TAG, "Can't remove geofence because it's null on: " + getQuietPlace());
         }
@@ -455,22 +482,20 @@ public class QuietPlaceMapMarker {
         int transitionType = Geofence.GEOFENCE_TRANSITION_ENTER | Geofence.GEOFENCE_TRANSITION_EXIT;
         float radius = (float) getRadius();
         return new Geofence.Builder()
-                .setRequestId(getNewGeofenceId())
+                .setRequestId(getGeofenceId())
                 .setTransitionTypes(transitionType)
                 .setCircularRegion(
                         quietPlace.getLatitude(),
                         quietPlace.getLongitude(),
                         radius)
-
-                        // are we fully managing all geofence removal?
-                .setExpirationDuration(Geofence.NEVER_EXPIRE)
+                .setExpirationDuration(Config.GEOFENCE_MAX_LIFETIME_MS)
                 .build();
     }
 
     public void enterGeofence() {
         setCurrentlyInside(true);
 
-        Log.w(TAG, "Entered Geofence! " + quietPlace);
+        Log.w(TAG, "Entered Geofence: " + getGeofenceId() + " qp: " + quietPlace);
 
         // SILENCE RINGER HERE....
         MainActivity mainActivity = (MainActivity) getQpMapFragment().getMyActivity();
@@ -492,7 +517,7 @@ public class QuietPlaceMapMarker {
             int transition = Geofence.GEOFENCE_TRANSITION_ENTER;
             mainActivity.sendGeofenceNotification(
                     transition,
-                    Config.getTransitionString(getQpMapFragment().getMyActivity(), transition),
+                    Config.getTransitionString(mainActivity, transition),
                     Long.toString(getQuietPlace().getId()),
                     getNotificationSubtitle());
         } else {
@@ -504,7 +529,7 @@ public class QuietPlaceMapMarker {
     public void exitGeofence() {
         setCurrentlyInside(false);
 
-        Log.w(TAG, "Exited Geofence! " + quietPlace);
+        Log.w(TAG, "Exited Geofence: " + getGeofenceId() + " QP: " + quietPlace);
 
         // UNSILENCE RINGER HERE....
         // only if all other zones are clear also.
@@ -526,7 +551,7 @@ public class QuietPlaceMapMarker {
             int transition = Geofence.GEOFENCE_TRANSITION_EXIT;
             mainActivity.sendGeofenceNotification(
                     transition,
-                    Config.getTransitionString(getQpMapFragment().getMyActivity(), transition),
+                    Config.getTransitionString(mainActivity, transition),
                     Long.toString(getQuietPlace().getId()),
                     getNotificationSubtitle());
 
@@ -541,17 +566,11 @@ public class QuietPlaceMapMarker {
         return "QuietPlace: " + getQuietPlace().getComment();
     }
 
-    public String getNewGeofenceId() {
-        if (quietPlace == null) {
-            return null;
-        }
-        return Long.toString(quietPlace.getId());
+    public String getGeofenceId() {
+        return geofenceId;
     }
 
-    public String getGeofenceId() {
-        if (geofence == null) {
-            return getNewGeofenceId();
-        }
-        return geofence.getRequestId();
+    public void setGeofenceId(String geofenceId) {
+        this.geofenceId = geofenceId;
     }
 }

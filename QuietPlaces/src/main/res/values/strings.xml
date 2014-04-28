@@ -72,7 +72,7 @@
 
     <string name="settings_activity_name">Settings</string>
     <string name="add_quiet_place_button">Add</string>
-    <string name="ringer_switch">Ringer</string>
+    <string name="ringer_switch">Ringer Enabled</string>
     <string name="add_button_description">Add Quiet Place</string>
     <string name="clear_history_button">Clear History</string>
 
@@ -222,4 +222,6 @@
 
     <string name="notification_title_enter">Disabled Ringer</string>
     <string name="notification_title_exit">Enabled Ringer</string>
+    <string name="pref_control_ringer">Control the ringer</string>
+    <string name="pref_control_ringer_summary">If checked this app can take control of the ringer when entering a quiet place.</string>
 </resources>

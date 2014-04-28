@@ -65,7 +65,8 @@ We also have a mock location testing companion app, which is available here:
 * Ringer switch on home screen can get out of sync with actual ringer status.
   * Need to register a listener for when the ringer changes, and update our switch from that
 * Current selection (of a Quiet Place) is lost when changing device orientation
-
+* There is a hard limit of 100 active geofences imposed by Location Services.
+  This isn't really handled gracefully.
 
 # Development Notes #
 

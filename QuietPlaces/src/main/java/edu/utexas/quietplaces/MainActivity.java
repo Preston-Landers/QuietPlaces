@@ -21,7 +21,6 @@ import android.util.Log;
 import android.view.Menu;
 import android.view.View;
 import android.widget.CheckBox;
-import android.widget.Switch;
 import android.widget.Toast;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GooglePlayServicesClient;
@@ -77,7 +76,6 @@ public class MainActivity extends ActionBarActivity
     private SharedPreferences prefs;
 
     private GoogleMap googleMap = null;
-    private boolean mUpdatesRequested = false;
     private Location lastKnownLocation = null;
 
     // Only want to set a suggested zoom once per 'resume'
@@ -130,9 +128,10 @@ public class MainActivity extends ActionBarActivity
     // the silence.
     private boolean wasSilencedFromGeofence;
 
-
     // Should the camera be following the user?
     private boolean followingUser;
+
+    private long nextTimeToRenewGeofences;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -381,7 +380,6 @@ public class MainActivity extends ActionBarActivity
 
         getSettingsFragment().updateMasterPlaceTypes();
         mLocationClient.connect();
-        startFollowUser();
 
 
     }
@@ -390,8 +388,6 @@ public class MainActivity extends ActionBarActivity
     protected void onResume() {
         super.onResume();
         Log.d(TAG, "onResume");
-
-        mUpdatesRequested = getPrefUsingLocation();
 
         haveSetZoomLevel = false;  // reset suggested zoom in follow mode
 
@@ -405,6 +401,7 @@ public class MainActivity extends ActionBarActivity
     @Override
     protected void onDestroy() {
         Log.d(TAG, "onDestroy");
+        // removeAllGeofences();
         disableMainActivityLocationUpdates();
         if (haveRegisteredBroadcastReceiver) {
             LocalBroadcastManager.getInstance(this).unregisterReceiver(geofenceReceiver);
@@ -440,18 +437,16 @@ public class MainActivity extends ActionBarActivity
 
     }
 
-    private void enableMainActivityLocationUpdates() {
+    public void enableMainActivityLocationUpdates() {
         // Display the connection status
-        if (mUpdatesRequested) {
+        if (getPrefUsingLocation()) {
             // shortToast("Requesting Location Services");
             mLocationClient.requestLocationUpdates(mLocationRequest, this);
 
-        } else {
-            shortToast("Location Services Disabled");
         }
     }
 
-    private void disableMainActivityLocationUpdates() {
+    public void disableMainActivityLocationUpdates() {
         // If the client is connected
         if (mLocationClient.isConnected()) {
             /*
@@ -539,9 +534,9 @@ public class MainActivity extends ActionBarActivity
 
 
     public void onClickRinger(View view) {
-        Switch ringerSwitch = (Switch) findViewById(R.id.switch_home_ringer);
+        CheckBox ringerCheckBox = (CheckBox) findViewById(R.id.checkbox_home_ringer);
         wasSilencedFromGeofence = false;
-        if (ringerSwitch.isChecked()) {
+        if (ringerCheckBox.isChecked()) {
             setRinger(true);
         } else {
             setRinger(false);
@@ -554,17 +549,19 @@ public class MainActivity extends ActionBarActivity
      * @return false if the device was already silent, true if we engaged silent mode.
      */
     public boolean silenceDeviceFromGeofence() {
+        boolean canControlRinger = getPrefControlRinger();
+        if (!canControlRinger) {
+            Log.i(TAG, "'Control Ringer' setting is off; not disabling ringer.");
+            return false;
+        }
+
         boolean wasSilent = isRingerSilentOrVibrate();
         if (wasSilent) {
             Log.d(TAG, "device was already silent when silenceDeviceFromGeofence() was called.");
             return false;
         }
-        Switch ringerSwitch = (Switch) findViewById(R.id.switch_home_ringer);
-        if (ringerSwitch != null) {
-            ringerSwitch.setChecked(false);
-        }
-        setRinger(false);
         wasSilencedFromGeofence = true;
+        setRinger(false);
         return true;
     }
 
@@ -574,22 +571,25 @@ public class MainActivity extends ActionBarActivity
      * @return false if the ringer was already in normal mode, or we didn't silence it before.
      */
     public boolean unsilenceDeviceFromGeofence() {
-        if (wasSilencedFromGeofence) {
-            boolean wasSilent = isRingerSilentOrVibrate();
-            if (!wasSilent) {
-                Log.d(TAG, "device was already in normal ringer mode when unsilenceDeviceFromGeofence() was called.");
-                return false;
-            }
-            Switch ringerSwitch = (Switch) findViewById(R.id.switch_home_ringer);
-            if (ringerSwitch != null) {
-                ringerSwitch.setChecked(true);
-            }
-            setRinger(true);
-            wasSilencedFromGeofence = false;
-            return true;
+        if (!wasSilencedFromGeofence) {
+            Log.i(TAG, "Unsilence request skipped because we did not silence the device from a geofence.");
+            return false;
         }
-        Log.i(TAG, "Unsilence request skipped because we did not silence the device from a geofence.");
-        return false;
+
+        boolean wasSilent = isRingerSilentOrVibrate();
+        if (!wasSilent) {
+            Log.d(TAG, "device was already in normal ringer mode when unsilenceDeviceFromGeofence() was called.");
+            return false;
+        }
+/*
+        Switch ringerSwitch = (Switch) findViewById(R.id.switch_home_ringer);
+        if (ringerSwitch != null) {
+            ringerSwitch.setChecked(true);
+        }
+*/
+        wasSilencedFromGeofence = false;
+        setRinger(true);
+        return true;
     }
 
 
@@ -717,6 +717,9 @@ public class MainActivity extends ActionBarActivity
         return prefs.getBoolean(SettingsFragment.KEY_USE_LOCATION, false);
     }
 
+    private boolean getPrefControlRinger() {
+        return prefs.getBoolean(SettingsFragment.KEY_CONTROL_RINGER, false);
+    }
 
     private boolean getPrefUsingVibrate() {
         return prefs.getBoolean(SettingsFragment.KEY_USE_VIBRATE, false);
@@ -1076,18 +1079,35 @@ public class MainActivity extends ActionBarActivity
             Log.d(TAG, "Updating place list for: No Previous Location Found");
     }
 
+    private void updateNextTimeToRenewGeofences() {
+        nextTimeToRenewGeofences = System.currentTimeMillis() + Config.GEOFENCE_RENEW_INTERVAL_MS;
+    }
 
     public void waitThenManagePlaces() {
         Log.w(TAG, "waitThenManagePlaces");
+
+        updateNextTimeToRenewGeofences();
+
         final Handler handler = new Handler();
         Timer timer = new Timer();
-        final MainActivity thisActivity = this;
         TimerTask task = new TimerTask() {
             @Override
             public void run() {
                 handler.post(new Runnable() {
                     public void run() {
                         Log.d(TAG, "starting PlacesUpdateService in waitThenManagePlaces");
+
+                        if (System.currentTimeMillis() > nextTimeToRenewGeofences) {
+                            Log.w(TAG, "Time to renew geofences has arrived.");
+                            renewAllGeofences();
+                            updateNextTimeToRenewGeofences();
+                        }
+
+                        // 'Use Location' pref is disabled - don't follow
+                        if (!getPrefUsingLocation()) {
+                            Log.i(TAG, "Places Updates are disabled per the preference.");
+                            return;
+                        }
 
                         // The places update service will check if enough time has passed since our last query
                         // or that we have moved enough.
@@ -1109,36 +1129,6 @@ public class MainActivity extends ActionBarActivity
     }
 
 
-    public void startFollowUser() {
-
-        final Handler handler = new Handler();
-        Timer timer = new Timer();
-        // final MainActivity thisActivity = this;
-        TimerTask task = new TimerTask() {
-            @Override
-            public void run() {
-                handler.post(new Runnable() {
-                    public void run() {
-                        if (!isFollowingUser()) {
-                            return;
-                        }
-/*
-                        if (lastKnownLocation != null) {
-                            Log.v(TAG, "following user with camera");
-                            updateUserLocationOnMap(lastKnownLocation);
-                        }
-*/
-                        updateUserLocationOnMap();
-                    }
-                });
-            }
-        };
-        timer.schedule(task,
-                Config.FOLLOW_USER_INTERVAL_MS,   // delay before first run   // 0,
-                Config.FOLLOW_USER_INTERVAL_MS);  // delay to subsequent run
-
-    }
-
     @Override
     public void onLocationChanged(Location location) {
         // Report to the UI that the location was updated
@@ -1147,6 +1137,11 @@ public class MainActivity extends ActionBarActivity
         if (isBetterLocation(location, lastKnownLocation)) {
             lastKnownLocation = location;
             Log.d(TAG, "Found better location: " + lastKnownLocation);
+
+            if (isFollowingUser()) {
+                updateUserLocationOnMap();
+            }
+
         } else {
             Log.i(TAG, "Keeping existing location: " + lastKnownLocation);
         }
@@ -1252,22 +1247,21 @@ public class MainActivity extends ActionBarActivity
     }
 
     private void registerRingerStateChangeReceiver() {
-        final Switch ringerSwitch = (Switch) findViewById(R.id.switch_home_ringer);
+        final CheckBox ringerCheckBox = (CheckBox) findViewById(R.id.checkbox_home_ringer);
         ringerStateChangedReceiver = new BroadcastReceiver() {
             @Override
             public void onReceive(Context context, Intent intent) {
                 AudioManager audioManager = (AudioManager) getSystemService(AUDIO_SERVICE);
                 int ringerMode = audioManager.getRingerMode();
-                if (ringerMode ==AudioManager.RINGER_MODE_SILENT ) {
+                if (ringerMode == AudioManager.RINGER_MODE_SILENT) {
                     Log.w(TAG, "Ringer was silenced.");
-                    ringerSwitch.setChecked(false);
+                    ringerCheckBox.setChecked(false);
                 } else if (ringerMode == AudioManager.RINGER_MODE_VIBRATE) {
                     Log.w(TAG, "Ringer was put on vibrate.");
-                    ringerSwitch.setChecked(false);
-                }
-                else {
+                    ringerCheckBox.setChecked(false);
+                } else {
                     Log.w(TAG, "Ringer was un-silenced!");
-                    ringerSwitch.setChecked(true);
+                    ringerCheckBox.setChecked(true);
                 }
 
             }
@@ -1280,5 +1274,24 @@ public class MainActivity extends ActionBarActivity
 
     private void unregisterRingerStateChangeReceiver() {
         unregisterReceiver(ringerStateChangedReceiver);
+    }
+
+//    private void removeAllGeofences() {
+//        try {
+//            /*
+//             * Remove the geofences represented by the currently-active PendingIntent. If the
+//             * PendingIntent was removed for some reason, re-create it; since it's always
+//             * created with FLAG_UPDATE_CURRENT, an identical PendingIntent is always created.
+//             */
+//            mGeofenceRemover.removeGeofencesByIntent(mGeofenceRequester.getRequestPendingIntent());
+//
+//        } catch (UnsupportedOperationException e) {
+//            // Notify user that previous request hasn't finished.
+//            shortToast(getString(R.string.remove_geofences_already_requested_error));
+//        }
+//    }
+
+    private void renewAllGeofences() {
+        getMapFragment().renewAllGeofences();
     }
 }

@@ -273,7 +273,7 @@ public class QPMapFragment extends BaseFragment {
         getMap().setOnMapClickListener(new GoogleMap.OnMapClickListener() {
             @Override
             public void onMapClick(LatLng latLng) {
-                addNewQuietPlace(generateManualQuietPlace(latLng));
+                addManualQuietPlace(generateManualQuietPlace(latLng));
                 cancelAddButton(view);
             }
         });
@@ -459,7 +459,7 @@ public class QPMapFragment extends BaseFragment {
      *
      * @param quietPlace the populated QuietPlace object
      */
-    private void addNewQuietPlace(QuietPlace quietPlace) {
+    private void addManualQuietPlace(QuietPlace quietPlace) {
         // shortToast("Clicked at: " + latLng);
 
         Log.v(TAG, "About to add new quiet place to db: " + quietPlace);
@@ -483,6 +483,7 @@ public class QPMapFragment extends BaseFragment {
         }
 
         addQuietPlaceMapMarker(quietPlace);
+        syncGeofences(); // necessary to activate the new geofence.
     }
 
     /**
@@ -549,6 +550,8 @@ public class QPMapFragment extends BaseFragment {
         for (QuietPlaceMapMarker qpmm : selectedMarkers) {
             qpmm.delete();
         }
+        // need to run this to actually delete the geofence!
+        syncGeofences();
     }
 
     /**
@@ -568,7 +571,7 @@ public class QPMapFragment extends BaseFragment {
         }
 
         if (markerByGeofenceId.remove(qpmm.getGeofenceId()) == null) {
-            Log.w(TAG, "couldn't remove item from markerByGeofenceId: " + qpmm.toString());
+            Log.w(TAG, "couldn't remove item from markerByGeofenceId: " + qpmm.getGeofenceId() + " qp: " + qpmm.toString());
         }
 
         if (!mapMarkerSet.remove(qpmm)) {
@@ -600,6 +603,7 @@ public class QPMapFragment extends BaseFragment {
 
             @Override
             protected void onPostExecute(Void result) {
+                Log.i(TAG, "Loaded marker database.");
                 deleteAutoAddedMarkers();
                 activateQuietPlaces(quietPlaceList, true);
             }
@@ -734,8 +738,6 @@ public class QPMapFragment extends BaseFragment {
             addQuietPlaceMapMarker(quietPlace);
         }
 
-        Log.i(TAG, "Loaded marker database.");
-
         if (logEvent) {
             // Not sure we need to keep this.
             HistoryEvent.logEvent(getMyActivity(), HistoryEvent.TYPE_DATABASE_LOADED,
@@ -751,6 +753,7 @@ public class QPMapFragment extends BaseFragment {
         QuietPlaceMapMarker qpmm = QuietPlaceMapMarker.createQuietPlaceMapMarker(quietPlace, this);
         mapMarkerSet.add(qpmm);
         markerMap.put(qpmm.getMapMarker(), qpmm);
+
         markerByGeofenceId.put(qpmm.getGeofenceId(), qpmm);
 
     }
@@ -971,16 +974,22 @@ public class QPMapFragment extends BaseFragment {
 */
 
     public void queueGeofenceAdd(Geofence geofence) {
+        if (geofence == null) {
+            Log.w(TAG, "null geofence queued!");
+            return;
+        }
         pendingGeofenceAdds.add(geofence);
     }
 
     private boolean sendGeofenceAdditions() {
         if (pendingGeofenceAdds == null ||
                 pendingGeofenceAdds.size() == 0) {
+            Log.d(TAG, "No pending geofences to add right now.");
             return false;
         }
         MainActivity mainActivity = (MainActivity) getMyActivity();
         if (mainActivity == null) {
+            Log.e(TAG, "Error: null mainActivity in sendGeofenceAdditions");
             return false;
         }
         boolean rv = mainActivity.requestGeofences(pendingGeofenceAdds);
@@ -1004,6 +1013,7 @@ public class QPMapFragment extends BaseFragment {
         if (mainActivity == null) {
             return false;
         }
+        Log.i(TAG, "Removing " + pendingGeofenceIdRemoves.size() + " geofences.");
         boolean rv = mainActivity.removeGeofences(pendingGeofenceIdRemoves);
 
         // Create a new array; the old one is being used by the pending request.
@@ -1011,13 +1021,23 @@ public class QPMapFragment extends BaseFragment {
         return rv;
     }
 
-    public void syncGeofences() {
-        sendGeofenceRemovals();
-        if (!sendGeofenceAdditions()) {
-            Log.e(TAG, "May have failed to set geofences when syncing.");
-        } else {
-            Log.d(TAG, "Syncing geofences: add ok.");
+    /**
+     * Re-add all existing geofences under the same IDs. This will renew them
+     * and refresh any expiration
+     */
+    public void renewAllGeofences() {
+        Log.i(TAG, "Renewing all geofences.");
+        for (QuietPlaceMapMarker qpmm : mapMarkerSet) {
+            queueGeofenceAdd(qpmm.getGeofence());
         }
+        syncGeofences();
+    }
+
+    public void syncGeofences() {
+        Log.d(TAG, "Syncing geofences.");
+        sendGeofenceRemovals();
+        sendGeofenceAdditions();
+        Log.d(TAG, "Syncing request initiated.");
     }
 
     /**
@@ -1036,7 +1056,7 @@ public class QPMapFragment extends BaseFragment {
             if (qpmm == null) {
                 // marker was probably deleted out from under us
                 Log.e(TAG, "Can't find QuietPlaceMapMarker from geofence ID: " + geofenceId);
-                // We need to remove this geofence!\
+                // We need to remove this geofence!
                 queueGeofenceIdRemove(geofenceId);
                 removingGeofence = true;
                 continue;

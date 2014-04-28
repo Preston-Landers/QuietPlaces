@@ -1,5 +1,6 @@
 package edu.utexas.quietplaces;
 
+import android.app.AlarmManager;
 import android.content.Context;
 import android.graphics.Color;
 import com.google.android.gms.location.Geofence;
@@ -21,7 +22,7 @@ public class Config {
 
     // http://developer.android.com/training/location/receive-location-updates.html
 
-    public static final long LOCATION_UPDATE_INTERVAL_MS = 10000;
+    public static final long LOCATION_UPDATE_INTERVAL_MS = 15000;
     public static final long LOCATION_FASTEST_INTERVAL_MS = 5000;
 
     // Only send a location update if we've moved at least this far (meters)
@@ -37,6 +38,11 @@ public class Config {
     // Distance (in meters) for an auto-added place to be considered for automatic cleanup
     public static final double DISCARD_AUTO_PLACES_DISTANCE = 750;
 
+
+    // Maximum time a geofence can live in the system. We automatically refresh their
+    // definition (using the same ID as before)
+    public static final long GEOFENCE_MAX_LIFETIME_MS = AlarmManager.INTERVAL_DAY;
+    public static final long GEOFENCE_RENEW_INTERVAL_MS = AlarmManager.INTERVAL_HOUR * 12;
 
     // Probably belongs in an XML file somewhere
     public static final int QP_CIRCLE_STROKE_COLOR = Color.argb(150, 0, 0, 255);

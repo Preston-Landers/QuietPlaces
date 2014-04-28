@@ -68,11 +68,11 @@
                 android:layout_centerHorizontal="true"
                 android:layout_marginTop="10dp"/>
 
-        <Switch
+        <CheckBox
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="@string/ringer_switch"
-                android:id="@+id/switch_home_ringer"
+                android:id="@+id/checkbox_home_ringer"
                 android:layout_below="@+id/tv_ringer_status"
                 android:layout_centerHorizontal="true"
                 android:layout_marginTop="30dp"

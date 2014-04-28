@@ -4,6 +4,11 @@
             android:title="@string/pref_category_device_title"
             android:key="pref_category_location">
         <CheckBoxPreference
+                android:key="pref_control_ringer"
+                android:title="@string/pref_control_ringer"
+                android:summary="@string/pref_control_ringer_summary"
+                android:defaultValue="true"/>
+        <CheckBoxPreference
                 android:key="pref_use_location"
                 android:title="@string/pref_use_location"
                 android:summary="@string/pref_use_location_summary"
