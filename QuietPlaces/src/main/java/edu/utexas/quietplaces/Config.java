@@ -32,9 +32,6 @@ public class Config {
     // may exceed this if the user hasn't moved much. See PlacesUpdateService for details
     public static final long MANAGE_PLACES_INTERVAL_MS = 30000;
 
-    // How often do we move the camera to follow the user?
-    public static final long FOLLOW_USER_INTERVAL_MS = LOCATION_FASTEST_INTERVAL_MS;
-
     // Distance (in meters) for an auto-added place to be considered for automatic cleanup
     public static final double DISCARD_AUTO_PLACES_DISTANCE = 750;
 

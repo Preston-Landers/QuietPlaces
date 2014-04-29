@@ -97,18 +97,6 @@ public class MainActivity extends ActionBarActivity
     List<Geofence> mCurrentGeofences;
 
     /*
-     * Use to set an expiration time for a geofence. After this amount
-     * of time Location Services will stop tracking the geofence.
-     * Remember to unregister a geofence when you're finished with it.
-     * Otherwise, your app will use up battery. To continue monitoring
-     * a geofence indefinitely, set the expiration time to
-     * Geofence#NEVER_EXPIRE.
-     */
-    private static final long GEOFENCE_EXPIRATION_IN_HOURS = 12;
-    private static final long GEOFENCE_EXPIRATION_IN_MILLISECONDS =
-            GEOFENCE_EXPIRATION_IN_HOURS * android.text.format.DateUtils.HOUR_IN_MILLIS;
-
-    /*
      * An instance of an inner class that receives broadcasts from listeners and from the
      * IntentService that receives geofence transition events
      */
@@ -203,7 +191,7 @@ public class MainActivity extends ActionBarActivity
         // UI FRAGMENTS
         List<Fragment> currentFragments = getSupportFragmentManager().getFragments();
         if (currentFragments == null || currentFragments.size() == 0) {
-            mapFragment = getMapFragment();       // TODO: check for null map here... no Google Play Services?
+            mapFragment = getMapFragment();
             homeFragment = HomeFragment.newInstance(1);
             historyFragment = HistoryFragment.newInstance(3);
             settingsFragment = new SettingsFragment();
@@ -379,9 +367,18 @@ public class MainActivity extends ActionBarActivity
 
 
         getSettingsFragment().updateMasterPlaceTypes();
-        mLocationClient.connect();
+        connectLocationClientIfEnabled();
 
 
+    }
+
+    public void connectLocationClientIfEnabled() {
+        if (getPrefUsingLocation()) {
+            Log.i(TAG, "Connecting location services.");
+            mLocationClient.connect();
+        } else {
+            Log.w(TAG, "Location services disabled by preference.");
+        }
     }
 
     @Override
@@ -437,16 +434,12 @@ public class MainActivity extends ActionBarActivity
 
     }
 
-    public void enableMainActivityLocationUpdates() {
-        // Display the connection status
-        if (getPrefUsingLocation()) {
-            // shortToast("Requesting Location Services");
-            mLocationClient.requestLocationUpdates(mLocationRequest, this);
-
-        }
-    }
 
     public void disableMainActivityLocationUpdates() {
+        if (getMapFragment() != null) {
+            getMapFragment().useMapLocationOptions(false);
+        }
+
         // If the client is connected
         if (mLocationClient.isConnected()) {
             /*
@@ -470,9 +463,6 @@ public class MainActivity extends ActionBarActivity
             // This can happen if the user hasn't visited the map tab yet
             return;
         }
-
-        // other map setup here
-        googleMap.setMyLocationEnabled(true);
 
     }
 
@@ -593,7 +583,12 @@ public class MainActivity extends ActionBarActivity
     }
 
 
-    // Todo: support separate vibration setting?
+    /**
+     * Set the ringer state without any further checking.
+     * Whether it's set to silent or vibrate depends on the preference.
+     *
+     * @param ringerState false to set silent/vibrate mode
+     */
     private void setRinger(boolean ringerState) {
         AudioManager audioManager = (AudioManager) getSystemService(AUDIO_SERVICE);
         int ringerMode = AudioManager.RINGER_MODE_NORMAL;
@@ -675,7 +670,19 @@ public class MainActivity extends ActionBarActivity
      */
     @Override
     public void onConnected(Bundle dataBundle) {
-        enableMainActivityLocationUpdates();
+        // Display the connection status
+        if (getPrefUsingLocation()) {
+            // shortToast("Requesting Location Services");
+            mLocationClient.requestLocationUpdates(mLocationRequest, this);
+
+        }
+
+        // Is redundant with onResume call in QPMapFragment
+        // But we also need this called when they toggle the Use Location preference.
+        if (getMapFragment() != null) {
+            getMapFragment().useMapLocationOptionsIfEnabled();
+        }
+
     }
 
     /*
@@ -713,7 +720,7 @@ public class MainActivity extends ActionBarActivity
         }
     }
 
-    private boolean getPrefUsingLocation() {
+    public boolean getPrefUsingLocation() {
         return prefs.getBoolean(SettingsFragment.KEY_USE_LOCATION, false);
     }
 
@@ -969,7 +976,6 @@ public class MainActivity extends ActionBarActivity
     /**
      * Verify that Google Play services is available before making a request.
      * <p/>
-     * TODO: should be calling this when initially creating the map fragment.
      *
      * @return true if Google Play services is available, otherwise false
      */

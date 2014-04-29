@@ -175,7 +175,7 @@ public class SettingsFragment extends PreferenceFragment
             if (usingLocation) {
                 if (mainActivity != null) {
                     Log.w(TAG, "'Use Location' setting changed to ON. Enabling location updates.");
-                    mainActivity.enableMainActivityLocationUpdates();
+                    mainActivity.connectLocationClientIfEnabled();
                 } else {
                     Log.e(TAG, "'Use Location' setting changed to ON, but unable to find main activity to enable location updates.");
                 }

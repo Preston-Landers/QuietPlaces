@@ -129,16 +129,11 @@ public class QPMapFragment extends BaseFragment {
     }
 
     private void setUpMap() {
-        // mMap.addMarker(new MarkerOptions().position(new LatLng(30, -90)).title("Marker"));
-
         // Set the map type from the preference.
         MainActivity activity = (MainActivity) getMyActivity();
         setMapType(activity.getSettingsFragment().getMapTypeInt());
 
-        getMap().getUiSettings().setCompassEnabled(true);
-
         loadPlacesFromDatabaseAsync();
-
     }
 
     private void setupMapListeners() {
@@ -193,7 +188,7 @@ public class QPMapFragment extends BaseFragment {
         if (mMapView != null) {
             mMapView.onResume();
         }
-        getMap().getUiSettings().setCompassEnabled(true);
+        useMapLocationOptionsIfEnabled();
     }
 
     @Override
@@ -202,8 +197,10 @@ public class QPMapFragment extends BaseFragment {
         if (mMapView != null) {
             mMapView.onPause();
         }
-        // Compass requires extra sensors, so turn it off when not using
-        // getMap().getUiSettings().setCompassEnabled(false);
+
+        // Turn off the 'my location' map stuff when not using it
+        useMapLocationOptions(false);
+
     }
 
     @Override
@@ -228,6 +225,18 @@ public class QPMapFragment extends BaseFragment {
         if (mMapView != null) {
             mMapView.onLowMemory();
         }
+    }
+
+    public void useMapLocationOptionsIfEnabled() {
+        MainActivity mainActivity = (MainActivity) getMyActivity();
+        if (mainActivity != null && mainActivity.getPrefUsingLocation()) {
+            useMapLocationOptions(true);
+        }
+    }
+
+    public void useMapLocationOptions(boolean useLocation) {
+        getMap().getUiSettings().setCompassEnabled(useLocation);
+        getMap().setMyLocationEnabled(useLocation);
     }
 
     /**

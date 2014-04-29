@@ -3,21 +3,12 @@
         xmlns:tools="http://schemas.android.com/tools"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        tools:context="edu.utexas.quietplaces.fragments.HistoryFragment">
+        tools:context="edu.utexas.quietplaces.fragments.QPMapFragment">
 
     <com.google.android.gms.maps.MapView
             android:id="@+id/map"
             android:layout_width="match_parent"
             android:layout_height="match_parent" />
-            <!--xmlns:map="http://schemas.android.com/apk/res-auto"-->
-            <!--map:mapType="satellite"-->
-            <!--map:uiCompass="true"-->
-            <!--map:uiRotateGestures="true"-->
-            <!--map:uiScrollGestures="true"-->
-            <!--map:uiTiltGestures="true"-->
-            <!--map:uiZoomControls="true"-->
-            <!--map:uiZoomGestures="true"-->
-            <!--/>-->
 
     <RelativeLayout
             android:layout_width="fill_parent"
