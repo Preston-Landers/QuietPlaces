@@ -17,7 +17,7 @@
                 android:id="@+id/event_icon"
                 android:src="@drawable/ic_menu_info_details"
                 android:layout_gravity="center"
-                />
+                android:contentDescription="@string/history_category_icon_desc"/>
     </FrameLayout>
 
     <RelativeLayout
@@ -31,7 +31,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:textAppearance="?android:attr/textAppearanceMedium"
-                android:text="Event Text"
+                android:text="@string/placeholder_text"
                 android:id="@+id/event_text"
                 android:layout_below="@+id/event_type"
                 android:layout_marginTop="3dp"/>
@@ -40,7 +40,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:textAppearance="?android:attr/textAppearanceSmall"
-                android:text="Event Date"
+                android:text="@string/placeholder_text"
                 android:id="@+id/event_date"
                 android:layout_alignParentRight="true"
                 />
@@ -49,7 +49,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:textAppearance="?android:attr/textAppearanceSmall"
-                android:text="Event Type"
+                android:text="@string/placeholder_text"
                 android:id="@+id/event_type"
                 android:layout_alignParentRight="false"
                 android:textStyle="italic"

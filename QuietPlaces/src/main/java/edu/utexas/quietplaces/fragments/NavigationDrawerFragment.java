@@ -111,6 +111,10 @@ public class NavigationDrawerFragment extends BaseFragment {
 
             @Override
             public View getView(int position, View convertView, ViewGroup parent) {
+                // TODO: IntelliJ says there's something wrong with this - that we should be using the
+                // 2nd argument instead of inflating here. And there does seem to be something hinky
+                // about the navigation drawer behavior, especially visible on the emulator.
+                // But as far as I can tell the passed-in convertView is always null....
                 LayoutInflater inflater = (LayoutInflater) getActivity().getSystemService(Context.LAYOUT_INFLATER_SERVICE);
                 convertView = inflater.inflate(R.layout.navigation_item, parent, false);
 

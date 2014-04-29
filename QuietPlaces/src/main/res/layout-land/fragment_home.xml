@@ -19,7 +19,7 @@
             android:layout_height="150dp"
             android:id="@+id/home_logo"
             android:src="@drawable/ic_launcher_web"
-            android:contentDescription="Logo"
+            android:contentDescription="@string/home_logo_description"
             android:layout_centerVertical="true"
             android:layout_alignParentEnd="false"
             android:layout_alignParentLeft="true"

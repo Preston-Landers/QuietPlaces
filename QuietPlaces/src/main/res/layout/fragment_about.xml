@@ -17,7 +17,7 @@
         <LinearLayout
                 android:orientation="vertical"
                 android:layout_width="fill_parent"
-                android:layout_height="fill_parent">
+                android:layout_height="wrap_content">
 
             <RelativeLayout
                     android:layout_width="fill_parent"
@@ -87,7 +87,7 @@
                         android:layout_height="75dp"
                         android:id="@+id/about_logo_iv"
                         android:src="@drawable/ic_launcher_web"
-                        android:contentDescription="Logo"
+                        android:contentDescription="@string/about_logo_desc"
                         android:layout_alignParentBottom="false"
                         android:layout_alignParentRight="true"
                         android:layout_alignParentEnd="false"
@@ -128,14 +128,15 @@
                         android:layout_alignParentStart="true"
                         android:layout_below="@+id/help_link"
                         android:singleLine="false"
-                        android:autoText="false"/>
+                        />
 
                 <ImageView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:id="@+id/about_icon_iv"
                         android:src="@drawable/ic_menu_info_details"
-                        android:layout_alignTop="@+id/about_title_tv"/>
+                        android:layout_alignTop="@+id/about_title_tv"
+                        android:contentDescription="@string/about_icon_desc"/>
 
             </RelativeLayout>
 
@@ -148,13 +149,14 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:id="@+id/about_help_icon"
-                        android:src="@drawable/ic_menu_help"/>
+                        android:src="@drawable/ic_menu_help"
+                        android:contentDescription="@string/about_help_icon_desc"/>
 
                 <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:textAppearance="?android:attr/textAppearanceLarge"
-                        android:text="Help!"
+                        android:text="@string/about_help_title"
                         android:id="@+id/about_help_title"
                         android:layout_toRightOf="@+id/about_help_icon"
                         android:layout_alignBottom="@+id/about_help_icon"

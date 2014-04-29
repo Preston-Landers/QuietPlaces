@@ -107,7 +107,7 @@
             <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Currently Selected"
+                    android:text="@string/currently_selected"
                     android:id="@+id/tv_selected_label"
                     android:layout_alignWithParentIfMissing="false"
                     android:layout_alignParentRight="false"
@@ -118,7 +118,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:textAppearance="?android:attr/textAppearanceSmall"
-                    android:text="Small Text"
+                    android:text=""
                     android:id="@+id/tv_selected_size"
                     android:layout_below="@+id/tv_selected_label"/>
 
@@ -178,7 +178,8 @@
                     android:background="@drawable/ic_menu_mylocation"
                     android:layout_marginLeft="10dp"
                     android:onClick="clickCenterButton"
-                    android:layout_alignTop="@+id/shrinkPlaceButton"/>
+                    android:layout_alignTop="@+id/shrinkPlaceButton"
+                    android:contentDescription="@string/centerPlaceButtonDescription"/>
 
             <ImageButton
                     android:layout_width="45dp"
@@ -188,7 +189,9 @@
                     android:background="@drawable/ic_menu_edit"
                     android:layout_marginLeft="10dp"
                     android:focusableInTouchMode="false"
-                    android:onClick="clickEditButton"/>
+                    android:onClick="clickEditButton"
+                    android:contentDescription="@string/editPlaceButtonDescription"
+                    />
 
             <TextView
                     android:layout_width="wrap_content"

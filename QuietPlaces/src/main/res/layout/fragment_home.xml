@@ -22,7 +22,7 @@
             android:layout_centerHorizontal="true"
             android:src="@drawable/ic_launcher_web"
             android:layout_marginTop="15dp"
-            android:contentDescription="Logo"/>
+            android:contentDescription="@string/home_logo_description"/>
 
     <TextView
             android:layout_width="wrap_content"

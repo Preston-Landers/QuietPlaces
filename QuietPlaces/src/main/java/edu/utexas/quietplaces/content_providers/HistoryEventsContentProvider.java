@@ -160,7 +160,7 @@ public class HistoryEventsContentProvider extends ContentProvider {
      *
      * @param context       activity context
      * @param orderedByTime if true, events are return in ascending order of time.
-     * @return
+     * @return list of all history events
      */
     public static List<HistoryEvent> getAllHistoryEvents(Context context, boolean orderedByTime) {
 
@@ -224,6 +224,7 @@ public class HistoryEventsContentProvider extends ContentProvider {
 
     /**
      * Load a HistoryEvent object out of a cursor.
+     *
      * @param cursor active cursor
      * @return new HistoryEvent from the current record in the cursor.
      */
@@ -429,7 +430,8 @@ public class HistoryEventsContentProvider extends ContentProvider {
         public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
             Log.w(TAG,
                     "Upgrading database from version " + oldVersion + " to "
-                            + newVersion + ", which will destroy all old data");
+                            + newVersion + ", which will destroy all old data"
+            );
             db.execSQL("DROP TABLE IF EXISTS " + TABLE_EVENTS);
             onCreate(db);
         }

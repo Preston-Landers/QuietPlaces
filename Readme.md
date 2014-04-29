@@ -30,20 +30,21 @@ Thanks to:
 
 Dr. Christine Julien
 
+
 # Current Status #
 
 See the section below for building the app from source code.
 
-The app is functional and mostly stable. It handles manual placement and adjustment of
+The app is has basic functionality working. It handles manual placement and adjustment of
 Quiet Places as well as automatic place suggestion using the Google Places API.  The
 automatic placement and sizing could use some additional refinement.
-
-The app has a built-in help screen in the navigation drawer. Please see that for basic usage information.
 
 We also have a mock location testing companion app, which is available here:
 [QuietPlacesMockLocations]. See below for more information about testing.
 
 ## Usage Summary ##
+
+The app has a built-in help screen in the navigation drawer. Please see that for more information.
 
 This app uses a [navigation drawer](https://developer.android.com/design/patterns/navigation-drawer.html) interface.
 There is a home screen with a ringer control switch. The main interface of the app is the Map tab.
@@ -73,37 +74,40 @@ There's also settings to control whether we actually silence the ringer, and whe
 * Use better looking map marker drawables, especially for auto-places
 * Generate more interesting names for manually added places (e.g. find an address or name)
 * Ability to resize quiet places with scale gestures
-  * Not critical because we have buttons to resize the selected place but would be cool.
+    * Not critical because we have buttons to resize the selected place but would be cool.
 * Better placement of auto-QPs. E.g. don't center the circle on the street corner
 * Better sizing of auto-QPs, at least some basic heuristics
 * Allow an individual Quiet Place to be temporarily disabled w/o deleting it.
 * Put a confirmation dialog on delete place, and clear history?
+* Use the 'user activity detection' features to determine if the user is driving
+  and suspend enforcement? (as an option)
 
 ## Known Bugs ##
 
-* If you are currently inside a geofence, and then move the fence away from you with a drag,
-  it doesn't register as leaving the fence since it got removed and then
-  readded in the other spot.
-* Likewise, if you create a new QP that you are currently inside, it doesn't trigger the silence.
-* When you change the selected categories, the auto places don't update until
-  you move a minimum distance (100 m), or 1 hour has passed.
-* Current selection (of a Quiet Place) is lost when changing device orientation
 * There is a hard limit of 100 active geofences imposed by Location Services.
   This isn't handled very gracefully yet. We should self-limit the number we
   try to create.  And also put in a preference to allow the maximum number.
+* If you are currently inside a geofence, and then move the fence away from you with a drag,
+  it doesn't register as leaving the geofence since it got removed and then
+  readded in the other spot.
+    * Likewise, if you create a new QP that you are currently inside, it doesn't trigger the silence.
+* When you change the selected categories, the auto places don't update until
+  you move a minimum distance (100 m), or 1 hour has passed. Even if you
+  are actively moving it can take up to a minute to register changes to the automatic place categories.
+* Current selection (of a Quiet Place) is lost when changing device orientation.
 
 
 # Development Notes #
 
-## Application Overview ##
+## Architecture Overview ##
 
 The app maintains a database with two types of map markers: manually placed and automatically
-placed. When we place a map marker we set up an associated [Geofence with Google Play Location Services]
+placed. When we place a map marker we create an associated [Geofence definition in Google Play Location Services]
 (https://developer.android.com/training/location/geofencing.html).
 
 The geofence sends the app a notification when the user enters or exits a circularly defined
 geographic region (a point plus a radius.)  The MainActivity registers a broadcast receiver for this
-geofence event and passes the event to the associated QuietPlaceMapMarker (QPMM, see below.)
+geofence transition event and passes the event to the associated QuietPlaceMapMarker (QPMM, see below) object.
 The QPMM determines if the ringer should be silenced or unsilenced. For instance, we should not unsilence if we're still
 inside another overlapping Quiet Place. These geofence events are processed even if the app is
 in the background.
@@ -112,24 +116,39 @@ The MainActivity also maintains another listener for general purpose location up
 used for two purposes:
 
 * Following the user's currently location on the map (if the option is checked)
-* Periodically querying the Google Places API with the current location, to look for nearby
+* Periodically querying the Google Places API with the current location to look for nearby
   places that match our preferences.
 
-The Places API query happens anywhere from every 60 seconds to up to an hour, depending how far the user has moved
-since the last query. The response may also be cached locally by the app. The query happens in a background
+The Places API query happens anywhere from every 30 seconds to up to an hour, depending how far the user has moved
+since the last query. The response may also be cached locally by the app. The API query happens in a background
 Service outside the main UI thread. Further processing of the results is done inside an AsyncTask from
-the main activity.
+the main activity to keep the application responsive.
 
-It scans the API results for new Quiet Places to add to the map, and prunes out QPs that no longer match
-our criteria or are too far away.
+The AsyncTask scans the API results from the PlacesUpdateService and finds new Quiet Places to add to the map,
+and prunes out QPs that no longer match our criteria or are too far away.
+
+## App Permissions ##
+
+The app requires the following Android system permissions:
+
+* Location data (ACCESS_FINE_LOCATION and ACCESS_COARSE_LOCATION)
+* Network access for the Places API  (INTERNET)
+    * Check whether we're connected to the network (ACCESS_NETWORK_STATE)
+* Cache map data on the device for better performance (WRITE_EXTERNAL_STORAGE)
 
 ## Tools and APIs used ##
 
-Note that if you wish to build this app from source you need to obtain your own Google API keys as described below.
+We used the following APIs and libraries to create this app:
 
 * [Google Maps for Android V2](https://developers.google.com/maps/documentation/android/)
 * [Google Places API](https://developers.google.com/places/)
 * [JodaTime library](http://www.joda.org/joda-time/)
+* Some code was adapted from a project called
+  [Android Location Best Practices](https://code.google.com/p/android-protips-location/) in heavily modified form.
+  See [this article about LBP.](http://android-developers.blogspot.com/2011/06/deep-dive-into-location.html)
+
+Note that if you wish to build this app from source you need to obtain your own Google API keys as described below.
+
 
 ## Data Model ##
 
@@ -154,7 +173,8 @@ are cached in the local database.
 ## Software Engineering Challenges ##
 
 This section describes some of the mobile computing and software engineering challenges
-encountered developing this project.
+encountered developing this project. These include the difficulty of readily testing an heavily
+location-based app, and prevent excessive battery drain by the app.
 
 ### Testing location-centric apps is hard. ###
 
@@ -198,13 +218,13 @@ step of creating a file and inserting a new API key that you got from Google.
 ## Prerequisites to Build ##
 
 * JDK 1.6
-* Android SDK installed
-  * Android SDK Platform/Build Tools
-  * Android API 19
-  * Android Support Library
-  * Google Play Services
+* Android SDK installed:
+    * Android SDK Platform/Build Tools
+    * Android API 19
+    * Android Support Library
+    * Google Play Services
 * Either: a Java IDE that includes Gradle such as IntelliJ IDEA 13 or Android Studio.
-  * OR a Gradle install if you wish to build from the command line
+    * OR a Gradle install if you wish to build from the command line
 * Obtain a new pair of API keys as described below.
 
 
@@ -232,15 +252,13 @@ Contents should be like:
 
     <?xml version="1.0" encoding="utf-8"?>
     <resources>
-        <string name="google_project_number">PROJECT_NUMBER</string>
         <string name="google_public_api_key">API_KEY</string>
         <string name="google_browser_api_key">BROWSER_API_KEY</string>
     </resources>
 
-Replace `PROJECT_NUMBER` with the project number from the Google API console, and the `API_KEY` from the
-Android key you got from the Public API Access area of the console.
+Replace `API_KEY` with the Android key you got from the Public API Access area of the console.
 
-Replace `BROWSER_API_KEY` from the browser key from the same area of the console.
+Replace `BROWSER_API_KEY` wtih the browser key from the same area of the console.
 
 The keys will look something like `AIzaSyBdVl-cTICSwYKrZ95SuvNw7dbMuDt1KG0` (this is not a valid key)
 
@@ -282,11 +300,7 @@ See LICENSE.txt for details.
 
 # Open Source Credits
 
-Some classes in this app were derived from the "Location Best Practices" project:
-
-https://code.google.com/p/android-protips-location/
-http://android-developers.blogspot.com/2011/06/deep-dive-into-location.html
-
-Some icons from:
-http://www.iconarchive.com/show/sleek-xp-basic-icons-by-hopstarter.html
+Some icons were taken from [this icon set]
+(http://www.iconarchive.com/show/sleek-xp-basic-icons-by-hopstarter.html)
+under Creative Commons license.
 

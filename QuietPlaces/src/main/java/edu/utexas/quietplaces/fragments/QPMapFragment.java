@@ -667,14 +667,12 @@ public class QPMapFragment extends BaseFragment {
             if (!qp.categoryMatchesSelectedPlaceTypes(selectedPlaceTypes)) {
                 Log.d(TAG, "Deleting auto-add QP because it doesn't match current critiera. " + qp);
                 deletables.add(qpmm);
-            }
-            else if (!inNewSet && isFarAwayFromCurrentLocation(qp)) {
+            } else if (!inNewSet && isFarAwayFromCurrentLocation(qp)) {
                 // Only remove an auto-QPMM if it's not in our new results set
                 // AND if it's far away from us.
                 Log.i(TAG, "Deleting auto-add QP because it's not in our new results and is far away: " + qp);
                 deletables.add(qpmm);
-            }
-            else {
+            } else {
                 Log.v(TAG, "Keeping QP because still matches and is nearby. " + qp);
             }
 
@@ -727,7 +725,7 @@ public class QPMapFragment extends BaseFragment {
      * Note that we return false (i.e, 'near') if we have no known location.
      *
      * @param quietPlace place to check
-     * @return
+     * @return true if the place is above the distance threshold for current location
      */
     private boolean isFarAwayFromCurrentLocation(QuietPlace quietPlace) {
         MainActivity mainActivity = (MainActivity) getMyActivity();

@@ -55,31 +55,44 @@
                 android:exported="false"/>
 
         <service
-                android:name="edu.utexas.quietplaces.services.EclairPlacesUpdateService">
+                android:name="edu.utexas.quietplaces.services.EclairPlacesUpdateService"
+                android:exported="false">
             <intent-filter>
                 <action android:name="edu.utexas.quietplaces.placesupdateservice"/>
             </intent-filter>
         </service>
-        <service android:name="edu.utexas.quietplaces.services.PlaceDetailsUpdateService"/>
+        <service
+                android:name="edu.utexas.quietplaces.services.PlacesUpdateService"
+                android:exported="false">
+            <intent-filter>
+                <action android:name="edu.utexas.quietplaces.placesupdateservice"/>
+            </intent-filter>
+        </service>
+        <service
+                android:name="edu.utexas.quietplaces.services.PlaceDetailsUpdateService"
+                android:exported="false"/>
 
 
-
-        <!-- TODO: do we really need to export these? Isn't this a security issue? -->
+        <!-- Don't we really need to export these? Isn't this a security issue? -->
         <provider
                 android:name=".content_providers.HistoryEventsContentProvider"
-                android:authorities="edu.utexas.quietplaces.provider.historyevents">
+                android:authorities="edu.utexas.quietplaces.provider.historyevents"
+                android:exported="false">
         </provider>
         <provider
                 android:name=".content_providers.QuietPlacesContentProvider"
-                android:authorities="edu.utexas.quietplaces.provider.quietplaces">
+                android:authorities="edu.utexas.quietplaces.provider.quietplaces"
+                android:exported="false">
         </provider>
         <provider
                 android:name=".content_providers.PlacesContentProvider"
-                android:authorities="edu.utexas.quietplaces.provider.gplaces">
+                android:authorities="edu.utexas.quietplaces.provider.gplaces"
+                android:exported="false">
         </provider>
         <provider
                 android:name=".content_providers.PlaceDetailsContentProvider"
-                android:authorities="edu.utexas.quietplaces.provider.gplacedetails">
+                android:authorities="edu.utexas.quietplaces.provider.gplacedetails"
+                android:exported="false">
         </provider>
     </application>
 

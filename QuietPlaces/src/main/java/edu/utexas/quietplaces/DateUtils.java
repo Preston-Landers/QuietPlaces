@@ -34,12 +34,11 @@ public class DateUtils {
 
     public static DateTime parseISO8601Date(String datetimeString) {
         DateTimeFormatter parser = ISODateTimeFormat.dateTimeParser();
-        // todo: check if this is correct
-        // probably want an exception handler that returns null?
         try {
             return parser.parseDateTime(datetimeString);
         } catch (Exception e) {
             Log.e(TAG, "Failed to parse datetime str: " + datetimeString, e);
+            // warning: this can cause the date to be interpreted as 'now' in some contexts
             return null;
         }
     }

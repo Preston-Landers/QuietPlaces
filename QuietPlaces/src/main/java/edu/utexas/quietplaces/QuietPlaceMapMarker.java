@@ -235,12 +235,14 @@ public class QuietPlaceMapMarker {
 
             // This QP is selected, so let it respond to scale gesture events.
             // getQpMapFragment().attachScaleListener(this);
-        } else {
+        }
+
+        // else {
 
             // Unselecting this QP, so no longer listen for scale gestures.
             // Now we go back to regular map zooming.
             // getQpMapFragment().detachScaleListener();
-        }
+        // }
 
     }
 
@@ -471,7 +473,7 @@ public class QuietPlaceMapMarker {
     /**
      * Returns a Geofence object corresponding to the current settings of this quiet place.
      *
-     * @return
+     * @return constructed Geofence object
      */
     private Geofence buildGeofence() {
         QuietPlace quietPlace = getQuietPlace();

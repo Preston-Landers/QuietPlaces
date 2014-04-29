@@ -28,7 +28,8 @@
             android:src="@drawable/overscroll_edge"
             android:layout_marginLeft="5dp"
             android:layout_marginRight="5dp"
-            android:visibility="gone"/>
+            android:visibility="gone"
+            android:contentDescription="@string/navigation_divider_desc"/>
 
     <RelativeLayout
             xmlns:android="http://schemas.android.com/apk/res/android"

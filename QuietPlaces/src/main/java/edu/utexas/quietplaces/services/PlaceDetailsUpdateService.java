@@ -165,7 +165,7 @@ public class PlaceDetailsUpdateService extends IntentService {
                             else if (eventType == XmlPullParser.START_TAG && xpp.getName().equals("vicinity"))
                                 vicinity = xpp.nextText();
                             else if (eventType == XmlPullParser.START_TAG && xpp.getName().equals("type"))
-                                types = types == "" ? xpp.nextText() : types + " " + xpp.nextText();
+                                types = types.equals("") ? xpp.nextText() : types + " " + xpp.nextText();
                             else if (eventType == XmlPullParser.START_TAG && xpp.getName().equals("lat"))
                                 locationLat = xpp.nextText();
                             else if (eventType == XmlPullParser.START_TAG && xpp.getName().equals("lng"))

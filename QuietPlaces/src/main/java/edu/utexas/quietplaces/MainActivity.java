@@ -459,11 +459,9 @@ public class MainActivity extends ActionBarActivity
     private void setupMapIfNeeded() {
         googleMap = getMapFragment().getMap();
         if (googleMap == null) {
-            // longToast("Can't get map object. :-(");
-            // This can happen if the user hasn't visited the map tab yet
-            return;
+            // This can happen if the user hasn't visited the map tab yet?
+            Log.w(TAG, "null map in setupMapIfNeeded");
         }
-
     }
 
     public void onSectionAttached(@SuppressWarnings("UnusedParameters") int number) {

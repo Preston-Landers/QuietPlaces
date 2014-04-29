@@ -81,7 +81,7 @@ public class PlaceDetailsContentProvider extends ContentProvider {
             Log.e(TAG, "Database Opening exception");
         }
 
-        return (database == null) ? false : true;
+        return (database != null);
     }
 
     @Override
