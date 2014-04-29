@@ -13,7 +13,7 @@ the Google Places API.
 Warning: this app should be considered experimental. Do not use this app on your main
 phone if having your phone unexpectedly silenced as you move around would be a problem.
 
-## About QuietPlace ##
+## About QuietPlaces ##
 
 This is a project for a Mobile Computing class at UT Austin. The goal is to combine the
 Google Maps and Places APIs to enable intelligent control over the phone ringer by sensing
