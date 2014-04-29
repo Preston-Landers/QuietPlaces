@@ -522,9 +522,28 @@ public class MainActivity extends ActionBarActivity
     }
 */
 
+    /**
+     * Click handler for the checkbox to control whether
+     * QuietPlaces (geofence-based silence) is enabled.
+     *
+     * @param view checkbox
+     */
+    public void onClickControlRinger(View view) {
+        CheckBox ringerControlCheckBox = (CheckBox) view;
+        boolean isChecked = ringerControlCheckBox.isChecked();
+        Log.i(TAG, "Control Ringer switch set to: " + isChecked);
+        prefsEditor.putBoolean(SettingsFragment.KEY_CONTROL_RINGER, isChecked);
+        sharedPreferenceSaver.savePreferences(prefsEditor, false);
+    }
 
+    /**
+     * This directly controls the current status of the ringer.
+     *
+     * @param view checkbox
+     */
     public void onClickRinger(View view) {
-        CheckBox ringerCheckBox = (CheckBox) findViewById(R.id.checkbox_home_ringer);
+        // CheckBox ringerCheckBox = (CheckBox) findViewById(R.id.checkbox_home_ringer);
+        CheckBox ringerCheckBox = (CheckBox) view;
         wasSilencedFromGeofence = false;
         if (ringerCheckBox.isChecked()) {
             setRinger(true);
@@ -550,6 +569,7 @@ public class MainActivity extends ActionBarActivity
             Log.d(TAG, "device was already silent when silenceDeviceFromGeofence() was called.");
             return false;
         }
+        Log.i(TAG, "Silencing device from geofence!");
         wasSilencedFromGeofence = true;
         setRinger(false);
         return true;
@@ -577,6 +597,7 @@ public class MainActivity extends ActionBarActivity
             ringerSwitch.setChecked(true);
         }
 */
+        Log.i(TAG, "Un-silencing device from geofence!");
         wasSilencedFromGeofence = false;
         setRinger(true);
         return true;
@@ -724,7 +745,7 @@ public class MainActivity extends ActionBarActivity
         return prefs.getBoolean(SettingsFragment.KEY_USE_LOCATION, false);
     }
 
-    private boolean getPrefControlRinger() {
+    public boolean getPrefControlRinger() {
         return prefs.getBoolean(SettingsFragment.KEY_CONTROL_RINGER, false);
     }
 
@@ -1299,5 +1320,9 @@ public class MainActivity extends ActionBarActivity
 
     private void renewAllGeofences() {
         getMapFragment().renewAllGeofences();
+    }
+
+    public HomeFragment getHomeFragment() {
+        return homeFragment;
     }
 }

@@ -76,6 +76,9 @@
     <string name="add_button_description">Add Quiet Place</string>
     <string name="clear_history_button">Clear History</string>
 
+    <string name="control_ringer_switch">Enforce QuietPlaces</string>
+    <string name="control_ringer_label">Let this app control the ringer?</string>
+
     <!-- Messages -->
     <string name="add_geofences_result_success">
         Add Geofences: Success GeofenceRequestIds=%1$s
@@ -224,4 +227,5 @@
     <string name="notification_title_exit">Enabled Ringer</string>
     <string name="pref_control_ringer">Control the ringer</string>
     <string name="pref_control_ringer_summary">If checked this app can take control of the ringer when entering a quiet place.</string>
+    <string name="home_screen_warning">This app is experimental; use at your own risk.</string>
 </resources>

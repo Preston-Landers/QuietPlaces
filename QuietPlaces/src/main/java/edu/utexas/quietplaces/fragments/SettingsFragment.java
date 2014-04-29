@@ -4,6 +4,7 @@ import android.app.Activity;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.os.Bundle;
+import android.preference.CheckBoxPreference;
 import android.preference.Preference;
 import android.preference.PreferenceFragment;
 import android.preference.PreferenceManager;
@@ -188,6 +189,23 @@ public class SettingsFragment extends PreferenceFragment
                 }
             }
 
+        } else if (key.equals(KEY_CONTROL_RINGER)) {
+            // boolean canControlRinger = sharedPreferences.getBoolean(SettingsFragment.KEY_CONTROL_RINGER, false);
+            if (mainActivity != null) {
+                HomeFragment homeFragment = mainActivity.getHomeFragment();
+                if (homeFragment != null) {
+                    // Update the checkbox on the home screen
+                    boolean isEnabled = homeFragment.updateControlRingerCheckbox();
+
+                    // Also update the checkbox on the settings screen.
+                    // This is necessary if we change the pref from outside the setting screen
+                    // i.e., from the checkbox on the home screen.
+                    CheckBoxPreference checkBoxPreference = (CheckBoxPreference ) findPreference(key);
+                    if (checkBoxPreference != null) {
+                        checkBoxPreference.setChecked(isEnabled);
+                    }
+                }
+            }
         }
 
         // Any time we change any 'category' preference, update the master place type pref.

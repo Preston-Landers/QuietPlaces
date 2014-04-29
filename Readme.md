@@ -7,8 +7,11 @@ the quiet zone your ringer is automatically re-enabled. Quiet Place zones are de
 circles centered around a geographic point.
 
 You can create, remove or adjust your quiet places at any time using an interactive map,
-and new quiet places can be automatically suggested based on categories obtained from
+and new quiet places can be automatically placed based on categories obtained from
 the Google Places API.
+
+Warning: this app should be considered experimental. Do not use this app on your main
+phone if having your phone unexpectedly silenced as you move around would be a problem.
 
 ## About QuietPlace ##
 
@@ -31,25 +34,49 @@ Dr. Christine Julien
 
 See the section below for building the app from source code.
 
-The app is largely functional. It handles manual placement and adjustment of Quiet Places,
-as well as automatic place suggestion from the Google Places API.  The automatic placement
-and sizing could use some refinement.
+The app is functional and mostly stable. It handles manual placement and adjustment of
+Quiet Places as well as automatic place suggestion using the Google Places API.  The
+automatic placement and sizing could use some additional refinement.
 
 The app has a built-in help screen in the navigation drawer. Please see that for basic usage information.
 
 We also have a mock location testing companion app, which is available here:
 [QuietPlacesMockLocations]. See below for more information about testing.
 
+## Usage Summary ##
+
+This app uses a [navigation drawer](https://developer.android.com/design/patterns/navigation-drawer.html) interface.
+There is a home screen with a ringer control switch. The main interface of the app is the Map tab.
+From this tab you can manually place quiet places on the map by pressing the Add button
+then pressing the spot to add. You can move places by holding the marker down then dragging it.
+You can resize, rename, or delete the place by pressing on the marker to select it.
+Select marker again to un-select it.
+
+There is a Follow checkbox to control whether the camera follows your current position.
+The standard Google map controls - 'my location' in the upper right, and zoom in and out on the bottom right.
+
+There is also a History panel with a log of system events such as entering or leaving a quiet place.
+
+You can enable automatic placement of Quiet Places by going to the Settings screen and selecting categories.
+These automatic places are periodically updated on the map; it may take up to 1 minute.  You can convert
+a suggested place to a permanently saved one by selecting it and then modifying it somehow (move or resize
+for example.)
+
+There are also settings to control whether or not we use Location Services.
+If this is disabled, the app won't automatically suggest places and won't update your position on the map.
+However, previously defined Quiet Places may still be activated.
+
+There's also settings to control whether we actually silence the ringer, and whether to use vibrate or silence.
+
 ## Future Features / TODO List  ##
 
-* Make a way to disable the geofencing ringer control from the home screen
 * Use better looking map marker drawables, especially for auto-places
 * Generate more interesting names for manually added places (e.g. find an address or name)
 * Ability to resize quiet places with scale gestures
-  * Not critical because we have buttons to resize the selected place.
+  * Not critical because we have buttons to resize the selected place but would be cool.
 * Better placement of auto-QPs. E.g. don't center the circle on the street corner
 * Better sizing of auto-QPs, at least some basic heuristics
-* Allow a Quiet Place to be temporarily disabled w/o deleting it.
+* Allow an individual Quiet Place to be temporarily disabled w/o deleting it.
 * Put a confirmation dialog on delete place, and clear history?
 
 ## Known Bugs ##
@@ -57,16 +84,14 @@ We also have a mock location testing companion app, which is available here:
 * If you are currently inside a geofence, and then move the fence away from you with a drag,
   it doesn't register as leaving the fence since it got removed and then
   readded in the other spot.
-* If you create a new QP that you are currently inside, it doesn't trigger the silence.
-* If the app has not received location updates in a while, we may miss some geofence
-  transitions and may need to do a manual check.
+* Likewise, if you create a new QP that you are currently inside, it doesn't trigger the silence.
 * When you change the selected categories, the auto places don't update until
   you move a minimum distance (100 m), or 1 hour has passed.
-* Ringer switch on home screen can get out of sync with actual ringer status.
-  * Need to register a listener for when the ringer changes, and update our switch from that
 * Current selection (of a Quiet Place) is lost when changing device orientation
 * There is a hard limit of 100 active geofences imposed by Location Services.
-  This isn't really handled gracefully.
+  This isn't handled very gracefully yet. We should self-limit the number we
+  try to create.  And also put in a preference to allow the maximum number.
+
 
 # Development Notes #
 
@@ -78,8 +103,8 @@ placed. When we place a map marker we set up an associated [Geofence with Google
 
 The geofence sends the app a notification when the user enters or exits a circularly defined
 geographic region (a point plus a radius.)  The MainActivity registers a broadcast receiver for this
-geofence event and passes the event to the QuietPlaceMapMarker (QPMM, see below). The QPMM determines
-if the ringer should be silenced or unsilenced. For instance, we should not unsilence if we're still
+geofence event and passes the event to the associated QuietPlaceMapMarker (QPMM, see below.)
+The QPMM determines if the ringer should be silenced or unsilenced. For instance, we should not unsilence if we're still
 inside another overlapping Quiet Place. These geofence events are processed even if the app is
 in the background.
 
@@ -120,6 +145,11 @@ QPMapFragment extends the basic Google Map view and adds our custom map behavior
 and manages the collection of QPMMs. Custom map controls are implemented as an overlay
 on top of the Google MapView.
 
+The Quiet Place definitions are stored in a [SQLite database](http://developer.android.com/training/basics/data-storage/databases.html)
+ local to the phone and accessed through a standard [ContentProvider interface](http://developer.android.com/guide/topics/providers/content-providers.html).
+
+The same applies to other data objects managed by the app - history events and Google Place API records that
+are cached in the local database.
 
 ## Software Engineering Challenges ##
 
@@ -145,7 +175,12 @@ please see the [project page for QuietPlacesMockLocations][QuietPlacesMockLocati
 
 ### Accuracy and energy usage ###
 
-TODO...
+The app makes an attempt to use as little energy as possible. The more 'Quiet Places' (geofences) that
+are active, the more energy the app will use.  It uses the most energy when the map is visible on screen
+due to frequent location updates. When the app is in the background it updates its location
+much less often.
+
+General information about usage limits in the Google Places API and rate limiting strategies:
 
 https://developers.google.com/maps/documentation/business/articles/usage_limits
 

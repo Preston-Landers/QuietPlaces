@@ -21,7 +21,9 @@
             android:src="@drawable/ic_launcher_web"
             android:contentDescription="Logo"
             android:layout_centerVertical="true"
-            android:layout_alignEnd="@+id/home_authors"/>
+            android:layout_alignParentEnd="false"
+            android:layout_alignParentLeft="true"
+            android:layout_marginLeft="40dp"/>
 
     <TextView
             android:layout_width="wrap_content"
@@ -41,7 +43,7 @@
             android:textAppearance="?android:attr/textAppearanceSmall"
             android:id="@+id/home_authors"
             android:singleLine="false"
-            android:text="@string/authors"
+            android:text="@string/home_screen_warning"
             android:layout_alignParentBottom="true"
             android:layout_alignParentLeft="true"
             android:layout_alignParentStart="true"
@@ -49,7 +51,7 @@
             android:layout_marginLeft="10dp"/>
 
     <RelativeLayout
-            android:layout_width="300dp"
+            android:layout_width="350dp"
             android:layout_height="150dp"
             android:layout_alignParentTop="false"
             android:layout_alignParentLeft="false"
@@ -68,7 +70,7 @@
                 android:id="@+id/tv_ringer_status"
                 android:layout_alignParentTop="true"
                 android:layout_centerHorizontal="true"
-                android:layout_marginTop="30dp"/>
+                android:layout_marginTop="10dp"/>
 
         <CheckBox
                 android:layout_width="wrap_content"
@@ -77,11 +79,35 @@
                 android:id="@+id/checkbox_home_ringer"
                 android:layout_below="@+id/tv_ringer_status"
                 android:layout_centerHorizontal="true"
-                android:layout_marginTop="30dp"
-                android:textSize="20sp"
+                android:layout_marginTop="10dp"
+                android:textSize="18sp"
                 android:lines="1"
                 android:longClickable="false"
                 android:onClick="onClickRinger"/>
+
+        <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textAppearance="?android:attr/textAppearanceSmall"
+                android:text="@string/control_ringer_label"
+                android:id="@+id/tv_control_ringer_status"
+                android:layout_alignParentTop="false"
+                android:layout_centerHorizontal="true"
+                android:layout_marginTop="15dp"
+                android:layout_below="@+id/checkbox_home_ringer"/>
+
+        <CheckBox
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/control_ringer_switch"
+                android:id="@+id/checkbox_home_control_ringer"
+                android:layout_below="@+id/tv_control_ringer_status"
+                android:layout_centerHorizontal="true"
+                android:layout_marginTop="5dp"
+                android:textSize="15sp"
+                android:lines="1"
+                android:longClickable="false"
+                android:onClick="onClickControlRinger"/>
 
     </RelativeLayout>
 

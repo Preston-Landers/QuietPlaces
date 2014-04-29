@@ -8,6 +8,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.CheckBox;
+import edu.utexas.quietplaces.MainActivity;
 import edu.utexas.quietplaces.R;
 
 /**
@@ -39,13 +40,14 @@ public class HomeFragment extends BaseFragment {
     @Override
     public void onStart() {
         super.onStart();
-        updateSwitchWithRingerState();
+        updateRingerStateCheckbox();
+        updateControlRingerCheckbox();
     }
 
     /**
      * Update the ringer switch on the home screen to the current ringer state on app startup.
      */
-    private void updateSwitchWithRingerState() {
+    private void updateRingerStateCheckbox() {
         Activity activity = getActivity();
         CheckBox ringerCheckBox = (CheckBox) activity.findViewById(R.id.checkbox_home_ringer);
         AudioManager audioManager = (AudioManager) activity.getSystemService(Context.AUDIO_SERVICE);
@@ -58,4 +60,11 @@ public class HomeFragment extends BaseFragment {
 
     }
 
+    public boolean updateControlRingerCheckbox() {
+        MainActivity mainActivity = (MainActivity) getActivity();
+        final CheckBox ringerControlCheckBox = (CheckBox) getActivity().findViewById(R.id.checkbox_home_control_ringer);
+        boolean isEnabled = mainActivity.getPrefControlRinger();
+        ringerControlCheckBox.setChecked(isEnabled);
+        return isEnabled;
+    }
 }
