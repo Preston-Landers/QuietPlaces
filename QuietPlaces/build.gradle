@@ -19,8 +19,8 @@ android {
     defaultConfig {
         minSdkVersion 11
         targetSdkVersion 19
-        versionCode 6
-        versionName "0.5"
+        versionCode 7
+        versionName "0.6"
     }
 
     packagingOptions {
@@ -36,9 +36,24 @@ android {
             keyAlias QP_RELEASE_KEY_ALIAS
             keyPassword QP_RELEASE_KEY_PASSWORD
         }
+
+        // Unfortunately necessary to install testing versions on top of store version
+        debug {
+            storeFile file(QP_RELEASE_STORE_FILE)
+            storePassword QP_RELEASE_STORE_PASSWORD
+            keyAlias QP_RELEASE_KEY_ALIAS
+            keyPassword QP_RELEASE_KEY_PASSWORD
+        }
     }
 
     buildTypes {
+        // This doesn't work very well due to a few things, mainly
+        // the .R generated package doesn't match, so imports have to be
+        // changed, as well as certain other parts of the mainfest.
+//        debug {
+//            packageNameSuffix '.debug'
+//            versionNameSuffix '-DEBUG'
+//        }
         release {
             runProguard true
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.txt'

@@ -18,6 +18,7 @@ import android.support.v7.app.ActionBar;
 import android.support.v7.app.ActionBarActivity;
 import android.text.TextUtils;
 import android.util.Log;
+import android.view.KeyEvent;
 import android.view.Menu;
 import android.view.View;
 import android.widget.CheckBox;
@@ -502,6 +503,21 @@ public class MainActivity extends ActionBarActivity
             return true;
         }
         return super.onCreateOptionsMenu(menu);
+    }
+
+
+    @Override
+    public boolean onKeyDown(int keyCode, KeyEvent event) {
+        if ( keyCode == KeyEvent.KEYCODE_MENU ) {
+            Log.d(TAG, "MENU pressed");
+            if (mNavigationDrawerFragment.isDrawerOpen()) {
+                mNavigationDrawerFragment.closeDrawer();
+            } else {
+                mNavigationDrawerFragment.openDrawer();
+            }
+            return true;
+        }
+        return super.onKeyDown(keyCode, event);
     }
 
 /*

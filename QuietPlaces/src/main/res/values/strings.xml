@@ -159,7 +159,7 @@
     <string name="pref_use_vibrate_summary">When checked the device will be set to vibrate instead of silent.</string>
 
     <string name="pref_map_type">Map Type</string>
-    <string name="pref_map_type_default">MAP_TYPE_NORMAL</string>
+    <string name="pref_map_type_default" translatable="false">MAP_TYPE_HYBRID</string>
 
     <string name="pref_category_dining_entertainment"><![CDATA[Dining & Entertainment]]></string>
     <string name="pref_cat_movie_theater">Movie Theaters</string>

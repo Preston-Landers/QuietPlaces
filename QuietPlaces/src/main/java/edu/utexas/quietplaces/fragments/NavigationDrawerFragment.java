@@ -219,7 +219,7 @@ public class NavigationDrawerFragment extends BaseFragment {
         // If the user hasn't 'learned' about the drawer, open it to introduce them to the drawer,
         // per the navigation drawer design guidelines.
         if (!mUserLearnedDrawer && !mFromSavedInstanceState) {
-            mDrawerLayout.openDrawer(mFragmentContainerView);
+            openDrawer();
         }
 
         // Defer code dependent on restoration of previous instance state.
@@ -231,6 +231,14 @@ public class NavigationDrawerFragment extends BaseFragment {
         });
 
         mDrawerLayout.setDrawerListener(mDrawerToggle);
+    }
+
+    public void openDrawer() {
+        mDrawerLayout.openDrawer(mFragmentContainerView);
+    }
+
+    public void closeDrawer() {
+        mDrawerLayout.closeDrawer(mFragmentContainerView);
     }
 
     private void selectItem(int position) {

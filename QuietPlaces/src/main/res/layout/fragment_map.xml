@@ -16,44 +16,50 @@
             android:id="@+id/customControlsContainer"
             >
 
-        <RelativeLayout
+        <LinearLayout
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_alignParentTop="true"
                 android:layout_alignParentRight="false"
                 android:layout_alignParentEnd="true"
-                android:layout_marginTop="70dp"
+                android:layout_marginTop="65dp"
                 android:layout_marginRight="12dp"
                 android:id="@+id/add_button_container"
                 android:padding="5dp"
                 android:background="@drawable/map_controls"
-                >
+                android:orientation="vertical">
 
             <ImageButton
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
+                    android:layout_width="40sp"
+                    android:layout_height="40sp"
                     android:id="@+id/addPlaceButton"
                     android:background="@drawable/ic_add_icon"
                     android:layout_alignParentTop="true"
                     android:layout_alignParentRight="false"
                     android:layout_alignParentEnd="false"
-                    android:scaleType="center"
                     android:onClick="clickAddButton"
                     android:contentDescription="@string/add_button_description"
-                    android:layout_centerHorizontal="true"/>
+                    android:textAlignment="viewEnd"
+                    android:layout_gravity="right"/>
 
             <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="@string/add_quiet_place_button"
                     android:id="@+id/tv_addPlaceLabel"
-                    android:layout_below="@+id/addPlaceButton"
                     android:layout_alignStart="@+id/addPlaceButton"
                     android:layout_alignWithParentIfMissing="false"
                     android:layout_alignParentRight="false"
-                    android:layout_alignParentLeft="true"
-                    android:textAppearance="@style/TextAppearance.AppCompat.SearchResult.Title"/>
-        </RelativeLayout>
+                    android:layout_alignParentLeft="false"
+                    android:textAppearance="@style/TextAppearance.AppCompat.SearchResult.Title"
+                    android:layout_centerHorizontal="true"
+                    android:layout_alignParentBottom="false"
+                    android:layout_below="@+id/addPlaceButton"
+                    android:layout_alignRight="@+id/addPlaceButton"
+                    android:textAlignment="viewEnd"
+                    android:layout_gravity="right"
+                    android:layout_marginRight="3dp"/>
+        </LinearLayout>
 
         <RelativeLayout
                 android:layout_width="wrap_content"
@@ -61,13 +67,12 @@
                 android:layout_alignParentTop="false"
                 android:layout_alignParentRight="true"
                 android:layout_alignParentEnd="false"
-                android:layout_marginTop="15dp"
                 android:id="@+id/follow_container"
                 android:padding="2dp"
                 android:background="@drawable/map_controls"
-                android:layout_below="@+id/add_button_container"
                 android:layout_marginRight="12dp"
-                >
+                android:layout_alignParentBottom="true"
+                android:layout_marginBottom="120dp">
 
             <CheckBox
                     android:layout_width="wrap_content"
@@ -76,7 +81,9 @@
                     android:layout_alignParentRight="false"
                     android:onClick="onCheckboxClicked"
                     android:checked="true"
-                    android:layout_centerHorizontal="true"/>
+                    android:layout_alignParentBottom="false"
+                    android:layout_alignParentEnd="false"
+                    android:layout_marginLeft="3dp"/>
 
             <TextView
                     android:layout_width="wrap_content"
@@ -86,7 +93,9 @@
                     android:layout_alignWithParentIfMissing="false"
                     android:layout_alignParentRight="false"
                     android:layout_alignParentLeft="false"
-                    android:layout_below="@+id/follow_user_checkBox"/>
+                    android:layout_alignParentBottom="false"
+                    android:layout_below="@+id/follow_user_checkBox"
+                    />
         </RelativeLayout>
 
         <RelativeLayout
