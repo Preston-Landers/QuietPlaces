@@ -19,6 +19,8 @@ This is a project for a Mobile Computing class at UT Austin. The goal is to comb
 Google Maps and Places APIs to enable intelligent control over the phone ringer by sensing
  when the user has entered places categorized as silent zones, such as hospitals or museums.
 
+## Download Now! ##
+The app is now available on the [Google Play Store](https://play.google.com/store/apps/details?id=edu.utexas.quietplaces)!
 
 ## Authors ##
 
@@ -214,6 +216,11 @@ Eclipse but I haven't tried that.
 *Important*: In order to build and run the app from source, you must create a new private.xml file
 and put in a Google API key as described below. The app won't compile unless you take this extra
 step of creating a file and inserting a new API key that you got from Google.
+
+Note that you can't have the Store version of the app installed at the same time as your
+custom compiled version unless you change the package name of your version. IntelliJ can refactor this
+for you in one step. If you don't change the Android package name, you will have to uninstall the store
+version and lose any saved Quiet Place definitions.
 
 ## Prerequisites to Build ##
 
