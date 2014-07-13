@@ -227,9 +227,11 @@ version and lose any saved Quiet Place definitions.
 * JDK 1.6
 * Android SDK installed:
     * Android SDK Platform/Build Tools
-    * Android API 19
+    * Android API 20
     * Android Support Library
+    * Android Support Repository
     * Google Play Services
+    * Google Repository
 * Either: a Java IDE that includes Gradle such as IntelliJ IDEA 13 or Android Studio.
     * OR a Gradle install if you wish to build from the command line
 * Obtain a new pair of API keys as described below.

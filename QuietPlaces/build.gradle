@@ -13,14 +13,15 @@ repositories {
 }
 
 android {
-    compileSdkVersion 19
-    buildToolsVersion "19.0.3"
+    compileSdkVersion 20
+    buildToolsVersion "20.0"
 
     defaultConfig {
         minSdkVersion 11
-        targetSdkVersion 19
+        targetSdkVersion 20
         versionCode 7
         versionName "0.6"
+        testPackageName "edu.utexas.quietplaces.test"
     }
 
     packagingOptions {
@@ -28,7 +29,6 @@ android {
         exclude 'META-INF/NOTICE.txt'
     }
 
-/*
     signingConfigs {
         release {
             storeFile file(QP_RELEASE_STORE_FILE)
@@ -60,14 +60,52 @@ android {
             signingConfig signingConfigs.release
         }
     }
-*/
+
+}
+
+sourceSets {
+    main {
+        java {
+            srcDir 'src/main/java'
+        }
+        resources {
+            srcDir 'src/main/resources'
+        }
+    }
+
+    unitTest {
+        java.srcDir file('src/androidTest/java')
+        resources.srcDir file('src/androidTest/resources')
+        // output.srcDir file('src/androidTest/output')
+    }
+
+//    androidTest.setRoot('src/androidTest')
+//    androidTest.java.srcDirs = ['src/androidTest/java']
 }
 
 dependencies {
-    compile 'com.android.support:support-v4:19.1.0'
-    compile 'com.android.support:appcompat-v7:19.1.0'
-    compile 'com.google.android.gms:play-services:4.3.23'
+    compile 'com.android.support:support-v4:20.0.0'
+    compile 'com.android.support:appcompat-v7:20.0.0'
+    compile 'com.google.android.gms:play-services:5.0.77'
     compile 'joda-time:joda-time:2.3'
     compile 'org.joda:joda-convert:1.4'
+    unitTestCompile files("$project.buildDir/classes/debug")
+    // unitTestCompile files("$buildDir/intermediates/classes/debug")
+    unitTestCompile 'junit:junit:3.8'
+    // compile 'junit:junit:3.8'
+    // unitTestCompile 'com.google.android:android:4.0.1.2'
     // compile fileTree(dir: 'libs', include: ['*.jar'])
 }
+
+configurations {
+    unitTestCompile.extendsFrom runtime
+    unitTestRuntime.extendsFrom unitTestCompile
+}
+
+task unitTest(type:Test, dependsOn: assemble) {
+    description = "run unit tests"
+    testClassesDir = project.sourceSets.unitTest.output.classesDir
+    classpath = project.sourceSets.unitTest.runtimeClasspath
+}
+
+build.dependsOn unitTest
